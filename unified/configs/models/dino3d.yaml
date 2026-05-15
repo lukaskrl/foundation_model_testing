@@ -1,0 +1,12 @@
+model:
+  name: dino3d
+  weights: /store/home/skrljl/projects/foundation_models/weights/3DINO/3dino_vit_weights.pth
+  kwargs:
+    arch: vit_large_3d        # vit_base_3d or vit_large_3d
+    # 3DINO was pretrained with 112³ patches (7×7×7 token grid). Constructing
+    # the ViT at img_size=112 matches the pretrained pos_embed exactly; the
+    # ViT's interpolate_pos_encoding handles arbitrary input sizes at forward.
+    img_size: 112
+    patch_size: 16
+    in_chans: 1
+    extract_blocks: [5, 11, 17, 23]

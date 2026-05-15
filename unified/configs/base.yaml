@@ -1,0 +1,73 @@
+# Shared base config — all models inherit from this.
+# Per-model configs may ONLY override the `model:` block. Overriding data/train/eval
+# is rejected by ConfigLoader (so comparisons stay fair).
+
+data:
+  dataset_root: /store/Datasets/TotalSegmentatorDataset
+  meta_csv: /store/Datasets/TotalSegmentatorDataset/meta.csv
+  num_classes: 118                     # 117 organs + background
+  classes_file: unified/data/classes.txt
+  spacing: [1.5, 1.5, 1.5]             # mm, isotropic resample target
+  intensity:
+    a_min: -1024.0
+    a_max: 1024.0
+    b_min: -1.0
+    b_max: 1.0
+    clip: true
+  patch_size: [96, 96, 96]
+  num_samples_per_volume: 2            # RandCropByPosNegLabel: positive crops
+  pos_neg_ratio: [1, 1]                # foreground vs background
+  cache_rate: 0.0                      # MONAI cache; bump if RAM permits
+  num_workers: 8
+  augment:
+    flip_prob: 0.5
+    rot_prob: 0.5
+    scale_intensity_prob: 0.1
+    shift_intensity_prob: 0.1
+
+train:
+  batch_size: 2
+  epochs: 200
+  optimizer:
+    name: adamw
+    lr: 1.0e-4
+    weight_decay: 1.0e-5
+  scheduler:
+    name: warmup_cosine
+    warmup_epochs: 10
+    min_lr: 1.0e-6
+  loss:
+    name: dice_ce
+    include_background: false
+    softmax: true
+    to_onehot_y: true
+  amp: true
+  grad_clip: 1.0
+  log_interval_steps: 50
+  ckpt_interval_epochs: 10
+  val_interval_epochs: 5
+  seed: 42
+
+eval:
+  sliding_window:
+    roi_size: [96, 96, 96]
+    sw_batch_size: 4
+    overlap: 0.5
+    mode: gaussian
+  metrics:
+    - dice
+    - hd95
+  save_predictions: false
+
+# decoder is also shared
+head:
+  name: unified_seg_head
+  num_classes: 118
+  feature_channels: [64, 128, 256, 512]
+  feature_strides: [4, 8, 16, 32]
+  decoder_channels: 32
+  norm: instance
+
+# Placeholder — every model config overrides this.
+model:
+  name: REQUIRED

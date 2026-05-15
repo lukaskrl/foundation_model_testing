@@ -1,0 +1,7 @@
+model:
+  name: voco_h
+  weights: /store/home/skrljl/projects/foundation_models/weights/VoCo/VoComni_H.pt
+  kwargs:
+    feature_size: 192
+    use_v2: true
+    in_chans: 1

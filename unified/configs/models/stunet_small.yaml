@@ -1,0 +1,8 @@
+# STU-Net requires the upstream code cloned at vendor/STU-Net/.
+# This adapter is a stub — see unified/models/backbones/stunet.py.
+model:
+  name: stunet_small
+  weights: /store/home/skrljl/projects/foundation_models/weights/STU-Net/stunet_small_ep4k.model
+  plans_pkl: vendor/STU-Net/plan_files/Task101_TotalSegmentator/STUNetTrainer_small__nnUNetPlansv2.1/plans.pkl
+  kwargs:
+    size: small

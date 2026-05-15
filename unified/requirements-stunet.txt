@@ -1,0 +1,8 @@
+# Isolated env for STU-Net only (nnU-Net V1 is incompatible with modern PyTorch).
+# Python 3.9.
+torch==1.10.0
+nnunet==1.7.0
+numpy>=1.21
+nibabel>=4.0
+SimpleITK>=2.2
+pyyaml>=6.0

@@ -1,0 +1,11 @@
+model:
+  name: vista3d
+  weights: /store/home/skrljl/projects/foundation_models/weights/VISTA/vista3d_pretrained_model/model_monai1.3.pt
+  kwargs:
+    # Match VISTA-3D's pretraining: 5 stages, init_filters=48
+    # → native channels (48, 96, 192, 384, 768) at strides (1, 2, 4, 8, 16).
+    # Adapter selects stages [1..4] for the pyramid contract.
+    init_filters: 48
+    blocks_down: [1, 2, 2, 4, 4]
+    in_channels: 1
+    norm: instance

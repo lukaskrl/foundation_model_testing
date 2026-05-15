@@ -1,0 +1,21 @@
+# Run outputs
+runs/
+checkpoints/
+*.pt
+*.pth
+*.model
+
+# Vendored upstream code (STU-Net etc.)
+vendor/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.env
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store

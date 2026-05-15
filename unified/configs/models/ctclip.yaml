@@ -1,0 +1,18 @@
+# CT-CLIP: single-bottleneck VAE encoder — see docs/HEAD_DESIGN.md for fairness caveat.
+# Adapter uses learned upsampling to synthesize the 4-level pyramid.
+model:
+  name: ctclip
+  weights: /store/home/skrljl/projects/foundation_models/weights/CT-CLIP/models/CT-CLIP-Related/CT-CLIP_v2.pt
+  kwargs:
+    # These match CT-CLIP/scripts/run_train.py exactly. dim_head was 32 in
+    # pretraining (CTViT default is 64 — don't trust the default).
+    dim: 512
+    codebook_size: 8192
+    image_size: 480
+    patch_size: 20
+    temporal_patch_size: 10
+    spatial_depth: 4
+    temporal_depth: 4
+    dim_head: 32
+    heads: 8
+    use_image_encoder_only: true   # we discard the text branch

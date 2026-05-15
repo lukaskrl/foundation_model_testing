@@ -1,0 +1,18 @@
+# BiomedParse: 2D slice-wise backbone — see docs/HEAD_DESIGN.md for fairness caveat.
+# Adapter is a stub; needs BiomedParse's Focal backbone constructor wired up.
+model:
+  name: biomedparse
+  weights: /store/home/skrljl/projects/foundation_models/weights/BiomedParse/biomedparse_v2.ckpt
+  kwargs:
+    # These match BiomedParse v2's d2focal config; Focal-Huge variant.
+    backbone: focal
+    embed_dim: 192
+    depths: [2, 2, 18, 2]
+    focal_levels: [4, 4, 4, 4]
+    focal_windows: [3, 3, 3, 3]
+    patch_size: 4
+    use_conv_embed: true
+    scaling_modulator: true
+    use_layerscale: true
+    use_postln: true
+    # Inputs are sliced along D; CT is broadcast to 3 channels per slice.
