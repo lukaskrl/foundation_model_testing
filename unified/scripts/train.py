@@ -38,13 +38,16 @@ def _build_loader(cfg, ds, transforms, batch_size, shuffle):
             return self.t(self.base[i])
 
     composed = Composed(ds, transforms)
+    nw = cfg["data"]["num_workers"]
     return DataLoader(
         composed,
         batch_size=batch_size,
         shuffle=shuffle,
-        num_workers=cfg["data"]["num_workers"],
+        num_workers=nw,
         pin_memory=True,
         drop_last=shuffle,
+        persistent_workers=(nw > 0),
+        prefetch_factor=(4 if nw > 0 else None),
     )
 
 
@@ -53,17 +56,38 @@ def main():
     ap.add_argument("--config", required=True, help="model config YAML")
     ap.add_argument("--output", required=True, help="output dir for run artifacts")
     ap.add_argument("--splits-dir", default=str(REPO / "unified" / "data" / "splits"))
+    ap.add_argument("--epochs", type=int, default=None,
+                    help="override cfg.train.epochs (for sanity/benchmark runs)")
     args = ap.parse_args()
 
     cfg = load_config(args.config)
+    if args.epochs is not None:
+        cfg["train"]["epochs"] = args.epochs
     setup_logging(args.output)
     log = get_logger("train")
-    log.info("config %s, output %s", args.config, args.output)
+
+    import torch
+    if torch.cuda.is_available():
+        dev_desc = f"cuda ({torch.cuda.get_device_name(0)})"
+    else:
+        dev_desc = "cpu"
+    log.info("=" * 72)
+    log.info("model=%s config=%s", cfg["model"]["name"], args.config)
+    log.info("output=%s device=%s", args.output, dev_desc)
+    log.info(
+        "epochs=%d batch_size=%d lr=%g amp=%s",
+        cfg["train"]["epochs"], cfg["train"]["batch_size"],
+        cfg["train"].get("optimizer", {}).get("lr", float("nan")),
+        cfg["train"].get("amp", True),
+    )
+    log.info("=" * 72)
 
     classes = load_classes()
     splits_dir = Path(args.splits_dir)
     train_ids = _read_split(splits_dir / "train.txt")
     val_ids = _read_split(splits_dir / "val.txt")
+    log.info("splits: train=%d val=%d classes=%d",
+             len(train_ids), len(val_ids), len(classes))
 
     train_ds = TotalSegmentatorDataset(cfg["data"]["dataset_root"], train_ids, classes)
     val_ds = TotalSegmentatorDataset(cfg["data"]["dataset_root"], val_ids, classes)

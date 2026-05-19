@@ -185,7 +185,10 @@ class CTClipBackbone(BackboneInterface):
 
     def forward_features(self, x):
         # CTViT was pretrained on (B, 1, T, 480, 480) with T divisible by
-        # temporal_patch_size (10). Resize in-plane up to 480×480.
+        # temporal_patch_size. Resize in-plane up to image_size; pad depth up
+        # to the next multiple of temporal_patch_size if needed (the pyramid
+        # interpolates back to the original input strides, so padding only
+        # affects the bottleneck shape).
         B, C, D, H, W = x.shape
         if C != 1:
             raise ValueError("ct-clip adapter expects 1-channel CT input")
@@ -195,6 +198,11 @@ class CTClipBackbone(BackboneInterface):
         flat = x.reshape(B * D, 1, H, W)
         flat = F.interpolate(flat, size=target_hw, mode="bilinear", align_corners=False)
         x_resized = flat.reshape(B, 1, D, *target_hw)
+
+        tps = self.encoder.temporal_patch_size
+        pad_d = (tps - (D % tps)) % tps
+        if pad_d > 0:
+            x_resized = F.pad(x_resized, (0, 0, 0, 0, 0, pad_d))
 
         # Bypass the VQ codebook — we only need the encoder features.
         tokens = self.encoder.to_patch_emb(x_resized)  # (b, t', h', w', d)

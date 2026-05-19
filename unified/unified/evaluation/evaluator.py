@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import Dict, List
 
 import torch
+from tqdm.auto import tqdm
 
 from ..utils import get_logger
 
@@ -35,7 +36,18 @@ class Evaluator:
         per_class_running = torch.zeros(self.num_classes - 1)
         per_class_count = torch.zeros(self.num_classes - 1)
 
-        for batch in loader:
+        try:
+            total = len(loader)
+        except TypeError:
+            total = None
+        pbar = tqdm(
+            loader,
+            total=total,
+            desc=f"[val] roi={tuple(self.roi)}",
+            dynamic_ncols=True,
+            leave=False,
+        )
+        for batch in pbar:
             image = batch["image"].to(device, non_blocking=True)
             label = batch["label"].to(device, non_blocking=True)
 
@@ -56,11 +68,24 @@ class Evaluator:
 
             dice(y_pred=pred_oh, y=label_oh)
             # accumulate per-class
-            per = dice.aggregate()  # length num_classes-1 if include_background=False
+            per = dice.aggregate().cpu()  # length num_classes-1 if include_background=False
             dice.reset()
             mask = ~torch.isnan(per)
-            per_class_running[mask] += per[mask].cpu()
+            per_class_running[mask] += per[mask]
             per_class_count[mask] += 1
+
+            running_mean = (
+                per_class_running / per_class_count.clamp(min=1)
+            )
+            valid_running = running_mean[per_class_count > 0]
+            postfix = {
+                "dice": f"{valid_running.mean().item():.4f}" if valid_running.numel() else "n/a",
+                "classes": f"{int((per_class_count > 0).sum().item())}/{self.num_classes - 1}",
+            }
+            if torch.cuda.is_available():
+                postfix["gpu_GB"] = f"{torch.cuda.max_memory_allocated() / 1e9:.1f}"
+            pbar.set_postfix(postfix, refresh=False)
+        pbar.close()
 
         per_class_mean = (per_class_running / per_class_count.clamp(min=1)).tolist()
         valid = [x for x, c in zip(per_class_mean, per_class_count.tolist()) if c > 0]

@@ -8,6 +8,8 @@ import time
 from pathlib import Path
 
 import torch
+from torch.utils.tensorboard import SummaryWriter
+from tqdm.auto import tqdm
 
 from ..utils import get_logger, save_checkpoint
 from .loss import build_loss
@@ -35,11 +37,21 @@ class Trainer:
         self.grad_clip = cfg["train"].get("grad_clip", 0.0)
         self.log = get_logger("trainer")
         self.best_dice = -1.0
+        self.tb = SummaryWriter(log_dir=str(self.output_dir / "tb"))
+        self.global_step = 0
 
     def _train_epoch(self, epoch: int):
         self.model.train()
         losses = []
-        for step, batch in enumerate(self.train_loader):
+        total_steps = len(self.train_loader)
+        pbar = tqdm(
+            self.train_loader,
+            total=total_steps,
+            desc=f"epoch {epoch:>3d}/{self.cfg['train']['epochs']} [train]",
+            dynamic_ncols=True,
+            leave=False,
+        )
+        for step, batch in enumerate(pbar):
             image = batch["image"].to(self.device, non_blocking=True)
             label = batch["label"].to(self.device, non_blocking=True)
 
@@ -65,14 +77,25 @@ class Trainer:
 
             self.scheduler.step()
             losses.append(loss.item())
+            self.global_step += 1
+
+            lr = self.optimizer.param_groups[0]["lr"]
+            self.tb.add_scalar("train/loss_step", loss.item(), self.global_step)
+            self.tb.add_scalar("train/lr", lr, self.global_step)
+
+            running = sum(losses[-50:]) / min(50, len(losses))
+            postfix = {"loss": f"{running:.4f}", "lr": f"{lr:.2e}"}
+            if torch.cuda.is_available():
+                postfix["gpu_GB"] = f"{torch.cuda.max_memory_allocated() / 1e9:.1f}"
+            pbar.set_postfix(postfix, refresh=False)
 
             if (step + 1) % self.cfg["train"]["log_interval_steps"] == 0:
                 self.log.info(
-                    "epoch %d step %d loss=%.4f lr=%.2e",
-                    epoch, step + 1, sum(losses[-50:]) / min(50, len(losses)),
-                    self.optimizer.param_groups[0]["lr"],
+                    "epoch %d step %d/%d loss=%.4f lr=%.2e",
+                    epoch, step + 1, total_steps, running, lr,
                 )
 
+        pbar.close()
         return sum(losses) / max(1, len(losses))
 
     def _validate(self, epoch: int) -> float:
@@ -81,6 +104,11 @@ class Trainer:
         metrics = self.evaluator.evaluate(self.model, self.val_loader, self.device)
         mean_dice = metrics["mean_dice"]
         self.log.info("epoch %d val_mean_dice=%.4f", epoch, mean_dice)
+        self.tb.add_scalar("val/mean_dice", mean_dice, epoch)
+        for key, value in metrics.items():
+            if key == "mean_dice" or value is None or value != value:  # skip NaN
+                continue
+            self.tb.add_scalar(f"val/{key}", value, epoch)
         # Persist a per-class metrics row.
         (self.output_dir / "val_metrics.jsonl").open("a").write(
             __import__("json").dumps({"epoch": epoch, **metrics}) + "\n"
@@ -89,30 +117,44 @@ class Trainer:
 
     def run(self):
         t_total = time.time()
-        for epoch in range(1, self.cfg["train"]["epochs"] + 1):
-            t = time.time()
-            train_loss = self._train_epoch(epoch)
-            self.log.info("epoch %d done train_loss=%.4f dt=%.1fs",
-                          epoch, train_loss, time.time() - t)
+        n_train = len(self.train_loader)
+        n_val = len(self.val_loader) if self.val_loader is not None else 0
+        self.log.info(
+            "start: epochs=%d device=%s amp=%s train_batches=%d val_batches=%d",
+            self.cfg["train"]["epochs"], self.device, self.amp, n_train, n_val,
+        )
+        try:
+            for epoch in range(1, self.cfg["train"]["epochs"] + 1):
+                t = time.time()
+                train_loss = self._train_epoch(epoch)
+                epoch_time = time.time() - t
+                self.log.info("epoch %d done train_loss=%.4f dt=%.1fs",
+                              epoch, train_loss, epoch_time)
+                self.tb.add_scalar("train/loss_epoch", train_loss, epoch)
+                self.tb.add_scalar("train/epoch_time_s", epoch_time, epoch)
 
-            if epoch % self.cfg["train"]["val_interval_epochs"] == 0:
-                dice = self._validate(epoch)
-                if dice > self.best_dice and not (dice != dice):  # not NaN
-                    self.best_dice = dice
+                if epoch % self.cfg["train"]["val_interval_epochs"] == 0:
+                    dice = self._validate(epoch)
+                    if dice > self.best_dice and not (dice != dice):  # not NaN
+                        self.best_dice = dice
+                        self.tb.add_scalar("val/best_mean_dice", self.best_dice, epoch)
+                        save_checkpoint(
+                            self.output_dir / "best.pt",
+                            model=self.model, optimizer=self.optimizer,
+                            scheduler=self.scheduler, scaler=self.scaler,
+                            epoch=epoch, extra={"mean_dice": dice},
+                        )
+
+                if epoch % self.cfg["train"]["ckpt_interval_epochs"] == 0:
                     save_checkpoint(
-                        self.output_dir / "best.pt",
+                        self.output_dir / f"epoch_{epoch:04d}.pt",
                         model=self.model, optimizer=self.optimizer,
                         scheduler=self.scheduler, scaler=self.scaler,
-                        epoch=epoch, extra={"mean_dice": dice},
+                        epoch=epoch,
                     )
 
-            if epoch % self.cfg["train"]["ckpt_interval_epochs"] == 0:
-                save_checkpoint(
-                    self.output_dir / f"epoch_{epoch:04d}.pt",
-                    model=self.model, optimizer=self.optimizer,
-                    scheduler=self.scheduler, scaler=self.scaler,
-                    epoch=epoch,
-                )
-
-        self.log.info("total time %.1f s, best dice %.4f",
-                      time.time() - t_total, self.best_dice)
+            self.log.info("total time %.1f s, best dice %.4f",
+                          time.time() - t_total, self.best_dice)
+        finally:
+            self.tb.flush()
+            self.tb.close()
