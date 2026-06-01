@@ -1,0 +1,16 @@
+model:
+  name: suprem_unet
+  # SuPreM custom UNet3D (19.08M params). Native encoder pyramid is at
+  # strides {1, 2, 4, 8} with channels {64, 128, 256, 512}; PyramidNeck
+  # downsamples to the unified {4, 8, 16, 32}.
+  batch_size: 2
+  weights: /store/home/skrljl/projects/foundation_models/weights/SuPreM/supervised_suprem_unet_2100.pth
+  preprocessing:
+    intensity:
+      a_min: -175.0
+      a_max: 250.0
+      b_min: 0.0
+      b_max: 1.0
+      clip: true
+  kwargs:
+    act: relu

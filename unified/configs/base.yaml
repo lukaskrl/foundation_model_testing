@@ -8,26 +8,57 @@ data:
   num_classes: 118                     # 117 organs + background
   classes_file: unified/data/classes.txt
   spacing: [1.5, 1.5, 1.5]             # mm, isotropic resample target
+  # Default HU window matches the CT-FM pretraining recipe (broad CT range).
+  # Per-encoder overrides live in model.preprocessing.intensity.
   intensity:
     a_min: -1024.0
-    a_max: 1024.0
-    b_min: -1.0
+    a_max: 2048.0
+    b_min: 0.0
     b_max: 1.0
     clip: true
   patch_size: [96, 96, 96]
-  num_samples_per_volume: 2            # RandCropByPosNegLabel: positive crops
-  pos_neg_ratio: [1, 1]                # foreground vs background
-  cache_rate: 0.0                      # MONAI cache; bump if RAM permits
-  num_workers: 8
+  num_samples_per_volume: 2
+  # Class-balanced patch sampler. ratios has length num_classes; default
+  # (computed in transforms.py) gives ratio 0 to background and 1 to every
+  # organ class — i.e. every patch is centered on some organ, sampled
+  # uniformly across the 117 classes. Override here to use a custom weighting.
+  sampler:
+    ratios: null
+  cache_rate: 0.0                      # MONAI in-memory cache; bump if RAM permits
+  # Disk cache for the MODEL-INDEPENDENT preprocessing prefix
+  # (EnsureTyped → Spacingd → CropForegroundd). First epoch populates it;
+  # subsequent epochs skip the raw NIfTI I/O and the resample entirely.
+  # Orientation and HU windowing are intentionally NOT cached — they run on
+  # the fly after the cache load, so one cache directory serves every model.
+  cache:
+    enabled: true
+    dir: /volatile/Datasets/TotalSeg
+  num_workers: 16
+  # CropForegroundd margin (in voxels). CT-FM keeps a 10-voxel margin around
+  # the foreground bbox; unified previously used 0 (tight crop). Margin > 0
+  # protects against truncating organs at the field-of-view boundary.
+  crop_foreground_margin: 10
   augment:
     flip_prob: 0.5
     rot_prob: 0.5
-    scale_intensity_prob: 0.1
-    shift_intensity_prob: 0.1
+    # Continuous affine: rotation in radians (CT-FM uses 0.26 rad ≈ 15° on each
+    # axis) and scale around 1.0. Applied independently of RandFlip/RandRotate90,
+    # which still fire — affine catches realistic patient-positioning variation
+    # that discrete flips/rotations miss.
+    affine_prob: 0.2
+    affine_rotate_rad: 0.26
+    affine_scale_factor: 0.20
+    scale_intensity_prob: 0.5
+    scale_intensity_factor: 0.30
+    shift_intensity_prob: 0.5
+    shift_intensity_factor: 0.10
+    gauss_smooth_prob: 0.2
+    gauss_noise_prob: 0.2
+    gauss_noise_std: 0.10
 
 train:
   batch_size: 2
-  epochs: 200
+  epochs: 2000
   optimizer:
     name: adamw
     lr: 1.0e-4
@@ -42,10 +73,12 @@ train:
     softmax: true
     to_onehot_y: true
   amp: true
+  grad_accum_steps: 1                  # effective batch = batch_size * grad_accum_steps; model configs may override
   grad_clip: 1.0
   log_interval_steps: 50
   ckpt_interval_epochs: 10
-  val_interval_epochs: 5
+  val_interval_epochs: 25
+  early_stop_patience: 0               # validation rounds w/o mean_dice improvement; 0 disables
   seed: 42
 
 eval:
@@ -59,14 +92,28 @@ eval:
     - hd95
   save_predictions: false
 
-# decoder is also shared
+# decoder is also shared. The 5-level finest-first contract is documented in
+# unified/models/seg_model.py. decoder_channels is kept in this block for
+# backward-compat with older configs; the U-Net head no longer uses it.
 head:
   name: unified_seg_head
   num_classes: 118
-  feature_channels: [64, 128, 256, 512]
-  feature_strides: [4, 8, 16, 32]
+  feature_channels: [32, 64, 128, 256, 512]
+  feature_strides: [1, 2, 4, 8, 16]
   decoder_channels: 32
   norm: instance
+  # Multi-resolution Dice-CE: heads at strides {1, 2, 4, 8}, weighted sum.
+  # Applies uniformly to every backbone — does not break the fairness lock.
+  deep_supervision: true
+  ds_weights: [1.0, 0.5, 0.25, 0.125]
+
+# Experiment tracking. Top-level (outside the locked train/data/eval blocks)
+# because logging is infrastructure, not a fair-comparison hyperparameter.
+# Override `mode` per-run via the WANDB_MODE env var (online | offline | disabled).
+wandb:
+  project: unified-foundation-models
+  entity: null          # null -> your default W&B entity
+  mode: online
 
 # Placeholder — every model config overrides this.
 model:

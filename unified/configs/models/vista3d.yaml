@@ -1,5 +1,8 @@
 model:
   name: vista3d
+  # fp16 AMP diverged in the prior sweep around epoch 78 (loss-scaler couldn't
+  # recover); fp32 is ~30% slower but stable.
+  amp: false
   weights: /store/home/skrljl/projects/foundation_models/weights/VISTA/vista3d_pretrained_model/model_monai1.3.pt
   kwargs:
     # Match VISTA-3D's pretraining: 5 stages, init_filters=48

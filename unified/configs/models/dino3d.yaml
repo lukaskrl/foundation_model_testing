@@ -1,5 +1,8 @@
 model:
   name: dino3d
+  # observed 17.9 GB at bs=2 (AMP) — small per-sample footprint (small token grid).
+  # bs=4 -> ~30 GB, plenty of slack on a 48 GB GPU.
+  batch_size: 4
   weights: /store/home/skrljl/projects/foundation_models/weights/3DINO/3dino_vit_weights.pth
   kwargs:
     arch: vit_large_3d        # vit_base_3d or vit_large_3d

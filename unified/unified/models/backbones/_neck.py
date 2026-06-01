@@ -1,37 +1,68 @@
-"""Small per-level adapters that bring native encoder features onto the
-contract pyramid (4 levels × {64,128,256,512} channels × strides {4,8,16,32}).
+"""Per-level adapter primitives used by backbone-specific adapters.
 
-Two operations: a 1×1×1 conv for channel adaptation and an optional spatial
-resize (stride conv to down-sample, trilinear interpolate to up-sample).
+Two building blocks:
+
+* ``ChannelNeck``  — 1×1×1 conv + GroupNorm + ReLU. Pure channel adaptation.
+* ``DownsampleNeck`` — 3×3×3 stride-2 conv + GroupNorm + ReLU. One factor-2
+  spatial downsample (and channel projection) when a backbone needs to
+  synthesize a coarser contract level than its native pyramid offers.
+
+We never *upsample* a pretrained feature: if a level is finer than any
+native feature provides, the backbone-specific adapter generates it from a
+fresh conv branch on the raw input (Swin conv stem, ViT SpatialPriorModule).
 """
 from __future__ import annotations
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
+
+
+def _group_count(ch: int, max_groups: int = 8) -> int:
+    g = min(max_groups, ch)
+    while ch % g != 0:
+        g -= 1
+    return g
 
 
 class ChannelNeck(nn.Module):
-    """1×1×1 conv + GroupNorm + ReLU. Cheap and uniform across backbones."""
+    """1×1×1 conv + GroupNorm + ReLU."""
 
     def __init__(self, in_ch: int, out_ch: int):
         super().__init__()
         self.proj = nn.Conv3d(in_ch, out_ch, kernel_size=1, bias=False)
-        groups = min(8, out_ch)
-        while out_ch % groups != 0:
-            groups -= 1
-        self.norm = nn.GroupNorm(groups, out_ch)
+        self.norm = nn.GroupNorm(_group_count(out_ch), out_ch)
         self.act = nn.ReLU(inplace=True)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.act(self.norm(self.proj(x)))
 
 
-class StrideAdapter(nn.Module):
-    """Re-sample a 3D feature map to a target stride relative to a reference shape.
+class DownsampleNeck(nn.Module):
+    """2×2×2 stride-2 conv + GroupNorm + ReLU. One factor-2 downsample step.
 
-    The reference shape ``(D_target, H_target, W_target)`` is computed at runtime
-    from the input image shape passed via ``forward``. If the feature is already
-    at the target stride, this is a no-op.
+    Kernel size 2 keeps param count manageable when the synthesized level
+    needs a channel expansion (256 → 512 is 1.05 M params here vs 3.5 M for
+    a 3×3×3 conv). The adapter is meant to be a lean lift, not a third
+    encoder stage.
+    """
+
+    def __init__(self, in_ch: int, out_ch: int):
+        super().__init__()
+        self.body = nn.Sequential(
+            nn.Conv3d(in_ch, out_ch, kernel_size=2, stride=2, padding=0, bias=False),
+            nn.GroupNorm(_group_count(out_ch), out_ch),
+            nn.ReLU(inplace=True),
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.body(x)
+
+
+class StrideAdapter(nn.Module):
+    """Legacy spatial resize helper (kept so stub backbones still import).
+
+    Not used by the new pyramid contract — the active adapters avoid
+    interpolation entirely. Stubs (biomedparse, ctclip) that referenced this
+    in older code paths import it here so the package still imports cleanly.
     """
 
     def __init__(self, mode: str = "trilinear"):
@@ -39,6 +70,7 @@ class StrideAdapter(nn.Module):
         self.mode = mode
 
     def forward(self, feat: torch.Tensor, target_shape):
+        import torch.nn.functional as F
         if tuple(feat.shape[2:]) == tuple(target_shape):
             return feat
         return F.interpolate(
@@ -50,40 +82,62 @@ class StrideAdapter(nn.Module):
 
 
 class PyramidNeck(nn.Module):
-    """Adapter that takes a list of native-encoder features and emits the
-    contract pyramid.
+    """Bundle of per-level ``ChannelNeck`` plus optional coarser-level synthesis.
 
     Parameters
     ----------
-    in_channels : tuple of 4 ints
-        Channels of the 4 native features picked from the encoder.
-    out_channels : tuple of 4 ints, default (64, 128, 256, 512)
-    strides : tuple of 4 ints, default (4, 8, 16, 32)
-        Pyramid strides on the contract side.
+    native_channels : sequence of ints
+        Channel count of each native encoder feature, finest first.
+    contract_channels : sequence of ints
+        Target channel count at each contract level, finest first.
+    extra_down : int, default 0
+        Number of extra coarser levels to synthesize beyond the deepest
+        native feature, via successive ``DownsampleNeck`` stages. The final
+        output channels at each synthesized level come from
+        ``contract_channels[len(native_channels) + i]``.
+
+    The total output length is ``len(native_channels) + extra_down`` and must
+    equal ``len(contract_channels)``. A native feature must be passed in for
+    each native level; the synthesized levels are produced from the deepest
+    *adapted* feature.
+
+    Spatial strides are not checked here — the adapter is responsible for
+    arranging native features at the target strides. The neck only does
+    1×1 channel projection plus, optionally, a strided downsample chain.
     """
 
     def __init__(
         self,
-        in_channels,
-        out_channels=(64, 128, 256, 512),
-        strides=(4, 8, 16, 32),
+        native_channels,
+        contract_channels=(32, 64, 128, 256, 512),
+        extra_down: int = 0,
     ):
         super().__init__()
-        if len(in_channels) != 4:
-            raise ValueError("PyramidNeck expects 4 input channel counts")
-        self.strides = tuple(strides)
+        native_channels = tuple(native_channels)
+        contract_channels = tuple(contract_channels)
+        if len(native_channels) + extra_down != len(contract_channels):
+            raise ValueError(
+                f"native ({len(native_channels)}) + extra_down ({extra_down})"
+                f" != contract ({len(contract_channels)})"
+            )
         self.ch_necks = nn.ModuleList(
-            [ChannelNeck(ic, oc) for ic, oc in zip(in_channels, out_channels)]
+            [ChannelNeck(ic, oc) for ic, oc in zip(native_channels, contract_channels)]
         )
-        self.resize = StrideAdapter()
+        self.downs = nn.ModuleList()
+        prev_ch = contract_channels[len(native_channels) - 1] if native_channels else None
+        for i in range(extra_down):
+            target_idx = len(native_channels) + i
+            self.downs.append(DownsampleNeck(prev_ch, contract_channels[target_idx]))
+            prev_ch = contract_channels[target_idx]
 
-    def forward(self, feats, input_shape):
-        """feats: List[Tensor], input_shape: (D, H, W). Returns 4 contract tensors."""
-        D, H, W = input_shape
-        out = []
-        for f, neck, s in zip(feats, self.ch_necks, self.strides):
-            target = (D // s, H // s, W // s)
-            f = neck(f)
-            f = self.resize(f, target)
-            out.append(f)
+    def forward(self, native_feats):
+        if len(native_feats) != len(self.ch_necks):
+            raise ValueError(
+                f"got {len(native_feats)} native features, expected {len(self.ch_necks)}"
+            )
+        out = [neck(f) for neck, f in zip(self.ch_necks, native_feats)]
+        cur = out[-1]
+        for down in self.downs:
+            cur = down(cur)
+            out.append(cur)
         return out

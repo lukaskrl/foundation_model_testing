@@ -24,7 +24,7 @@ from unified.utils import load_config, setup_logging, get_logger  # noqa: E402
 from unified.data import (
     TotalSegmentatorDataset, load_classes, build_train_transforms,
 )  # noqa: E402
-from unified.models import build_backbone, UnifiedSegHead, SegModel  # noqa: E402
+from unified.models import build_backbone, build_head, SegModel  # noqa: E402
 from unified.training import build_loss, build_optimizer  # noqa: E402
 
 
@@ -87,19 +87,25 @@ def main():
     mcfg = cfg["model"]
     weights = None if args.no_weights else mcfg.get("weights")
     backbone = build_backbone(mcfg["name"], weights=weights, **mcfg.get("kwargs", {}))
-    head = UnifiedSegHead(
+    head = build_head(
+        cfg["head"].get("name", "unified_seg_head"),
         num_classes=cfg["head"]["num_classes"],
         feature_channels=cfg["head"]["feature_channels"],
         feature_strides=cfg["head"]["feature_strides"],
         decoder_channels=cfg["head"]["decoder_channels"],
         norm=cfg["head"]["norm"],
+        deep_supervision=cfg["head"].get("deep_supervision", False),
     )
-    model = SegModel(backbone, head)
-    log.info("trainable params: %d", model.num_trainable_params())
+    model = SegModel(backbone, head,
+                     freeze_backbone=bool(mcfg.get("freeze_backbone", False)))
+    log.info("trainable params: %d / %d total (freeze_backbone=%s)",
+             model.num_trainable_params(), model.num_total_params(),
+             model.freeze_backbone)
 
     def _try_device(device):
         model.to(device)
-        optimizer = build_optimizer(cfg, model.parameters())
+        trainable = [p for p in model.parameters() if p.requires_grad]
+        optimizer = build_optimizer(cfg, trainable)
         loss_fn = build_loss(cfg)
         return device, optimizer, loss_fn
 

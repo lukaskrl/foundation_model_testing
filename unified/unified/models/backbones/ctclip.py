@@ -1,12 +1,26 @@
-"""CT-CLIP adapter (stub).
+"""CT-CLIP adapter.
 
 CT-CLIP's image encoder is CTViT — a 3D VAE-ish ViT producing a single
-bottleneck `(B, 512, T/4, H/16, W/16)` (with default config). There are no
-intermediate skip features, so the adapter takes the bottleneck and synthesizes
-the four-scale pyramid via learned upsampling.
+bottleneck `(B, dim, T/temporal_patch, H/patch, W/patch)`. CTViT was
+pretrained on **480×480** in-plane patches with temporal patches of
+``temporal_patch_size`` frames, so the encoder is run on a resized,
+depth-padded copy of the input and the bottleneck is anisotropic
+(different temporal vs spatial strides relative to the resized input).
 
-This adds more 'fresh' parameters at the pyramid stage than other backbones'
-necks; CT-CLIP results carry that asterisk (see docs/HEAD_DESIGN.md).
+There are no intermediate skip features. Mirroring the dino3d adapter:
+
+  * Fine levels (strides 1, 2, 4, 8) come from a lightweight
+    ``SpatialPriorModule3D`` running on the **raw input volume** — a fresh
+    conv branch, the only source of native-resolution detail.
+  * Stride-16 (the contract's coarsest level) comes from the CTViT
+    bottleneck: a 1×1×1 channel projection to 512 ch, followed by a single
+    trilinear resample to the cubic stride-16 target. This is the *only*
+    spatial resample of pretrained features in any adapter; it's required
+    because the CTViT bottleneck is anisotropic and operates on a resized
+    canvas. The CT-CLIP comparison therefore carries an asterisk relative
+    to backbones whose native pyramids fit the contract cleanly.
+
+CT-CLIP results carry that asterisk (see docs/HEAD_DESIGN.md).
 """
 from __future__ import annotations
 import sys
@@ -18,6 +32,7 @@ import torch.nn.functional as F
 
 from ..registry import register_backbone
 from ..seg_model import BackboneInterface
+from .dino3d import SpatialPriorModule3D
 
 CTCLIP_REPO = Path("/store/home/skrljl/projects/foundation_models/CT-CLIP")
 
@@ -36,8 +51,6 @@ def _import_ctvit():
             "cloned at /store/home/skrljl/projects/foundation_models/CT-CLIP."
         )
     import importlib.util
-    # Pre-register a stub `transformer_maskgit` package so `from transformer_maskgit.attention import ...`
-    # in ctvit.py resolves to our hand-loaded module.
     import types
     pkg_name = "transformer_maskgit"
     if pkg_name not in sys.modules:
@@ -60,33 +73,29 @@ def _import_ctvit():
     return ctvit_mod.CTViT
 
 
-class _PyramidFromBottleneck(nn.Module):
-    """Take a single (B, C, d, h, w) bottleneck and emit 4 pyramid features."""
+def _gn(ch: int) -> nn.GroupNorm:
+    g = min(8, ch)
+    while ch % g != 0:
+        g -= 1
+    return nn.GroupNorm(g, ch)
 
-    def __init__(self, in_ch: int, out_channels=(64, 128, 256, 512)):
+
+class _CTClipAdapter(nn.Module):
+    """SPM (strides 1..8) + 1×1 projection of CTViT bottleneck (stride 16)."""
+
+    def __init__(self, ctvit_dim: int, contract_channels, spm_inplanes: int = 16):
         super().__init__()
-        c0, c1, c2, c3 = out_channels
-        # Each level is a 1×1×1 channel projection + a (potentially identity)
-        # spatial resize done at runtime in forward().
-        self.proj0 = nn.Conv3d(in_ch, c0, kernel_size=1, bias=False)
-        self.proj1 = nn.Conv3d(in_ch, c1, kernel_size=1, bias=False)
-        self.proj2 = nn.Conv3d(in_ch, c2, kernel_size=1, bias=False)
-        self.proj3 = nn.Conv3d(in_ch, c3, kernel_size=1, bias=False)
-
-    def forward(self, bottleneck, input_shape):
-        D, H, W = input_shape
-        t0 = (D // 4, H // 4, W // 4)
-        t1 = (D // 8, H // 8, W // 8)
-        t2 = (D // 16, H // 16, W // 16)
-        t3 = (D // 32, H // 32, W // 32)
-
-        def up(p, t):
-            x = p(bottleneck)
-            if tuple(x.shape[2:]) != tuple(t):
-                x = F.interpolate(x, size=t, mode="trilinear", align_corners=False)
-            return x
-
-        return [up(self.proj0, t0), up(self.proj1, t1), up(self.proj2, t2), up(self.proj3, t3)]
+        self.spm = SpatialPriorModule3D(
+            in_channels=1,
+            inplanes=spm_inplanes,
+            out_channels=contract_channels[:4],
+        )
+        c_top = contract_channels[4]
+        self.vit_proj = nn.Sequential(
+            nn.Conv3d(ctvit_dim, c_top, kernel_size=1, bias=False),
+            _gn(c_top),
+            nn.ReLU(inplace=True),
+        )
 
 
 @register_backbone("ctclip")
@@ -104,6 +113,7 @@ class CTClipBackbone(BackboneInterface):
         dim_head: int = 32,
         heads: int = 8,
         use_image_encoder_only: bool = True,
+        spm_inplanes: int = 16,
     ):
         super().__init__()
         CTViT = _import_ctvit()
@@ -121,8 +131,6 @@ class CTClipBackbone(BackboneInterface):
 
         if weights:
             ckpt = torch.load(weights, map_location="cpu", weights_only=False)
-            # CT-CLIP checkpoints store both visual and text encoders; we take
-            # just the visual side.
             state = ckpt.get("state_dict", ckpt) if isinstance(ckpt, dict) else ckpt
             visual = {
                 k.split("visual_transformer.", 1)[1]: v
@@ -133,12 +141,15 @@ class CTClipBackbone(BackboneInterface):
                 visual = state
             self.encoder.load_state_dict(visual, strict=False)
 
-        # CTViT's ContinuousPositionBias.forward has a hard-coded device=cuda
-        # at the inner torch.arange call. Replace it with a version that
-        # respects the passed `device` argument. (Upstream bug.)
+        # CTViT's ContinuousPositionBias has a hard-coded device=cuda; patch
+        # so it respects the passed `device` argument.
         self._patch_pos_bias(self.encoder.spatial_rel_pos_bias)
 
-        self.pyramid = _PyramidFromBottleneck(in_ch=dim)
+        self.adapter = _CTClipAdapter(
+            ctvit_dim=dim,
+            contract_channels=self.EXPECTED_CHANNELS,
+            spm_inplanes=spm_inplanes,
+        )
 
     @staticmethod
     def _patch_pos_bias(pos_bias_module):
@@ -164,9 +175,10 @@ class CTClipBackbone(BackboneInterface):
         pos_bias_module.forward = types.MethodType(forward, pos_bias_module)
 
     def _encode(self, tokens):
-        """Re-implementation of CTViT.encode that uses the tensor's device
-        instead of CTViT's hard-coded `torch.device('cuda')` (lines 292, 332 of
-        upstream ctvit.py). Identical otherwise.
+        """Reimplementation of CTViT.encode that respects tensor device.
+
+        Identical to upstream except the hard-coded ``torch.device('cuda')``
+        on lines 292, 332 of upstream ctvit.py.
         """
         from einops import rearrange
         b = tokens.shape[0]
@@ -183,18 +195,16 @@ class CTClipBackbone(BackboneInterface):
         tokens = rearrange(tokens, "(b h w) t d -> b t h w d", b=b, h=h, w=w)
         return tokens
 
-    def forward_features(self, x):
-        # CTViT was pretrained on (B, 1, T, 480, 480) with T divisible by
-        # temporal_patch_size. Resize in-plane up to image_size; pad depth up
-        # to the next multiple of temporal_patch_size if needed (the pyramid
-        # interpolates back to the original input strides, so padding only
-        # affects the bottleneck shape).
+    def _run_ctvit(self, x):
+        """Resize input to the pretrained canvas, encode, return bottleneck."""
         B, C, D, H, W = x.shape
         if C != 1:
             raise ValueError("ct-clip adapter expects 1-channel CT input")
-        target_hw = (self.encoder.image_size, self.encoder.image_size) \
-            if isinstance(self.encoder.image_size, int) \
+        target_hw = (
+            (self.encoder.image_size, self.encoder.image_size)
+            if isinstance(self.encoder.image_size, int)
             else tuple(self.encoder.image_size)
+        )
         flat = x.reshape(B * D, 1, H, W)
         flat = F.interpolate(flat, size=target_hw, mode="bilinear", align_corners=False)
         x_resized = flat.reshape(B, 1, D, *target_hw)
@@ -204,8 +214,25 @@ class CTClipBackbone(BackboneInterface):
         if pad_d > 0:
             x_resized = F.pad(x_resized, (0, 0, 0, 0, 0, pad_d))
 
-        # Bypass the VQ codebook — we only need the encoder features.
-        tokens = self.encoder.to_patch_emb(x_resized)  # (b, t', h', w', d)
-        tokens = self._encode(tokens)                   # (b, t', h', w', d)
-        bottleneck = tokens.permute(0, 4, 1, 2, 3).contiguous()
-        return self.pyramid(bottleneck, input_shape=x.shape[2:])
+        tokens = self.encoder.to_patch_emb(x_resized)   # (B, t', h', w', d)
+        tokens = self._encode(tokens)
+        return tokens.permute(0, 4, 1, 2, 3).contiguous()  # (B, dim, t', h', w')
+
+    def encoder_forward(self, x):
+        bottleneck = self._run_ctvit(x)
+        # Pass raw input alongside the bottleneck so the trainable SPM in the
+        # adapter can consume it.
+        return [x, bottleneck]
+
+    def adapter_forward(self, native, input_shape):
+        x_in, bottleneck = native
+        D, H, W = input_shape
+        fine = self.adapter.spm(x_in)                       # strides 1..8
+        s16 = self.adapter.vit_proj(bottleneck)             # 512 ch, anisotropic
+        target = (D // 16, H // 16, W // 16)
+        if tuple(s16.shape[2:]) != target:
+            s16 = F.interpolate(s16, size=target, mode="trilinear", align_corners=False)
+        return [*fine, s16]
+
+    def forward_features(self, x):
+        return self.adapter_forward(self.encoder_forward(x), x.shape[2:])

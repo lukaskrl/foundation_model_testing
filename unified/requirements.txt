@@ -6,7 +6,7 @@ nibabel>=5.1
 numpy>=1.24
 pyyaml>=6.0
 tqdm>=4.66
-tensorboard>=2.14
+wandb>=0.16
 
 # Per-model extras (uncomment depending on which adapters you use):
 # einops>=0.7              # 3DINO, CT-CLIP

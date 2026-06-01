@@ -1,0 +1,34 @@
+model:
+  name: ctfm
+  # CT-FM was pretrained with intra-sample SimCLR on 148k CT scans. The
+  # SegResEncoder is architecturally identical to VISTA's — only the weights
+  # differ. Same 48-GB-GPU memory profile as vista3d.
+  # With a frozen backbone (framework default) the AMP scaler instability that
+  # motivated amp=false in the full-finetune recipe does not apply — only the
+  # head trains.
+  amp: true
+  # Frozen backbone => no encoder activations retained, head is small (9 M params)
+  # so we can fit a much larger batch than the default 2. Dropped back to 2 for
+  # the rerun on a contested GPU 0 — peak memory at bs=4 was ~30 GB and was
+  # OOMing when another tenant's working set grew.
+  batch_size: 4
+  # Encoder-only safetensors. The full-SegResNet variant
+  # (weights/CT-FM/ct_fm_segresnet/model.safetensors) also works — the adapter
+  # strips the decoder weights at load time.
+  weights: /store/home/skrljl/projects/foundation_models/weights/CT-FM/ct_fm_feature_extractor/model.safetensors
+  preprocessing:
+    # CT-FM was pretrained in SPL orientation; feed it data in the same frame.
+    axcodes: SPL
+    # HU window [-1024, 2048] -> [0, 1] matches CT-FM pretraining (and the
+    # unified base default). Stated explicitly for clarity.
+    intensity:
+      a_min: -1024.0
+      a_max: 2048.0
+      b_min: 0.0
+      b_max: 1.0
+      clip: true
+  kwargs:
+    init_filters: 32
+    blocks_down: [1, 2, 2, 4, 4]
+    in_channels: 1
+    norm: instance

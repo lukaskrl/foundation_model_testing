@@ -1,0 +1,15 @@
+model:
+  name: sam_med3d
+  # SAM-Med3D-turbo (vit_b_ori variant): 12-layer ViT, embed_dim=768,
+  # patch=16, image_size=128 → token grid 8×8×8, neck projects to 384ch.
+  # The adapter resizes any input patch to 128³ for the ViT pass and
+  # resamples the bottleneck back to cubic stride 16.
+  batch_size: 2
+  weights: /store/home/skrljl/projects/foundation_models/weights/SAM-Med3D/sam_med3d_turbo.pth
+  kwargs:
+    arch: vit_b_ori
+    patch_size: 16
+    in_chans: 1
+    window_size: 14
+    out_chans: 384
+    use_rel_pos: true

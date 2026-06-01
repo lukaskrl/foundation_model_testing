@@ -1,5 +1,8 @@
 model:
   name: voco_b
+  # observed 23.5 GB at bs=2 (AMP). bs=3 -> ~35 GB, leaves ~12 GB headroom
+  # for the eval one-hot tensors on a 48 GB RTX 6000 Ada.
+  batch_size: 3
   weights: /store/home/skrljl/projects/foundation_models/weights/VoCo/VoComni_B.pt
   kwargs:
     feature_size: 48

@@ -1,16 +1,19 @@
-"""3DINO-ViT backbone adapter.
+"""3DINO-ViT backbone adapter with a SpatialPriorModule for fine levels.
 
-ViTs only have one spatial scale, so we use the UNETR projection trick: take
-four intermediate blocks, all at stride patch_size, and synthesize the pyramid
-by applying progressive ConvTranspose stacks to the shallower blocks.
+A plain ViT has only one spatial scale (stride 16 with ``patch_size=16``).
+Upsampling tokens cannot invent fine-grained detail, so the adapter splits
+the contract pyramid:
 
-Concretely, with patch_size=16 the ViT outputs are at stride 16. To produce
-strides {4, 8, 16, 32} we:
-  - feat0: upsample x4 (the shallowest block)
-  - feat1: upsample x2
-  - feat2: identity
-  - feat3: downsample x2
-And remap channels 1024 → {64, 128, 256, 512} with a 1×1×1 conv.
+  * ``feats[0..3]`` (strides 1, 2, 4, 8) come from a lightweight
+    SpatialPriorModule3D — a small conv stem that runs on the *raw input
+    volume*. The module's design is ported (and simplified) from
+    ``3DINO/dinov2/eval/segmentation_3d/adapter_modules.py:SpatialPriorModule``
+    but uses ``GroupNorm`` so it trains at small batch size on one GPU.
+    Deformable Injector/Extractor blocks are intentionally omitted — they
+    belong to the future deformable-head path.
+
+  * ``feats[4]`` (stride 16) comes from the ViT's last (or last-of-extract)
+    intermediate layer with a 1×1 channel projection (``embed_dim → 512``).
 """
 from __future__ import annotations
 import sys
@@ -40,58 +43,92 @@ def _arch_kwargs(arch: str):
     raise ValueError(f"unknown 3DINO arch {arch}")
 
 
-class _Up(nn.Module):
-    def __init__(self, in_ch, out_ch, factor: int):
+class SpatialPriorModule3D(nn.Module):
+    """Conv stem on raw input that emits features at strides {1, 2, 4, 8}.
+
+    Adapted from 3DINO's ``SpatialPriorModule`` (with the first conv changed
+    from stride 2 to stride 1 so we keep a stride-1 level, and ``GroupNorm``
+    in place of ``SyncBatchNorm``). Parameter count is dominated by the two
+    deepest stages — keep ``inplanes`` small.
+    """
+
+    def __init__(
+        self,
+        in_channels: int = 1,
+        inplanes: int = 16,
+        out_channels=(32, 64, 128, 256),
+    ):
         super().__init__()
-        layers = []
-        cur = in_ch
-        f = factor
-        # progressive ×2 transposed convs
-        while f > 1:
-            nxt = max(out_ch, cur // 2)
-            layers += [
-                nn.ConvTranspose3d(cur, nxt, kernel_size=2, stride=2, bias=False),
-                nn.GroupNorm(min(8, nxt), nxt),
-                nn.ReLU(inplace=True),
-            ]
-            cur = nxt
-            f //= 2
-        layers.append(nn.Conv3d(cur, out_ch, kernel_size=1, bias=False))
-        self.body = nn.Sequential(*layers)
+        c0, c1, c2, c3 = out_channels
+
+        def gn(ch):
+            g = min(8, ch)
+            while ch % g != 0:
+                g -= 1
+            return nn.GroupNorm(g, ch)
+
+        # stride 1 stem
+        self.stem = nn.Sequential(
+            nn.Conv3d(in_channels, inplanes, kernel_size=3, stride=1, padding=1, bias=False),
+            gn(inplanes), nn.ReLU(inplace=True),
+            nn.Conv3d(inplanes, inplanes, kernel_size=3, stride=1, padding=1, bias=False),
+            gn(inplanes), nn.ReLU(inplace=True),
+            nn.Conv3d(inplanes, inplanes, kernel_size=3, stride=1, padding=1, bias=False),
+            gn(inplanes), nn.ReLU(inplace=True),
+        )
+        # stride 1 -> 2
+        self.down1 = nn.Sequential(
+            nn.Conv3d(inplanes, 2 * inplanes, kernel_size=3, stride=2, padding=1, bias=False),
+            gn(2 * inplanes), nn.ReLU(inplace=True),
+        )
+        # stride 2 -> 4
+        self.down2 = nn.Sequential(
+            nn.Conv3d(2 * inplanes, 4 * inplanes, kernel_size=3, stride=2, padding=1, bias=False),
+            gn(4 * inplanes), nn.ReLU(inplace=True),
+        )
+        # stride 4 -> 8
+        self.down3 = nn.Sequential(
+            nn.Conv3d(4 * inplanes, 8 * inplanes, kernel_size=3, stride=2, padding=1, bias=False),
+            gn(8 * inplanes), nn.ReLU(inplace=True),
+        )
+
+        self.proj0 = nn.Conv3d(inplanes,     c0, kernel_size=1, bias=False)
+        self.proj1 = nn.Conv3d(2 * inplanes, c1, kernel_size=1, bias=False)
+        self.proj2 = nn.Conv3d(4 * inplanes, c2, kernel_size=1, bias=False)
+        self.proj3 = nn.Conv3d(8 * inplanes, c3, kernel_size=1, bias=False)
 
     def forward(self, x):
-        return self.body(x)
+        c0 = self.stem(x)
+        c1 = self.down1(c0)
+        c2 = self.down2(c1)
+        c3 = self.down3(c2)
+        return [self.proj0(c0), self.proj1(c1), self.proj2(c2), self.proj3(c3)]
 
 
-class _Down(nn.Module):
-    def __init__(self, in_ch, out_ch, factor: int):
+class _DinoAdapter(nn.Module):
+    """Bundle: SPM (strides 1..8) + 1×1 channel projection on ViT tokens (stride 16)."""
+
+    def __init__(self, embed_dim: int, contract_channels, spm_inplanes: int = 16):
         super().__init__()
-        layers = []
-        cur = in_ch
-        f = factor
-        while f > 1:
-            nxt = min(out_ch, cur * 2) if cur < out_ch else cur
-            layers += [
-                nn.Conv3d(cur, nxt, kernel_size=2, stride=2, bias=False),
-                nn.GroupNorm(min(8, nxt), nxt),
-                nn.ReLU(inplace=True),
-            ]
-            cur = nxt
-            f //= 2
-        layers.append(nn.Conv3d(cur, out_ch, kernel_size=1, bias=False))
-        self.body = nn.Sequential(*layers)
+        # Fine levels come from a SpatialPriorModule on raw input.
+        self.spm = SpatialPriorModule3D(
+            in_channels=1,
+            inplanes=spm_inplanes,
+            out_channels=contract_channels[:4],
+        )
+        # Semantic level (stride 16) is the ViT's tokens, channel-projected.
+        c_top = contract_channels[4]
 
-    def forward(self, x):
-        return self.body(x)
-
-
-class _Identity1x1(nn.Module):
-    def __init__(self, in_ch, out_ch):
-        super().__init__()
-        self.proj = nn.Conv3d(in_ch, out_ch, kernel_size=1, bias=False)
-
-    def forward(self, x):
-        return self.proj(x)
+        def gn(ch):
+            g = min(8, ch)
+            while ch % g != 0:
+                g -= 1
+            return nn.GroupNorm(g, ch)
+        self.vit_proj = nn.Sequential(
+            nn.Conv3d(embed_dim, c_top, kernel_size=1, bias=False),
+            gn(c_top),
+            nn.ReLU(inplace=True),
+        )
 
 
 @register_backbone("dino3d")
@@ -104,11 +141,10 @@ class DinoBackbone(BackboneInterface):
         patch_size: int = 16,
         in_chans: int = 1,
         extract_blocks=(5, 11, 17, 23),
+        spm_inplanes: int = 16,
     ):
         super().__init__()
         if patch_size != 16:
-            # The pyramid math below assumes ViT stride == 16 (giving {4,8,16,32}
-            # after the pyramid projection).
             raise ValueError("dino3d adapter assumes patch_size=16")
         DinoVisionTransformer3d = _import_dino_vit()
         self.vit = DinoVisionTransformer3d(
@@ -117,19 +153,20 @@ class DinoBackbone(BackboneInterface):
             in_chans=in_chans,
             **_arch_kwargs(arch),
         )
+        # We only need the last extract_block for the stride-16 semantic level,
+        # but we still accept the historical 4-block list (the others are
+        # ignored). This keeps existing per-model configs compatible.
         self.extract_blocks = tuple(extract_blocks)
-        if len(self.extract_blocks) != 4:
-            raise ValueError("dino3d requires exactly 4 extract_blocks")
+        if not self.extract_blocks:
+            raise ValueError("dino3d requires at least one extract_block")
 
         if weights:
             state = torch.load(weights, map_location="cpu", weights_only=False)
-            # 3DINO ckpts are typically nested under "teacher" / "student"
             if isinstance(state, dict):
                 for k in ("teacher", "student", "model"):
                     if k in state and isinstance(state[k], dict):
                         state = state[k]
                         break
-            # Strip common prefixes
             new = {}
             for k, v in state.items():
                 nk = k
@@ -139,26 +176,34 @@ class DinoBackbone(BackboneInterface):
                 new[nk] = v
             self.vit.load_state_dict(new, strict=False)
 
-        # ViT output channel
         embed_dim = _arch_kwargs(arch)["embed_dim"]
-        # Pyramid projection: 4× up, 2× up, identity, 2× down. Channels: {64,128,256,512}.
-        self.proj0 = _Up(embed_dim, 64, factor=4)    # stride 16 -> 4
-        self.proj1 = _Up(embed_dim, 128, factor=2)   # stride 16 -> 8
-        self.proj2 = _Identity1x1(embed_dim, 256)    # stride 16 -> 16
-        self.proj3 = _Down(embed_dim, 512, factor=2) # stride 16 -> 32
+        self.adapter = _DinoAdapter(
+            embed_dim=embed_dim,
+            contract_channels=self.EXPECTED_CHANNELS,
+            spm_inplanes=spm_inplanes,
+        )
 
-    def forward_features(self, x):
-        # get_intermediate_layers handles cls token stripping + reshape to 3D grid.
-        b0, b1, b2, b3 = self.vit.get_intermediate_layers(
+    def encoder_forward(self, x):
+        # We use just the deepest extracted layer for the stride-16 level.
+        # `get_intermediate_layers` returns a tuple in the order of
+        # `extract_blocks`; the last one is the deepest.
+        layers = self.vit.get_intermediate_layers(
             x,
             n=self.extract_blocks,
             reshape=True,
             return_class_token=False,
             norm=True,
         )
-        return [
-            self.proj0(b0),
-            self.proj1(b1),
-            self.proj2(b2),
-            self.proj3(b3),
-        ]
+        tokens = layers[-1]
+        # Pass raw input alongside the ViT tokens so the trainable SPM can
+        # consume it in the adapter step.
+        return [x, tokens]
+
+    def adapter_forward(self, native, input_shape):
+        x_in, tokens = native
+        fine = self.adapter.spm(x_in)            # 4 tensors @ strides 1..8
+        s16 = self.adapter.vit_proj(tokens)      # stride 16
+        return [*fine, s16]
+
+    def forward_features(self, x):
+        return self.adapter_forward(self.encoder_forward(x), x.shape[2:])
