@@ -39,12 +39,18 @@ data:
   # protects against truncating organs at the field-of-view boundary.
   crop_foreground_margin: 10
   augment:
-    flip_prob: 0.5
-    rot_prob: 0.5
+    # Discrete flips and 90° rotations are DISABLED (prob 0) to mirror the
+    # CT-FM TotalSegmentatorV2 recipe, whose only spatial augmentation is the
+    # small continuous RandAffine below. Left-right flips destroy organ
+    # laterality (*_left vs *_right become indistinguishable) and flip+rot90
+    # together leave only ~6% of training patches in the upright orientation
+    # that validation/inference use — both depress Dice across every class.
+    # Set >0 (e.g. 0.5) to re-enable for an ablation.
+    flip_prob: 0.0
+    rot_prob: 0.0
     # Continuous affine: rotation in radians (CT-FM uses 0.26 rad ≈ 15° on each
-    # axis) and scale around 1.0. Applied independently of RandFlip/RandRotate90,
-    # which still fire — affine catches realistic patient-positioning variation
-    # that discrete flips/rotations miss.
+    # axis) and scale around 1.0 — realistic patient-positioning variation, and
+    # the CT-FM recipe's sole spatial augmentation.
     affine_prob: 0.2
     affine_rotate_rad: 0.26
     affine_scale_factor: 0.20
@@ -58,10 +64,10 @@ data:
 
 train:
   batch_size: 2
-  epochs: 2000
+  epochs: 300
   optimizer:
     name: adamw
-    lr: 1.0e-4
+    lr: 2.0e-4
     weight_decay: 1.0e-5
   scheduler:
     name: warmup_cosine
@@ -69,7 +75,12 @@ train:
     min_lr: 1.0e-6
   loss:
     name: dice_ce
-    include_background: false
+    # Include the background channel in the Dice term, matching the official
+    # CT-FM TotalSegmentatorV2 recipe (DiceCELoss include_background: True). The
+    # reported metric still excludes background (evaluator DiceMetric
+    # include_background=False), so this only affects optimization — it
+    # calibrates the softmax background logit rather than letting it drift.
+    include_background: true
     softmax: true
     to_onehot_y: true
   amp: true
@@ -87,6 +98,17 @@ eval:
     sw_batch_size: 4
     overlap: 0.5
     mode: gaussian
+  # CT-FM-style patch validation, computed every val round IN ADDITION to the
+  # full-volume metrics above (kept separate in W&B under val_patch*). Each case
+  # is scored on a single random crop (RandSpatialCrop -> SpatialPad to
+  # crop_size) with the same sliding-window inferer; the headline
+  # patch_mean_dice is the per-crop macro Dice over present foreground classes,
+  # averaged across cases — i.e. CT-FM's Macro_Dice, so the number is directly
+  # comparable. crop_size is in the model's fed orientation (SPL for ct-fm),
+  # matching CT-FM's val_max_patch_size. Set enabled: false to skip it.
+  patch_validation:
+    enabled: true
+    crop_size: [192, 240, 240]
   metrics:
     - dice
     - hd95

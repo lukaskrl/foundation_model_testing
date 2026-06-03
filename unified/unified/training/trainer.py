@@ -130,8 +130,20 @@ class Trainer:
         wandb.define_metric("train/lr", step_metric="global_step")
         wandb.define_metric("train/loss_epoch", step_metric="epoch")
         wandb.define_metric("train/epoch_time_s", step_metric="epoch")
+        # Each metric family gets its own top-level namespace so the W&B
+        # workspace shows clean, separate sections instead of one mixed bucket:
+        #   val/             full-volume global summary (means + best)
+        #   val_dice/        full-volume per-organ Dice
+        #   val_hd95/        full-volume per-organ HD95
+        #   val_patch/       CT-FM-style patch global summary (means)
+        #   val_patch_dice/  patch per-organ Dice
+        #   val_patch_hd95/  patch per-organ HD95
         wandb.define_metric("val/*", step_metric="epoch")
-        wandb.define_metric("val_individual_organ/*", step_metric="epoch")
+        wandb.define_metric("val_dice/*", step_metric="epoch")
+        wandb.define_metric("val_hd95/*", step_metric="epoch")
+        wandb.define_metric("val_patch/*", step_metric="epoch")
+        wandb.define_metric("val_patch_dice/*", step_metric="epoch")
+        wandb.define_metric("val_patch_hd95/*", step_metric="epoch")
 
     def _find_resume_checkpoint(self, resume) -> Path | None:
         if isinstance(resume, (str, Path)) and Path(resume).is_file():
@@ -240,15 +252,38 @@ class Trainer:
             return float("nan")
         metrics = self.evaluator.evaluate(self.model, self.val_loader, self.device)
         mean_dice = metrics["mean_dice"]
-        self.log.info("epoch %d val_mean_dice=%.4f", epoch, mean_dice)
+        if "patch_mean_dice" in metrics:
+            self.log.info(
+                "epoch %d val_mean_dice=%.4f (full-vol) patch_mean_dice=%.4f (CT-FM-style)",
+                epoch, mean_dice, metrics["patch_mean_dice"],
+            )
+        else:
+            self.log.info("epoch %d val_mean_dice=%.4f", epoch, mean_dice)
+        # Route metrics into separate W&B namespaces so full-volume vs patch and
+        # global vs per-organ panels never mix in the workspace. Patch keys
+        # (`patch_*`) are matched first since they share the dice/hd95 suffixes.
+        #   val/{mean_dice,mean_hd95}            full-volume global
+        #   val_dice/<organ>, val_hd95/<organ>   full-volume per-organ
+        #   val_patch/{mean_dice,mean_hd95}      patch global (CT-FM Macro_Dice)
+        #   val_patch_dice/<organ>, val_patch_hd95/<organ>   patch per-organ
         log_row = {"epoch": epoch}
         for key, value in metrics.items():
             if value is None or value != value:  # skip NaN
                 continue
-            if key.startswith("mean_"):
+            if key.startswith("patch_mean_"):
+                tag = f"val_patch/{key[len('patch_'):]}"
+            elif key.startswith("patch_dice/"):
+                tag = f"val_patch_dice/{key[len('patch_dice/'):]}"
+            elif key.startswith("patch_hd95/"):
+                tag = f"val_patch_hd95/{key[len('patch_hd95/'):]}"
+            elif key.startswith("mean_"):
                 tag = f"val/{key}"
+            elif key.startswith("dice/"):
+                tag = f"val_dice/{key[len('dice/'):]}"
+            elif key.startswith("hd95/"):
+                tag = f"val_hd95/{key[len('hd95/'):]}"
             else:
-                tag = f"val_individual_organ/{key}"
+                tag = f"val/{key}"
             log_row[tag] = value
         wandb.log(log_row)
         # Persist a per-class metrics row.

@@ -9,10 +9,13 @@ back (shapes, dtypes, intensity / class statistics), then dumps a PNG montage
 that puts the input CT, the ground-truth label, and the prediction side by side
 on a few axial slices.
 
-This is a debugging / smoke tool, NOT the metrics evaluator -- for Dice/HD95 use
-``scripts/evaluate.py``. A checkpoint is optional: omit ``--checkpoint`` to sanity
-check that an untrained (randomly-initialised head + pretrained backbone) pipeline
-runs and produces correctly-shaped outputs.
+This is a debugging / visualization tool. It now also reports per-sample Dice and
+HD95 against the ground truth (same metric definitions as the evaluator: foreground
+-only, euclidean 95th-percentile Hausdorff, macro = mean over present foreground
+classes), but ``scripts/evaluate.py`` remains the canonical evaluator over a full
+split. A checkpoint is optional: omit ``--checkpoint`` to sanity check that an
+untrained (randomly-initialised head + pretrained backbone) pipeline runs and
+produces correctly-shaped outputs.
 
 Example:
     python scripts/infer.py \
@@ -198,6 +201,74 @@ def _describe(name, t: torch.Tensor, log):
     )
 
 
+def compute_sample_metrics(pred, label, num_classes, classes, want_hd95):
+    """Per-sample Dice (+ optional HD95) for one volume, mirroring the evaluator.
+
+    ``pred`` and ``label`` are ``(1, 1, D, H, W)`` integer tensors. one-hot
+    expansion + metrics run on CPU because a 117-class ``(1, C, D, H, W)`` tensor
+    is several GiB and OOMs the GPU for the larger backbones (same reason the
+    evaluator offloads). Uses the identical metric definitions as
+    ``unified.evaluation.evaluator`` so these numbers match validation:
+    foreground-only Dice (macro over classes present in the ground truth; a
+    missed organ scores 0) and euclidean 95th-percentile Hausdorff (macro over
+    classes present in BOTH gt and prediction, since a distance needs two
+    non-empty surfaces).
+    """
+    import gc
+    import warnings
+    from monai.metrics import DiceMetric, HausdorffDistanceMetric
+    from monai.networks.utils import one_hot
+
+    # MONAI warns "the ground truth/prediction of class N is all 0 ..." for every
+    # class absent on either side; we handle those explicitly, so silence them.
+    empty_class_warn = r"the (ground truth|prediction) of class"
+
+    pred_oh = one_hot(pred.detach().cpu(), num_classes=num_classes)
+    label_oh = one_hot(label.detach().cpu(), num_classes=num_classes)
+    sp = [0] + list(range(2, label_oh.ndim))            # batch + spatial dims
+    gt_present = label_oh.sum(dim=sp)[1:] > 0           # foreground classes in GT
+
+    dm = DiceMetric(include_background=False, reduction="mean_batch",
+                    get_not_nans=False)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message=empty_class_warn,
+                                category=UserWarning)
+        dm(y_pred=pred_oh, y=label_oh)
+    dice_pc = dm.aggregate().cpu()                      # (num_classes - 1,)
+    # Average over GT-present classes only. reduction="mean_batch" collapses
+    # MONAI's empty-gt NaN to 0.0, so ``~isnan`` would NOT exclude gt-absent
+    # classes (it would average over all 117) — derive presence from the label
+    # instead, matching CT-FM's ignore_empty=True. A gt-present but missed organ
+    # keeps its 0 Dice.
+    res = {
+        "macro_dice": dice_pc[gt_present].mean().item() if bool(gt_present.any()) else float("nan"),
+        "dice_per_class": {classes[i]: float(dice_pc[i])
+                           for i in range(len(classes)) if bool(gt_present[i])},
+    }
+    if want_hd95:
+        hm = HausdorffDistanceMetric(include_background=False,
+                                     distance_metric="euclidean", percentile=95,
+                                     reduction="mean_batch", get_not_nans=False)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", message=empty_class_warn,
+                                    category=UserWarning)
+            hm(y_pred=pred_oh, y=label_oh)
+        hd_pc = hm.aggregate().cpu()
+        # HD95 only for classes present in BOTH gt and prediction (a distance
+        # needs two non-empty surfaces). MONAI otherwise returns a spurious 0.0
+        # when the prediction is empty and NaN when gt is empty; excluding
+        # either-missing classes keeps this consistent with the evaluator and
+        # avoids a completely-missed organ logging a fake 0 mm.
+        pred_present = pred_oh.sum(dim=sp)[1:] > 0
+        hmask = gt_present & pred_present & torch.isfinite(hd_pc)
+        res["macro_hd95"] = hd_pc[hmask].mean().item() if bool(hmask.any()) else float("nan")
+        res["hd95_per_class"] = {classes[i]: float(hd_pc[i])
+                                 for i in range(len(classes)) if bool(hmask[i])}
+    del pred_oh, label_oh
+    gc.collect()
+    return res
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -218,6 +289,8 @@ def main():
                     help="Axial slices per montage")
     ap.add_argument("--save-nifti", action="store_true",
                     help="Also write the prediction volume as a NIfTI per subject")
+    ap.add_argument("--skip-metrics", action="store_true",
+                    help="Skip the Dice/HD95 computation (montage / shape sanity only)")
     args = ap.parse_args()
 
     setup_logging(None)
@@ -259,8 +332,14 @@ def main():
     log.info(f"sliding window: roi={roi} sw_batch={sw['sw_batch_size']} "
              f"overlap={sw['overlap']} mode={sw['mode']}")
 
+    # Match the evaluator: compute HD95 only when the eval config asks for it.
+    want_hd95 = "hd95" in cfg["eval"].get("metrics", [])
+    do_metrics = not args.skip_metrics
+
     palette = _label_palette(num_classes)
     out_dir = Path(args.out_dir)
+    macro_dice_all: list[float] = []
+    macro_hd95_all: list[float] = []
 
     for i in range(len(ds)):
         sample = ds[i]
@@ -293,6 +372,32 @@ def main():
         log.info(f"  pred classes present: {len(pred_classes)} "
                  f"(e.g. {pred_classes[:10]}{'...' if len(pred_classes) > 10 else ''})")
 
+        # --- per-sample metrics vs ground truth ---------------------------- #
+        if label is not None and do_metrics:
+            m = compute_sample_metrics(pred, label, num_classes, classes, want_hd95)
+            n_d = len(m["dice_per_class"])
+            log.info(f"[{sid}] METRICS vs GT (full-volume, foreground-only):")
+            log.info(f"  macro Dice = {m['macro_dice']:.4f}  "
+                     f"(mean over {n_d} foreground classes present in GT)")
+            if "macro_hd95" in m:
+                n_h = len(m["hd95_per_class"])
+                log.info(f"  macro HD95 = {m['macro_hd95']:.2f} voxels  "
+                         f"(mean over {n_h} classes)")
+            # Per-class breakdown, worst Dice first (most useful for debugging).
+            for name, dv in sorted(m["dice_per_class"].items(), key=lambda kv: kv[1]):
+                hv = m.get("hd95_per_class", {}).get(name)
+                hs = f"  hd95={hv:7.2f}" if hv is not None else ""
+                log.info(f"    dice={dv:.4f}{hs}  {name}")
+            mj = out_dir / f"{sid}_metrics.json"
+            mj.parent.mkdir(parents=True, exist_ok=True)
+            import json as _json
+            mj.write_text(_json.dumps({"id": sid, **m}, indent=2))
+            log.info(f"[{sid}] metrics -> {mj}")
+            if m["macro_dice"] == m["macro_dice"]:  # not NaN
+                macro_dice_all.append(m["macro_dice"])
+            if m.get("macro_hd95", float("nan")) == m.get("macro_hd95", float("nan")):
+                macro_hd95_all.append(m["macro_hd95"])
+
         # --- visualize ----------------------------------------------------- #
         img_np = image[0, 0].cpu().numpy()
         pred_np = pred[0, 0].cpu().numpy()
@@ -315,6 +420,14 @@ def main():
         del logits, pred, image
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
+
+    if macro_dice_all:
+        import statistics
+        msg = (f"summary over {len(macro_dice_all)} subject(s): "
+               f"mean macro Dice = {statistics.mean(macro_dice_all):.4f}")
+        if macro_hd95_all:
+            msg += f"  |  mean macro HD95 = {statistics.mean(macro_hd95_all):.2f} voxels"
+        log.info(msg)
 
     log.info(f"done -- montages in {out_dir}")
 
