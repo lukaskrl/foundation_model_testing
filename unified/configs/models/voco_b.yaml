@@ -1,8 +1,11 @@
 model:
   name: voco_b
-  # observed 23.5 GB at bs=2 (AMP). bs=3 -> ~35 GB, leaves ~12 GB headroom
-  # for the eval one-hot tensors on a 48 GB RTX 6000 Ada.
-  batch_size: 3
+  # bs=2: VRAM sweep peak 25.3 GB / 32.3 GB reserved — safe headroom for the
+  # validation sliding-window spike on the 48 GB RTX 6000 Ada. bs=3 reserves
+  # 48.2 GB (sweep flagged [OVER] the 46 GB safe cap); it runs standalone but
+  # OOM-crashed at step 0 in the back-to-back batch under the slightest
+  # contention from a preceding run.
+  batch_size: 2
   weights: /store/home/skrljl/projects/foundation_models/weights/VoCo/VoComni_B.pt
   kwargs:
     feature_size: 48

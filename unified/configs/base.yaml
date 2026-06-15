@@ -33,7 +33,7 @@ data:
   cache:
     enabled: true
     dir: /volatile/Datasets/TotalSeg
-  num_workers: 16
+  num_workers: 6                       # reduced from 16 to cut dataloader RSS on the shared, OOM-prone node
   # CropForegroundd margin (in voxels). CT-FM keeps a 10-voxel margin around
   # the foreground bbox; unified previously used 0 (tight crop). Margin > 0
   # protects against truncating organs at the field-of-view boundary.
@@ -64,7 +64,7 @@ data:
 
 train:
   batch_size: 2
-  epochs: 300
+  epochs: 500
   optimizer:
     name: adamw
     lr: 2.0e-4
@@ -89,26 +89,15 @@ train:
   log_interval_steps: 50
   ckpt_interval_epochs: 10
   val_interval_epochs: 25
-  early_stop_patience: 0               # validation rounds w/o mean_dice improvement; 0 disables
+  early_stop_patience: 5               # validation rounds w/o mean_dice improvement; 0 disables (~125 epochs at val_interval 25)
   seed: 42
 
 eval:
   sliding_window:
     roi_size: [96, 96, 96]
-    sw_batch_size: 4
+    sw_batch_size: 2                   # reduced from 4 to shrink the validation memory spike (no effect on metrics)
     overlap: 0.5
     mode: gaussian
-  # CT-FM-style patch validation, computed every val round IN ADDITION to the
-  # full-volume metrics above (kept separate in W&B under val_patch*). Each case
-  # is scored on a single random crop (RandSpatialCrop -> SpatialPad to
-  # crop_size) with the same sliding-window inferer; the headline
-  # patch_mean_dice is the per-crop macro Dice over present foreground classes,
-  # averaged across cases — i.e. CT-FM's Macro_Dice, so the number is directly
-  # comparable. crop_size is in the model's fed orientation (SPL for ct-fm),
-  # matching CT-FM's val_max_patch_size. Set enabled: false to skip it.
-  patch_validation:
-    enabled: true
-    crop_size: [192, 240, 240]
   metrics:
     - dice
     - hd95

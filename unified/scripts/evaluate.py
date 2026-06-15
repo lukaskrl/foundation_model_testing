@@ -14,7 +14,7 @@ from unified.utils import load_config, load_checkpoint, setup_logging  # noqa: E
 from unified.data import (
     TotalSegmentatorDataset, load_classes, build_val_transforms,
 )  # noqa: E402
-from unified.models import build_backbone, UnifiedSegHead, SegModel  # noqa: E402
+from unified.models import build_backbone, build_head, SegModel  # noqa: E402
 from unified.evaluation import Evaluator  # noqa: E402
 
 
@@ -30,6 +30,8 @@ def main():
     ap.add_argument("--splits-dir", default=str(REPO / "unified" / "data" / "splits"))
     ap.add_argument("--out", default=None,
                     help="JSON file to dump metrics into")
+    ap.add_argument("--limit", type=int, default=None,
+                    help="evaluate only the first N subjects (quick test run)")
     args = ap.parse_args()
 
     cfg = load_config(args.config)
@@ -37,6 +39,8 @@ def main():
     classes = load_classes()
 
     ids = _read_split(Path(args.splits_dir) / f"{args.split}.txt")
+    if args.limit is not None:
+        ids = ids[: args.limit]
     ds = TotalSegmentatorDataset(cfg["data"]["dataset_root"], ids, classes)
     tf = build_val_transforms(cfg)
 
@@ -55,14 +59,21 @@ def main():
 
     mcfg = cfg["model"]
     backbone = build_backbone(mcfg["name"], weights=None, **mcfg.get("kwargs", {}))
-    head = UnifiedSegHead(
+    # Build the head exactly as train.py does — including deep supervision — so a
+    # strict checkpoint load matches the saved head.aux_heads.* parameters. The
+    # aux heads are inert at eval (the head returns only the main logits when not
+    # training), but they must exist for a strict load.
+    head = build_head(
+        cfg["head"].get("name", "unified_seg_head"),
         num_classes=cfg["head"]["num_classes"],
         feature_channels=cfg["head"]["feature_channels"],
         feature_strides=cfg["head"]["feature_strides"],
         decoder_channels=cfg["head"]["decoder_channels"],
         norm=cfg["head"]["norm"],
+        deep_supervision=cfg["head"].get("deep_supervision", False),
     )
-    model = SegModel(backbone, head)
+    model = SegModel(backbone, head,
+                     freeze_backbone=bool(mcfg.get("freeze_backbone", False)))
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
 

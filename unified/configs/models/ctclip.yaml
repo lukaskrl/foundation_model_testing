@@ -2,6 +2,7 @@
 # Adapter uses learned upsampling to synthesize the 4-level pyramid.
 model:
   name: ctclip
+  batch_size: 3   # VRAM sweep: 40.7/51.5 GB reserved at eff=6 (96^3 patch); bs4 = 50.2 GB
   weights: /store/home/skrljl/projects/foundation_models/weights/CT-CLIP/models/CT-CLIP-Related/CT-CLIP_v2.pt
   kwargs:
     # These match CT-CLIP/scripts/run_train.py exactly. dim_head was 32 in

@@ -3,7 +3,7 @@ model:
   # SuPreM SwinUNETR (62.19M params). Pretrained on AbdomenAtlas 1.1 with
   # supervised multi-organ + tumor segmentation. Same arch as VoCo-B but
   # different pretraining objective + use_v2=false.
-  batch_size: 2
+  batch_size: 3   # VRAM sweep: 47.8/51.5 GB reserved at eff=6
   weights: /store/home/skrljl/projects/foundation_models/weights/SuPreM/supervised_suprem_swinunetr_2100.pth
   preprocessing:
     # SuPreM's downstream pipelines all use a narrow soft-tissue HU window.

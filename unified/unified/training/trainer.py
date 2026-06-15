@@ -85,8 +85,30 @@ class Trainer:
                     map_location=self.device,
                 )
                 self.start_epoch = epoch
+                # Restore best-so-far Dice. epoch_*.pt checkpoints don't carry
+                # mean_dice (only best.pt did historically); newer ones store
+                # best_dice in extra. When neither is present — i.e. auto-resume
+                # picked an old epoch checkpoint — fall back to best.pt's stored
+                # mean_dice. Without this best_dice stays -1 and the first
+                # post-resume validation overwrites a possibly-better best.pt and
+                # needlessly resets the early-stop counter.
                 if "mean_dice" in extra:
                     self.best_dice = extra["mean_dice"]
+                elif "best_dice" in extra:
+                    self.best_dice = extra["best_dice"]
+                else:
+                    best_pt = self.output_dir / "best.pt"
+                    if best_pt.exists():
+                        try:
+                            prev = torch.load(best_pt, map_location="cpu",
+                                              weights_only=False)
+                            md = (prev.get("extra") or {}).get("mean_dice")
+                            if md is not None:
+                                self.best_dice = md
+                            del prev
+                        except Exception as e:  # noqa: BLE001
+                            self.log.warning(
+                                "could not read best_dice from %s: %s", best_pt, e)
                 self.global_step = epoch * max(1, len(train_loader))
                 self.log.info(
                     "resumed: start_epoch=%d best_dice=%.4f global_step=%d",
@@ -135,15 +157,9 @@ class Trainer:
         #   val/             full-volume global summary (means + best)
         #   val_dice/        full-volume per-organ Dice
         #   val_hd95/        full-volume per-organ HD95
-        #   val_patch/       CT-FM-style patch global summary (means)
-        #   val_patch_dice/  patch per-organ Dice
-        #   val_patch_hd95/  patch per-organ HD95
         wandb.define_metric("val/*", step_metric="epoch")
         wandb.define_metric("val_dice/*", step_metric="epoch")
         wandb.define_metric("val_hd95/*", step_metric="epoch")
-        wandb.define_metric("val_patch/*", step_metric="epoch")
-        wandb.define_metric("val_patch_dice/*", step_metric="epoch")
-        wandb.define_metric("val_patch_hd95/*", step_metric="epoch")
 
     def _find_resume_checkpoint(self, resume) -> Path | None:
         if isinstance(resume, (str, Path)) and Path(resume).is_file():
@@ -252,31 +268,16 @@ class Trainer:
             return float("nan")
         metrics = self.evaluator.evaluate(self.model, self.val_loader, self.device)
         mean_dice = metrics["mean_dice"]
-        if "patch_mean_dice" in metrics:
-            self.log.info(
-                "epoch %d val_mean_dice=%.4f (full-vol) patch_mean_dice=%.4f (CT-FM-style)",
-                epoch, mean_dice, metrics["patch_mean_dice"],
-            )
-        else:
-            self.log.info("epoch %d val_mean_dice=%.4f", epoch, mean_dice)
-        # Route metrics into separate W&B namespaces so full-volume vs patch and
-        # global vs per-organ panels never mix in the workspace. Patch keys
-        # (`patch_*`) are matched first since they share the dice/hd95 suffixes.
-        #   val/{mean_dice,mean_hd95}            full-volume global
-        #   val_dice/<organ>, val_hd95/<organ>   full-volume per-organ
-        #   val_patch/{mean_dice,mean_hd95}      patch global (CT-FM Macro_Dice)
-        #   val_patch_dice/<organ>, val_patch_hd95/<organ>   patch per-organ
+        self.log.info("epoch %d val_mean_dice=%.4f", epoch, mean_dice)
+        # Route metrics into separate W&B namespaces so global vs per-organ panels
+        # never mix in the workspace.
+        #   val/{mean_dice,mean_hd95}            global summary
+        #   val_dice/<organ>, val_hd95/<organ>   per-organ
         log_row = {"epoch": epoch}
         for key, value in metrics.items():
             if value is None or value != value:  # skip NaN
                 continue
-            if key.startswith("patch_mean_"):
-                tag = f"val_patch/{key[len('patch_'):]}"
-            elif key.startswith("patch_dice/"):
-                tag = f"val_patch_dice/{key[len('patch_dice/'):]}"
-            elif key.startswith("patch_hd95/"):
-                tag = f"val_patch_hd95/{key[len('patch_hd95/'):]}"
-            elif key.startswith("mean_"):
+            if key.startswith("mean_"):
                 tag = f"val/{key}"
             elif key.startswith("dice/"):
                 tag = f"val_dice/{key[len('dice/'):]}"
@@ -327,6 +328,13 @@ class Trainer:
 
                 stop_early = False
                 if epoch % self.cfg["train"]["val_interval_epochs"] == 0:
+                    # Release the training step's cached allocator blocks so the
+                    # sliding-window inferer's large (1, C, D, H, W) logits
+                    # volume has room to grow into — prevents a val-time OOM when
+                    # training runs near the memory ceiling (batch sizes are
+                    # tuned to ~80-93% of the card).
+                    if torch.cuda.is_available():
+                        torch.cuda.empty_cache()
                     dice = self._validate(epoch)
                     if dice > self.best_dice and not (dice != dice):  # not NaN
                         self.best_dice = dice
@@ -353,7 +361,7 @@ class Trainer:
                         self.output_dir / f"epoch_{epoch:04d}.pt",
                         model=self.model, optimizer=self.optimizer,
                         scheduler=self.scheduler, scaler=self.scaler,
-                        epoch=epoch,
+                        epoch=epoch, extra={"best_dice": self.best_dice},
                     )
                     # Rotate: keep only the 2 most recent epoch checkpoints.
                     # /store filled at 22 TB during the earlier sweep with

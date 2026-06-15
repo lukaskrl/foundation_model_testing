@@ -3,7 +3,7 @@ model:
   # SuPreM SegResNet (4.70M params — smallest of the SuPreM family).
   # Different layer naming than VISTA/CT-FM SegResEncoder: MONAI SegResNet's
   # convInit/down_layers/up_layers structure, init_filters=16.
-  batch_size: 2
+  batch_size: 5   # VRAM sweep: 46.5/51.5 GB reserved at eff=10; bs6 OOMs
   weights: /store/home/skrljl/projects/foundation_models/weights/SuPreM/supervised_suprem_segresnet_2100.pth
   preprocessing:
     intensity:

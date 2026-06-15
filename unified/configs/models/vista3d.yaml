@@ -1,5 +1,6 @@
 model:
   name: vista3d
+  batch_size: 3   # VRAM sweep: 37.3/51.5 GB reserved (fp32) at eff=6; bs4 = 49.5 GB
   # fp16 AMP diverged in the prior sweep around epoch 78 (loss-scaler couldn't
   # recover); fp32 is ~30% slower but stable.
   amp: false

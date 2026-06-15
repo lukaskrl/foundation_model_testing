@@ -57,18 +57,18 @@ def _build_dataset(cfg, raw, *, training, cache_dir):
     return Composed(raw, transforms)
 
 
-def _build_loader(cfg, ds, batch_size, shuffle):
+def _build_loader(cfg, ds, batch_size, shuffle, num_workers=None):
     from monai.data import DataLoader
-    nw = cfg["data"]["num_workers"]
+    nw = cfg["data"]["num_workers"] if num_workers is None else num_workers
     return DataLoader(
         ds,
         batch_size=batch_size,
         shuffle=shuffle,
         num_workers=nw,
-        pin_memory=True,
+        pin_memory=False,
         drop_last=shuffle,
         persistent_workers=(nw > 0),
-        prefetch_factor=(4 if nw > 0 else None),
+        prefetch_factor=(2 if nw > 0 else None),
     )
 
 
@@ -138,7 +138,15 @@ def main():
     # comparison guard stays in place). Falls back to train.batch_size.
     bs = cfg["model"].get("batch_size", cfg["train"]["batch_size"])
     train_loader = _build_loader(cfg, train_ds, batch_size=bs, shuffle=True)
-    val_loader = _build_loader(cfg, val_ds, batch_size=1, shuffle=False)
+    # Validation (every val_interval epochs) runs whole-volume sliding-window
+    # inference. Streaming the large val volumes through persistent prefetch
+    # workers — on top of the train loader's still-resident workers — was the
+    # host-RAM spike that got the process OOM-killed (exit 137) mid-validation
+    # on the shared node. num_workers=0 loads val volumes synchronously in the
+    # main process (one at a time, no extra worker RSS); validation is
+    # infrequent so the lost prefetch overlap is negligible.
+    val_loader = _build_loader(cfg, val_ds, batch_size=1, shuffle=False,
+                               num_workers=0)
 
     # Build model.
     mcfg = cfg["model"]
