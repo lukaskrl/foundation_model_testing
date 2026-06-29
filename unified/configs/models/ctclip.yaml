@@ -17,3 +17,9 @@ model:
     dim_head: 32
     heads: 8
     use_image_encoder_only: true   # we discard the text branch
+    # Probe-honest pyramid: synthesize all 5 contract levels by channel-
+    # projecting + trilinearly resampling the CTViT bottleneck (no fresh
+    # SpatialPriorModule conv on the raw input). A frozen run then measures the
+    # pretrained representation itself, symmetric with the CNN encoders' 1x1
+    # neck. Set to `spm` to restore the raw-input conv branch (ablation).
+    pyramid_mode: upsample

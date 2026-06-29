@@ -13,3 +13,9 @@ model:
     window_size: 14
     out_chans: 384
     use_rel_pos: true
+    # Probe-honest pyramid: synthesize all 5 contract levels by channel-
+    # projecting + trilinearly resampling the ViT bottleneck (no fresh
+    # SpatialPriorModule conv on the raw input). A frozen run then measures the
+    # pretrained representation itself, symmetric with the CNN encoders' 1x1
+    # neck. Set to `spm` to restore the raw-input conv branch (ablation).
+    pyramid_mode: upsample

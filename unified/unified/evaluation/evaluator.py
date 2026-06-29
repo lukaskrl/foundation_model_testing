@@ -21,7 +21,7 @@ actually in each scan, which is where the bulk of the old HD95 cost went.
 from __future__ import annotations
 import math
 import warnings
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import torch
 from tqdm.auto import tqdm
@@ -36,7 +36,7 @@ _EMPTY_CLASS_WARN = r"the (ground truth|prediction) of class"
 
 
 class Evaluator:
-    def __init__(self, cfg, classes: List[str]):
+    def __init__(self, cfg, classes: List[str], metrics: Optional[List[str]] = None):
         self.cfg = cfg
         self.classes = classes  # length 117 (does not include background)
         self.num_classes = cfg["data"]["num_classes"]
@@ -46,7 +46,11 @@ class Evaluator:
         self.sw_batch = sw["sw_batch_size"]
         self.overlap = sw["overlap"]
         self.mode = sw["mode"]
-        self.want_hd95 = "hd95" in cfg["eval"]["metrics"]
+        # ``metrics`` lets a caller request a subset (periodic training
+        # validation passes dice-only to skip HD95's host-RAM spike); falls back
+        # to the full eval.metrics set used by scripts/evaluate.py.
+        metric_set = metrics if metrics is not None else cfg["eval"]["metrics"]
+        self.want_hd95 = "hd95" in metric_set
 
     def _infer(self, model, image):
         """Sliding-window inference -> integer label map ``(1, 1, D, H, W)``.

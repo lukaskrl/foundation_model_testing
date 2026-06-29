@@ -1,0 +1,30 @@
+[submodule "3DINO"]
+	path = 3DINO
+	url = https://github.com/AICONSlab/3DINO.git
+[submodule "BiomedParse"]
+	path = BiomedParse
+	url = https://github.com/microsoft/BiomedParse.git
+[submodule "CT-CLIP"]
+	path = CT-CLIP
+	url = https://github.com/ibrahimethemhamamci/CT-CLIP.git
+[submodule "CT-FM"]
+	path = CT-FM
+	url = https://github.com/project-lighter/CT-FM.git
+[submodule "SAM-Med3D"]
+	path = SAM-Med3D
+	url = https://github.com/uni-medical/SAM-Med3D.git
+[submodule "STU-Net"]
+	path = STU-Net
+	url = https://github.com/openmedlab/STU-Net.git
+[submodule "SuPreM"]
+	path = SuPreM
+	url = https://github.com/MrGiovanni/SuPreM.git
+[submodule "VISTA"]
+	path = VISTA
+	url = https://github.com/Project-MONAI/VISTA.git
+[submodule "Large-Scale-Medical"]
+	path = Large-Scale-Medical
+	url = https://github.com/Luffy03/Large-Scale-Medical.git
+[submodule "LVM-Med"]
+	path = LVM-Med
+	url = https://github.com/duyhominhnguyen/LVM-Med.git

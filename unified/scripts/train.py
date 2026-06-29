@@ -170,7 +170,7 @@ def main():
              mcfg["name"], model.num_trainable_params(),
              model.num_total_params(), model.freeze_backbone)
 
-    evaluator = Evaluator(cfg, classes)
+    evaluator = Evaluator(cfg, classes, metrics=cfg["eval"].get("val_metrics", ["dice"]))
     trainer = Trainer(cfg, model, train_loader, val_loader, evaluator, args.output,
                       resume=args.resume)
     trainer.run()

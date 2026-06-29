@@ -24,6 +24,7 @@ import torch.nn as nn
 
 from ..registry import register_backbone
 from ..seg_model import BackboneInterface
+from ._neck import UpsampleNeck
 
 DINO_REPO = Path("/store/home/skrljl/projects/foundation_models/3DINO")
 
@@ -106,29 +107,50 @@ class SpatialPriorModule3D(nn.Module):
 
 
 class _DinoAdapter(nn.Module):
-    """Bundle: SPM (strides 1..8) + 1×1 channel projection on ViT tokens (stride 16)."""
+    """Adapt ViT features onto the contract pyramid.
 
-    def __init__(self, embed_dim: int, contract_channels, spm_inplanes: int = 16):
+    ``pyramid_mode``:
+      * ``"spm"`` (default): SPM on the raw input (strides 1..8) + 1×1
+        projection of the ViT tokens (stride 16). The fine levels come from a
+        fresh conv branch, so a frozen run is NOT a clean representation probe.
+      * ``"upsample"``: every level is a channel-projected, trilinearly
+        upsampled copy of the ViT tokens (``UpsampleNeck``). No raw-input
+        path — use this for frozen-encoder probes.
+    """
+
+    def __init__(self, embed_dim: int, contract_channels, spm_inplanes: int = 16,
+                 pyramid_mode: str = "spm"):
         super().__init__()
-        # Fine levels come from a SpatialPriorModule on raw input.
-        self.spm = SpatialPriorModule3D(
-            in_channels=1,
-            inplanes=spm_inplanes,
-            out_channels=contract_channels[:4],
-        )
-        # Semantic level (stride 16) is the ViT's tokens, channel-projected.
-        c_top = contract_channels[4]
+        self.pyramid_mode = pyramid_mode
+        if pyramid_mode == "spm":
+            # Fine levels come from a SpatialPriorModule on raw input.
+            self.spm = SpatialPriorModule3D(
+                in_channels=1,
+                inplanes=spm_inplanes,
+                out_channels=contract_channels[:4],
+            )
+            # Semantic level (stride 16) is the ViT's tokens, channel-projected.
+            c_top = contract_channels[4]
 
-        def gn(ch):
-            g = min(8, ch)
-            while ch % g != 0:
-                g -= 1
-            return nn.GroupNorm(g, ch)
-        self.vit_proj = nn.Sequential(
-            nn.Conv3d(embed_dim, c_top, kernel_size=1, bias=False),
-            gn(c_top),
-            nn.ReLU(inplace=True),
-        )
+            def gn(ch):
+                g = min(8, ch)
+                while ch % g != 0:
+                    g -= 1
+                return nn.GroupNorm(g, ch)
+            self.vit_proj = nn.Sequential(
+                nn.Conv3d(embed_dim, c_top, kernel_size=1, bias=False),
+                gn(c_top),
+                nn.ReLU(inplace=True),
+            )
+        elif pyramid_mode == "upsample":
+            self.upsample_neck = UpsampleNeck(
+                in_channels=embed_dim,
+                contract_channels=contract_channels,
+            )
+        else:
+            raise ValueError(
+                f"unknown pyramid_mode {pyramid_mode!r}; expected 'spm' or 'upsample'"
+            )
 
 
 @register_backbone("dino3d")
@@ -142,6 +164,7 @@ class DinoBackbone(BackboneInterface):
         in_chans: int = 1,
         extract_blocks=(5, 11, 17, 23),
         spm_inplanes: int = 16,
+        pyramid_mode: str = "spm",
     ):
         super().__init__()
         if patch_size != 16:
@@ -181,6 +204,7 @@ class DinoBackbone(BackboneInterface):
             embed_dim=embed_dim,
             contract_channels=self.EXPECTED_CHANNELS,
             spm_inplanes=spm_inplanes,
+            pyramid_mode=pyramid_mode,
         )
 
     def encoder_forward(self, x):
@@ -201,6 +225,8 @@ class DinoBackbone(BackboneInterface):
 
     def adapter_forward(self, native, input_shape):
         x_in, tokens = native
+        if self.adapter.pyramid_mode == "upsample":
+            return self.adapter.upsample_neck(tokens, input_shape)
         fine = self.adapter.spm(x_in)            # 4 tensors @ strides 1..8
         s16 = self.adapter.vit_proj(tokens)      # stride 16
         return [*fine, s16]

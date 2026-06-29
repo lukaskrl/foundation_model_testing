@@ -101,6 +101,14 @@ eval:
   metrics:
     - dice
     - hd95
+  # Metrics for the periodic in-training validation only (checkpoint selection
+  # uses mean_dice). HD95 builds full-resolution CPU one-hot volumes per case
+  # (one channel per organ present), spiking host RAM to ~224 GB across the val
+  # set — which the shared node's OOM-killer turns into a SIGKILL at validation
+  # boundaries (every val_interval_epochs). So training-time val runs dice only;
+  # scripts/evaluate.py still uses the full `metrics` list above for final eval.
+  val_metrics:
+    - dice
   save_predictions: false
 
 # decoder is also shared. The 5-level finest-first contract is documented in

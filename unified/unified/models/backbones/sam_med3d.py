@@ -37,6 +37,7 @@ import torch.nn.functional as F
 from ..registry import register_backbone
 from ..seg_model import BackboneInterface
 from .dino3d import SpatialPriorModule3D
+from ._neck import UpsampleNeck
 
 SAM_REPO = Path("/store/home/skrljl/projects/foundation_models/SAM-Med3D")
 
@@ -91,21 +92,39 @@ def _gn(ch: int) -> nn.GroupNorm:
 
 
 class _SAMMed3DAdapter(nn.Module):
-    """SPM (strides 1..8) + 1×1 projection on ViT bottleneck (stride 16)."""
+    """Adapt the SAM-Med3D bottleneck onto the contract pyramid.
 
-    def __init__(self, bottleneck_dim: int, contract_channels, spm_inplanes: int = 16):
+    ``pyramid_mode``: ``"spm"`` (default) = SPM on raw input (strides 1..8) +
+    1×1 projection of the ViT bottleneck (stride 16); ``"upsample"`` = every
+    level is a channel-projected, trilinearly resampled copy of the bottleneck
+    (``UpsampleNeck``), no raw-input path — for frozen-encoder probes.
+    """
+
+    def __init__(self, bottleneck_dim: int, contract_channels, spm_inplanes: int = 16,
+                 pyramid_mode: str = "spm"):
         super().__init__()
-        self.spm = SpatialPriorModule3D(
-            in_channels=1,
-            inplanes=spm_inplanes,
-            out_channels=contract_channels[:4],
-        )
-        c_top = contract_channels[4]
-        self.vit_proj = nn.Sequential(
-            nn.Conv3d(bottleneck_dim, c_top, kernel_size=1, bias=False),
-            _gn(c_top),
-            nn.ReLU(inplace=True),
-        )
+        self.pyramid_mode = pyramid_mode
+        if pyramid_mode == "spm":
+            self.spm = SpatialPriorModule3D(
+                in_channels=1,
+                inplanes=spm_inplanes,
+                out_channels=contract_channels[:4],
+            )
+            c_top = contract_channels[4]
+            self.vit_proj = nn.Sequential(
+                nn.Conv3d(bottleneck_dim, c_top, kernel_size=1, bias=False),
+                _gn(c_top),
+                nn.ReLU(inplace=True),
+            )
+        elif pyramid_mode == "upsample":
+            self.upsample_neck = UpsampleNeck(
+                in_channels=bottleneck_dim,
+                contract_channels=contract_channels,
+            )
+        else:
+            raise ValueError(
+                f"unknown pyramid_mode {pyramid_mode!r}; expected 'spm' or 'upsample'"
+            )
 
 
 @register_backbone("sam_med3d")
@@ -120,6 +139,7 @@ class SAMMed3DBackbone(BackboneInterface):
         out_chans: int = 384,
         use_rel_pos: bool = True,
         spm_inplanes: int = 16,
+        pyramid_mode: str = "spm",
     ):
         super().__init__()
         ImageEncoderViT3D = _import_image_encoder()
@@ -169,6 +189,7 @@ class SAMMed3DBackbone(BackboneInterface):
             bottleneck_dim=out_chans,
             contract_channels=self.EXPECTED_CHANNELS,
             spm_inplanes=spm_inplanes,
+            pyramid_mode=pyramid_mode,
         )
 
     def _run_encoder(self, x: torch.Tensor) -> torch.Tensor:
@@ -194,6 +215,8 @@ class SAMMed3DBackbone(BackboneInterface):
 
     def adapter_forward(self, native, input_shape):
         x_in, bottleneck = native
+        if self.adapter.pyramid_mode == "upsample":
+            return self.adapter.upsample_neck(bottleneck, input_shape)
         D, H, W = input_shape
         fine = self.adapter.spm(x_in)                  # strides 1..8
         s16 = self.adapter.vit_proj(bottleneck)        # 512 ch on canvas grid

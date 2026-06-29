@@ -33,6 +33,7 @@ import torch.nn.functional as F
 from ..registry import register_backbone
 from ..seg_model import BackboneInterface
 from .dino3d import SpatialPriorModule3D
+from ._neck import UpsampleNeck
 
 CTCLIP_REPO = Path("/store/home/skrljl/projects/foundation_models/CT-CLIP")
 
@@ -81,21 +82,39 @@ def _gn(ch: int) -> nn.GroupNorm:
 
 
 class _CTClipAdapter(nn.Module):
-    """SPM (strides 1..8) + 1×1 projection of CTViT bottleneck (stride 16)."""
+    """Adapt the CTViT bottleneck onto the contract pyramid.
 
-    def __init__(self, ctvit_dim: int, contract_channels, spm_inplanes: int = 16):
+    ``pyramid_mode``: ``"spm"`` (default) = SPM on raw input (strides 1..8) +
+    1×1 projection of the CTViT bottleneck (stride 16); ``"upsample"`` = every
+    level is a channel-projected, trilinearly resampled copy of the bottleneck
+    (``UpsampleNeck``), no raw-input path — for frozen-encoder probes.
+    """
+
+    def __init__(self, ctvit_dim: int, contract_channels, spm_inplanes: int = 16,
+                 pyramid_mode: str = "spm"):
         super().__init__()
-        self.spm = SpatialPriorModule3D(
-            in_channels=1,
-            inplanes=spm_inplanes,
-            out_channels=contract_channels[:4],
-        )
-        c_top = contract_channels[4]
-        self.vit_proj = nn.Sequential(
-            nn.Conv3d(ctvit_dim, c_top, kernel_size=1, bias=False),
-            _gn(c_top),
-            nn.ReLU(inplace=True),
-        )
+        self.pyramid_mode = pyramid_mode
+        if pyramid_mode == "spm":
+            self.spm = SpatialPriorModule3D(
+                in_channels=1,
+                inplanes=spm_inplanes,
+                out_channels=contract_channels[:4],
+            )
+            c_top = contract_channels[4]
+            self.vit_proj = nn.Sequential(
+                nn.Conv3d(ctvit_dim, c_top, kernel_size=1, bias=False),
+                _gn(c_top),
+                nn.ReLU(inplace=True),
+            )
+        elif pyramid_mode == "upsample":
+            self.upsample_neck = UpsampleNeck(
+                in_channels=ctvit_dim,
+                contract_channels=contract_channels,
+            )
+        else:
+            raise ValueError(
+                f"unknown pyramid_mode {pyramid_mode!r}; expected 'spm' or 'upsample'"
+            )
 
 
 @register_backbone("ctclip")
@@ -114,6 +133,7 @@ class CTClipBackbone(BackboneInterface):
         heads: int = 8,
         use_image_encoder_only: bool = True,
         spm_inplanes: int = 16,
+        pyramid_mode: str = "spm",
     ):
         super().__init__()
         CTViT = _import_ctvit()
@@ -149,6 +169,7 @@ class CTClipBackbone(BackboneInterface):
             ctvit_dim=dim,
             contract_channels=self.EXPECTED_CHANNELS,
             spm_inplanes=spm_inplanes,
+            pyramid_mode=pyramid_mode,
         )
 
     @staticmethod
@@ -226,6 +247,8 @@ class CTClipBackbone(BackboneInterface):
 
     def adapter_forward(self, native, input_shape):
         x_in, bottleneck = native
+        if self.adapter.pyramid_mode == "upsample":
+            return self.adapter.upsample_neck(bottleneck, input_shape)
         D, H, W = input_shape
         fine = self.adapter.spm(x_in)                       # strides 1..8
         s16 = self.adapter.vit_proj(bottleneck)             # 512 ch, anisotropic
