@@ -1,0 +1,31 @@
+# Large data / model weights — never commit
+weights/
+*.pt
+*.pth
+*.ckpt
+*.model
+*.torch
+*.safetensors
+*.bin
+
+# Python env
+env/
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Upstream model repos are now git submodules (see .gitmodules); clone with
+# `git clone --recurse-submodules` or run `git submodule update --init`.
+
+# Editor / OS / Claude
+.claude/
+.vscode/
+.idea/
+.DS_Store
+
+# Run outputs
+runs/
+checkpoints/
+logs/
+wandb/
