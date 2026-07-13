@@ -1,0 +1,51 @@
+# CT-FM + U-Net head (base default) — BEST-EFFORT run: 128^3 field of view.
+#
+# The decoder axis is settled (the two-tier Mask2Former head only ties the plain
+# U-Net head at matched budget), so this run stops tuning the decoder and instead
+# widens the field of view — the lever the fingerprint flags for the worst class
+# group. At 96^3 / 1.5 mm the patch spans 144 mm, but 43/117 classes physically
+# exceed that: a mid-rib is 166-175 mm, so the network never sees enough ribcage
+# to count "which rib #" (ribs are the worst group, 0.817). 128^3 / 1.5 mm spans
+# 192 mm — it covers median ribs and gives the global context ribs/vessels need.
+#
+# NOT a fair-comparison run: it overrides the locked data.patch_size and the
+# matching eval.sliding_window.roi_size (config.py deep-merge, best-effort track).
+# Everything else is the shared recipe-v2 from base.yaml (batch Dice, gamma /
+# low-res aug, fingerprint CE class weights, deep supervision, min_delta early
+# stop) + the U-Net head — so vs the 96^3 U-Net baseline the intended variable is
+# the field of view (recipe still differs from the June baseline; see notes).
+#
+# VRAM (RTX 6000 Ada 49 GB, bf16, unfrozen full-FT, vram_probe --patch 128):
+#   bs=1 -> 18.3 GB peak / 21.2 reserved
+#   bs=2 -> 35.4 GB peak / 41.3 reserved   <- chosen (fits with headroom)
+#   bs=3 -> OOM
+# bs=2 x num_samples_per_volume(2) = 4 patches/forward; grad_accum_steps 2 ->
+# optimizer batch = 8 patches, matching every prior CT-FM run.
+model:
+  name: ctfm
+  amp: true
+  batch_size: 2          # micro-batch; x num_samples_per_volume(2) = 4 patches/forward
+  grad_accum_steps: 2    # eff optimizer batch = 2*2*2 = 8, matches prior runs
+  weights: /store/home/skrljl/projects/foundation_models/weights/CT-FM/ct_fm_feature_extractor/model.safetensors
+  preprocessing:
+    axcodes: SPL
+    intensity:
+      a_min: -1024.0
+      a_max: 2048.0
+      b_min: 0.0
+      b_max: 1.0
+      clip: true
+  kwargs:
+    init_filters: 32
+    blocks_down: [1, 2, 2, 4, 4]
+    in_channels: 1
+    norm: instance
+
+# Best-effort override of the (otherwise locked) FOV knobs. Deep-merged over
+# base.yaml, so only the changed leaves are restated.
+data:
+  patch_size: [128, 128, 128]
+
+eval:
+  sliding_window:
+    roi_size: [128, 128, 128]   # infer at the training FOV so the win carries to test time

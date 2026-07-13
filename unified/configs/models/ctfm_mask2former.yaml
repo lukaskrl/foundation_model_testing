@@ -1,0 +1,34 @@
+# CT-FM backbone + the denser Mask2Former-style decoder.
+#
+# Identical `model:` block to ctfm.yaml (same encoder, weights, preprocessing) —
+# the ONLY change vs. ctfm.yaml is the `head:` override below, so a run of this
+# config against a ctfm.yaml run isolates a single variable: the decoder
+# (query-based mask classification vs. the U-Net head). Everything in
+# data/train/eval stays locked by base.yaml.
+model:
+  name: ctfm
+  amp: true
+  batch_size: 4   # bs=6 OOMs (~52 GB reserved > 49 GB); bs=4 peaks ~30 GB, verified
+  weights: /store/home/skrljl/projects/foundation_models/weights/CT-FM/ct_fm_feature_extractor/model.safetensors
+  preprocessing:
+    axcodes: SPL
+    intensity:
+      a_min: -1024.0
+      a_max: 2048.0
+      b_min: 0.0
+      b_max: 1.0
+      clip: true
+  kwargs:
+    init_filters: 32
+    blocks_down: [1, 2, 2, 4, 4]
+    in_channels: 1
+    norm: instance
+
+# Head override (shallow-merged over base.yaml's head). num_classes /
+# feature_channels / feature_strides / deep_supervision are inherited from base.
+# Mask2Former-specific hyperparameters (mask_feat_stride, dec_layers, ...) use
+# the head's code defaults — they are not config-wired yet (build_head forwards
+# only the fixed kwarg set across all scripts, so defaults keep train/eval in
+# lock-step).
+head:
+  name: mask2former_head

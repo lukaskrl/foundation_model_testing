@@ -1,11 +1,21 @@
 # Shared base config — all models inherit from this.
-# Per-model configs may ONLY override the `model:` block. Overriding data/train/eval
-# is rejected by ConfigLoader (so comparisons stay fair).
+# Per-model configs may override `model:` and deep-merge onto `head:`/`data:`/
+# `eval:`; `train:` stays globally locked (ConfigLoader rejects it) so the
+# optimizer/schedule/loss recipe is identical across runs. Leave head/data/eval
+# at these defaults for any CROSS-BACKBONE comparison; override them only for a
+# deliberate best-effort or protocol run (larger FOV, low-shot fraction, etc.).
 
 data:
   dataset_root: /store/Datasets/TotalSegmentatorDataset
   meta_csv: /store/Datasets/TotalSegmentatorDataset/meta.csv
   num_classes: 118                     # 117 organs + background
+  # Low-shot data-fraction protocol (frozen/low-shot benchmark track). Fraction
+  # of the TRAIN split to keep (val is never subset). Subsets are NESTED across
+  # fractions and the seed is model-independent, so every encoder sees the
+  # identical subset at a given fraction. 1.0 = full split (default, no-op);
+  # override per-run, e.g. data.train_fraction: 0.05.
+  train_fraction: 1.0
+  train_fraction_seed: 1234
   classes_file: unified/data/classes.txt
   spacing: [1.5, 1.5, 1.5]             # mm, isotropic resample target
   # Default HU window matches the CT-FM pretraining recipe (broad CT range).
@@ -39,13 +49,13 @@ data:
   # protects against truncating organs at the field-of-view boundary.
   crop_foreground_margin: 10
   augment:
-    # Discrete flips and 90° rotations are DISABLED (prob 0) to mirror the
-    # CT-FM TotalSegmentatorV2 recipe, whose only spatial augmentation is the
-    # small continuous RandAffine below. Left-right flips destroy organ
-    # laterality (*_left vs *_right become indistinguishable) and flip+rot90
-    # together leave only ~6% of training patches in the upright orientation
-    # that validation/inference use — both depress Dice across every class.
-    # Set >0 (e.g. 0.5) to re-enable for an ablation.
+    # flip_prob now drives a LATERALITY-SAFE left<->right mirror (transforms.py):
+    # it flips along the L-R axis AND swaps *_left<->*_right labels, so laterality
+    # is preserved (unlike a plain flip, which is why flips used to be disabled).
+    # Kept at 0 here so the fair cross-backbone sweep is unchanged; set >0 (e.g.
+    # 0.5) per-run to enable the mirror (see configs/models/ctfm_sigmoid_mirror).
+    # rot90 is NOT made laterality-safe (a 180° axial rotation also swaps L/R), so
+    # leave rot_prob=0 unless doing a dedicated ablation.
     flip_prob: 0.0
     rot_prob: 0.0
     # Continuous affine: rotation in radians (CT-FM uses 0.26 rad ≈ 15° on each
@@ -61,6 +71,13 @@ data:
     gauss_smooth_prob: 0.2
     gauss_noise_prob: 0.2
     gauss_noise_std: 0.10
+    # Tier-1 recipe upgrade (nnU-Net-style, image-only, laterality-safe). Both
+    # lift the shared ceiling for every backbone; set prob 0 to ablate back to
+    # the prior recipe.
+    lowres_prob: 0.25                    # simulate-low-resolution: robustness to resolution/scanner
+    lowres_zoom_range: [0.5, 1.0]        # downsample to 50-100% of size, then upsample back
+    gamma_prob: 0.3                      # nonlinear intensity remap
+    gamma_range: [0.7, 1.5]
 
 train:
   batch_size: 2
@@ -83,6 +100,14 @@ train:
     include_background: true
     softmax: true
     to_onehot_y: true
+    # Tier-1: batch Dice (nnU-Net default) — Dice denominator over the whole
+    # batch, stabilizing gradients for small/rare classes (ribs, adrenals,
+    # prostate). false => per-sample Dice (the prior behavior).
+    batch_dice: true
+    # Optional inverse-frequency class weights (length = num_classes, background
+    # included), applied to both Dice and CE. null => uniform. Populate from the
+    # dataset fingerprint's per-class voxel counts; inert until then.
+    ce_class_weights: [1.0, 2.257, 2.369, 0.28, 1.811, 0.224, 0.225, 1.983, 1.368, 1.921, 0.315, 0.996, 0.97, 0.186, 2.124, 2.672, 0.379, 0.695, 0.759, 0.397, 0.404, 1.063, 0.251, 0.247, 0.351, 0.356, 0.713, 0.693, 0.188, 0.281, 0.282, 0.709, 0.686, 1.245, 1.245, 0.965, 1.069, 0.327, 0.335, 0.537, 2.63, 3.141, 0.415, 0.418, 0.115, 0.155, 0.146, 0.236, 0.144, 0.159, 0.589, 0.991, 1.372, 1.002, 1.519, 1.218, 1.521, 2.478, 1.415, 1.322, 1.194, 1.118, 1.038, 1.008, 1.077, 1.111, 1.52, 1.219, 1.544, 2.512, 1.421, 1.34, 1.205, 1.113, 1.048, 1.011, 1.06, 1.098, 0.405, 0.504, 0.508, 0.357, 0.174, 0.506, 0.297, 0.593, 0.251, 1.615, 1.717, 1.047, 1.284, 0.782, 0.401, 2.236, 2.025, 2.389, 2.331, 2.191, 1.908, 1.354, 0.655, 0.668, 0.654, 0.655, 0.667, 0.769, 1.02, 0.717, 0.68, 0.66, 0.994, 1.006, 0.983, 0.968, 0.966, 0.917, 0.86, 0.786]
   amp: true
   grad_accum_steps: 1                  # effective batch = batch_size * grad_accum_steps; model configs may override
   grad_clip: 1.0
@@ -90,6 +115,7 @@ train:
   ckpt_interval_epochs: 10
   val_interval_epochs: 25
   early_stop_patience: 5               # validation rounds w/o mean_dice improvement; 0 disables (~125 epochs at val_interval 25)
+  early_stop_min_delta: 0.002          # Tier-1: min mean_dice gain to count as improvement (kills the sub-noise tail); 0 = prior behavior
   seed: 42
 
 eval:

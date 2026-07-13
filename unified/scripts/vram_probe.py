@@ -64,12 +64,7 @@ def main():
         backbone = build_backbone(mcfg["name"], weights=None, **mcfg.get("kwargs", {}))
         head = build_head(
             cfg["head"].get("name", "unified_seg_head"),
-            num_classes=cfg["head"]["num_classes"],
-            feature_channels=cfg["head"]["feature_channels"],
-            feature_strides=cfg["head"]["feature_strides"],
-            decoder_channels=cfg["head"]["decoder_channels"],
-            norm=cfg["head"]["norm"],
-            deep_supervision=cfg["head"].get("deep_supervision", False),
+            **{k: v for k, v in cfg["head"].items() if k != "name"},
         )
         model = SegModel(backbone, head,
                          freeze_backbone=bool(mcfg.get("freeze_backbone", False)))
@@ -79,6 +74,7 @@ def main():
         trainable = [p for p in model.parameters() if p.requires_grad]
         optimizer = build_optimizer(cfg, trainable)
         loss_fn = build_loss(cfg)
+        loss_fn.to(device)  # mirror Trainer: CE class-weight buffer must be on-device
 
         # AMP exactly as the trainer resolves it.
         model_amp = cfg["model"].get("amp")

@@ -146,6 +146,115 @@ def _reindex_class_indices_transform(axcodes,
     return ReindexClassIndicesd()
 
 
+def _lr_axis(axcodes):
+    """Spatial axis index (0-based) that runs left<->right, for an orientation.
+
+    RAS -> 0 (the R axis); SPL (CT-FM) -> 2 (the L axis). Used to know which axis
+    a laterality-safe mirror must flip.
+    """
+    for i, c in enumerate(axcodes):
+        if c in ("L", "R"):
+            return i
+    raise ValueError(f"axcodes {axcodes!r} has no L/R axis")
+
+
+def _lr_label_remap(num_classes):
+    """LUT (length ``num_classes``) mapping each label to its left<->right swap.
+
+    Background (0) and non-lateralized classes map to themselves. Class order is
+    the alphabetical ``classes.txt`` order (label index = position + 1), the same
+    map the dataset uses to merge masks — so the LUT indexes the label volume
+    directly. ``vertebrae_L3`` etc. are untouched ('L3' is not the token 'left').
+    Returns ``(remap_list, n_pairs)``.
+    """
+    from .totalsegmentator import load_classes
+    classes = load_classes()
+    name_to_idx = {n: i + 1 for i, n in enumerate(classes)}
+
+    def _swap(name):
+        parts = ["right" if p == "left" else "left" if p == "right" else p
+                 for p in name.split("_")]
+        return "_".join(parts)
+
+    remap = list(range(num_classes))
+    n_pairs = 0
+    for n, i in name_to_idx.items():
+        sw = _swap(n)
+        if sw != n and sw in name_to_idx:
+            remap[i] = name_to_idx[sw]
+            if i < name_to_idx[sw]:
+                n_pairs += 1
+    return remap, n_pairs
+
+
+def _sigmoid_intensity_transform(center, scale):
+    """Nonlinear soft-tissue window: ``out = sigmoid((x - center) / scale)``.
+
+    A smooth alternative to ``ScaleIntensityRanged``'s hard window: it expands
+    contrast around ``center`` (soft-tissue WL, ~40 HU) while bone/lung saturate
+    SMOOTHLY toward 1/0 instead of hard-clipping, so no intensity information is
+    destroyed (monotonic, invertible). Output range (0, 1) matches the linear
+    window, so the intensity-augmentation magnitudes still apply unchanged.
+    """
+    import torch
+    from monai.transforms import MapTransform
+
+    class SigmoidIntensityd(MapTransform):
+        def __init__(self):
+            super().__init__(keys="image")
+            self.center = float(center)
+            self.scale = float(scale)
+
+        def __call__(self, data):
+            d = dict(data)
+            for k in self.key_iterator(d):
+                d[k] = torch.sigmoid((d[k] - self.center) / self.scale)
+            return d
+
+    return SigmoidIntensityd()
+
+
+def _lateral_flip_transform(lr_axis, remap, prob, label_key="label",
+                            keys=("image", "label")):
+    """Laterality-safe left<->right mirror (flip + label swap).
+
+    Flips image+label along the L-R spatial axis with probability ``prob``, then
+    remaps ``*_left`` <-> ``*_right`` label indices via ``remap`` so organ
+    laterality is preserved. A plain ``RandFlipd`` would make left/right organs
+    indistinguishable — which is why discrete flips were disabled. Only the L-R
+    axis is mirrored (an A-P or S-I flip would create an unrealistic pose).
+    """
+    import torch
+    from monai.transforms import MapTransform, RandomizableTransform
+    from monai.data import MetaTensor
+
+    class RandLateralFlipd(MapTransform, RandomizableTransform):
+        def __init__(self):
+            MapTransform.__init__(self, keys)
+            RandomizableTransform.__init__(self, prob)
+            self.flip_dim = int(lr_axis) + 1  # channel-first: spatial axis -> +1
+            self.remap_lut = torch.as_tensor(remap, dtype=torch.long)
+
+        def __call__(self, data):
+            d = dict(data)
+            self.randomize(None)
+            if not self._do_transform:
+                return d
+            for k in self.key_iterator(d):
+                d[k] = torch.flip(d[k], dims=[self.flip_dim])
+            lab = d.get(label_key)
+            if lab is not None:
+                remapped = self.remap_lut.to(lab.device)[lab.long()]
+                if isinstance(lab, MetaTensor):
+                    lab.copy_(remapped)          # in-place: preserve MetaTensor
+                    d[label_key] = lab
+                else:
+                    d[label_key] = remapped.to(lab.dtype)
+            return d
+
+    return RandLateralFlipd()
+
+
 def _orient_intensity_list(cfg, *, reindex_class_indices=False):
     """Model-specific deterministic transforms applied on the fly after the cache.
 
@@ -169,15 +278,26 @@ def _orient_intensity_list(cfg, *, reindex_class_indices=False):
         # Must precede Orientationd: it reads the source affine off the still-RAS
         # label to compute the same permute/flip Orientationd will apply.
         t.append(_reindex_class_indices_transform(axcodes))
-    t += [
-        Orientationd(keys=keys, axcodes=axcodes),
-        ScaleIntensityRanged(
+    t.append(Orientationd(keys=keys, axcodes=axcodes))
+    # Intensity normalization. mode "range" (default) = the linear HU window
+    # (ScaleIntensityRanged); mode "sigmoid" = the nonlinear soft-tissue window.
+    # Both are per-encoder-overridable via model.preprocessing.intensity.
+    mode = str(intens.get("mode", "range")).lower()
+    if mode == "range":
+        t.append(ScaleIntensityRanged(
             keys="image",
             a_min=intens["a_min"], a_max=intens["a_max"],
             b_min=intens["b_min"], b_max=intens["b_max"],
             clip=intens.get("clip", True),
-        ),
-    ]
+        ))
+    elif mode == "sigmoid":
+        t.append(_sigmoid_intensity_transform(
+            center=intens.get("center", 40.0),
+            scale=intens.get("scale", 80.0),
+        ))
+    else:
+        raise ValueError(
+            f"unknown data.intensity.mode {mode!r}; expected 'range' or 'sigmoid'")
     return t
 
 
@@ -187,12 +307,13 @@ def _rand_transform_list(cfg):
         SpatialPadd,
         RandCropByLabelClassesd,
         RandAffined,
-        RandFlipd,
         RandRotate90d,
         RandShiftIntensityd,
         RandScaleIntensityd,
         RandGaussianSmoothd,
         RandGaussianNoised,
+        RandAdjustContrastd,
+        RandSimulateLowResolutiond,
     )
     d = cfg["data"]
     keys = ("image", "label")
@@ -228,21 +349,19 @@ def _rand_transform_list(cfg):
             warn=False,
         ),
     ]
-    # Discrete flips / 90° rotations are DISABLED by default (flip_prob =
-    # rot_prob = 0) to match the CT-FM TotalSegmentatorV2 recipe, whose only
-    # spatial augmentation is the small continuous RandAffine below. Two
-    # reasons: (1) a left-right flip destroys organ laterality, so the model
-    # can no longer tell *_left from *_right; (2) flip (3 axes @ p) + rot90
-    # together leave only a few percent of training patches in the upright
-    # orientation that validation/inference actually use. Both depress Dice
-    # across every class. Kept behind a prob switch so an ablation can
-    # re-enable them from config without touching this file.
+    # flip_prob now drives a LATERALITY-SAFE left<->right mirror: it flips along
+    # the L-R axis (orientation-dependent) AND swaps *_left<->*_right label
+    # indices, so left/right organs stay distinguishable. This replaces the old
+    # 3-axis RandFlipd, which broke laterality (why flips were disabled). Only
+    # L-R is mirrored (A-P / S-I flips make unrealistic poses). Default is 0 in
+    # base.yaml (fair-sweep untouched); set >0 per-run to enable the mirror.
     if aug.get("flip_prob", 0.0) > 0:
-        t += [
-            RandFlipd(keys=keys, prob=aug["flip_prob"], spatial_axis=0),
-            RandFlipd(keys=keys, prob=aug["flip_prob"], spatial_axis=1),
-            RandFlipd(keys=keys, prob=aug["flip_prob"], spatial_axis=2),
-        ]
+        axcodes, _ = _resolved_preprocessing(cfg)
+        remap, n_pairs = _lr_label_remap(num_classes)
+        t.append(_lateral_flip_transform(
+            lr_axis=_lr_axis(axcodes), remap=remap, prob=float(aug["flip_prob"])))
+    # rot90 stays gated + off: a 180° axial rotation ALSO swaps left/right and is
+    # not made safe here, so leave rot_prob=0 unless doing a dedicated ablation.
     if aug.get("rot_prob", 0.0) > 0:
         t.append(RandRotate90d(keys=keys, prob=aug["rot_prob"], max_k=3))
     t.append(
@@ -283,6 +402,26 @@ def _rand_transform_list(cfg):
         t.append(RandGaussianNoised(
             keys="image", prob=aug["gauss_noise_prob"],
             std=aug.get("gauss_noise_std", 0.1),
+        ))
+    # Tier-1 recipe upgrade: two nnU-Net quality/appearance augmentations. Both
+    # are image-only and laterality-safe (unlike flips), so they lift the shared
+    # ceiling without breaking left/right classes. Guarded by prob>0 like the
+    # spatial augs above, so prob=0 in config drops them for an ablation.
+    #   * simulate-low-resolution: downsample to zoom_range then upsample back,
+    #     teaching robustness to resolution/scanner variation (val is
+    #     generalization-bound, so this hits the ceiling directly).
+    #   * gamma: nonlinear intensity remap; retain_stats keeps the per-patch
+    #     mean/std so it perturbs contrast without shifting the distribution.
+    if aug.get("lowres_prob", 0.0) > 0:
+        t.append(RandSimulateLowResolutiond(
+            keys="image", prob=aug["lowres_prob"],
+            zoom_range=tuple(aug.get("lowres_zoom_range", (0.5, 1.0))),
+        ))
+    if aug.get("gamma_prob", 0.0) > 0:
+        t.append(RandAdjustContrastd(
+            keys="image", prob=aug["gamma_prob"],
+            gamma=tuple(aug.get("gamma_range", (0.7, 1.5))),
+            retain_stats=True,
         ))
     return t
 

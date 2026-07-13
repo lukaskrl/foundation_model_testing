@@ -106,7 +106,9 @@ def main():
         model.to(device)
         trainable = [p for p in model.parameters() if p.requires_grad]
         optimizer = build_optimizer(cfg, trainable)
-        loss_fn = build_loss(cfg)
+        # Move the loss to device too: DiceCELoss holds the ce_class_weights
+        # buffer, which must match the logits' device (mirrors trainer.py).
+        loss_fn = build_loss(cfg).to(device)
         return device, optimizer, loss_fn
 
     if args.device == "auto":

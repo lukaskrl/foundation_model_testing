@@ -1,0 +1,45 @@
+# CT-FM + Mask2Former head — BEST-HEAD run (step 3, "Option B": two-tier).
+#
+# The resolution ablation is settled: full-resolution masks (s1,
+# mask_feat_stride=1) beat the stride-2 baseline (0.8615 vs 0.8563 mean Dice)
+# and dominated at every matched checkpoint — but s1 only afforded full-res by
+# handicapping itself to bs=2 / dec_layers=3, because the old head produced a
+# full-res, 118-channel logit volume at EVERY decoder layer.
+#
+# The two-tier head fixes that: per-layer attention masks + deep-sup aux are
+# read from a COARSE mask-feature map (attn_feat_stride: 2), and only the FINAL
+# output is read at full resolution (mask_feat_stride: 1). That removes the
+# (dec_layers+1)x full-res blow-up, so we restore the strong recipe:
+#   * batch_size: 4      (2x s1's micro-batch; eff optimizer batch 4*2 = 8, same
+#                         as BOTH prior runs -> still a fair comparison)
+#   * dec_layers: 9      (full depth, like the stride-2 baseline)
+#   * epochs: base 500 + early stop (both prior runs were STILL improving when
+#             capped at 200/150 -> let this one find the real ceiling).
+# The only representational change vs. s1 is the coarse attention tier; the
+# full-res final readout that won is unchanged.
+model:
+  name: ctfm
+  amp: true
+  batch_size: 4          # restored; two-tier keeps peak VRAM near the stride-2 baseline (~30 GB)
+  weights: /store/home/skrljl/projects/foundation_models/weights/CT-FM/ct_fm_feature_extractor/model.safetensors
+  preprocessing:
+    axcodes: SPL
+    intensity:
+      a_min: -1024.0
+      a_max: 2048.0
+      b_min: 0.0
+      b_max: 1.0
+      clip: true
+  kwargs:
+    init_filters: 32
+    blocks_down: [1, 2, 2, 4, 4]
+    in_channels: 1
+    norm: instance
+
+head:
+  name: mask2former_head
+  mask_feat_stride: 1    # full-resolution FINAL masks (the confirmed win from s1)
+  attn_feat_stride: 2    # coarse tier: per-layer attention masks + aux at stride 2
+  dec_layers: 9          # full decoder depth, restored
+  # queries_per_class: 1 (default) — kept at 1 so the two-tier change is the only
+  # variable vs. s1; bump to 2-4 for a capacity ablation once this baseline lands.

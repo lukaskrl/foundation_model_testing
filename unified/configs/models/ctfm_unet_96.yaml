@@ -1,0 +1,36 @@
+# CT-FM + U-Net head (base default) — 96^3 FOV CONTROL for the 128^3 run.
+#
+# The clean partner to ctfm_unet_128.yaml: identical in every respect EXCEPT it
+# uses the base.yaml FOV (patch 96^3 / eval roi 96^3), so it does NOT override
+# data/eval at all. The ONLY difference between this run and ctfm_unet_128 is the
+# field of view — isolating whether 96->128 helps (esp. ribs/vessels, the
+# FOV-limited groups from the dataset fingerprint).
+#
+# Batch structure is matched to the 128^3 run (bs=2 x num_samples(2) = 4
+# patches/forward, grad_accum 2 -> optimizer batch 8) so batch_dice sees the same
+# forward minibatch in both — nothing but FOV differs. (The June recipe-v1
+# baseline ctfm_unfrozen_eval used bs=4; this run also serves as the recipe-v2
+# 96^3 U-Net number, so recipe-v2-vs-v1 is a second, looser read off it.)
+#
+# 96^3 bs=2 fits trivially (~18-20 GB; cf. bs=4/8-patch ~30 GB from prior runs).
+# Inherits recipe-v2 from base.yaml (batch_dice, gamma/lowres aug, fingerprint CE
+# class weights, deep supervision, min_delta early-stop) + the U-Net head.
+model:
+  name: ctfm
+  amp: true
+  batch_size: 2          # matches ctfm_unet_128: x num_samples(2) = 4 patches/forward
+  grad_accum_steps: 2    # eff optimizer batch = 2*2*2 = 8, matches every prior run
+  weights: /store/home/skrljl/projects/foundation_models/weights/CT-FM/ct_fm_feature_extractor/model.safetensors
+  preprocessing:
+    axcodes: SPL
+    intensity:
+      a_min: -1024.0
+      a_max: 2048.0
+      b_min: 0.0
+      b_max: 1.0
+      clip: true
+  kwargs:
+    init_filters: 32
+    blocks_down: [1, 2, 2, 4, 4]
+    in_channels: 1
+    norm: instance

@@ -23,6 +23,7 @@ deformable / Mask2Former-style head registers under a new name and is
 selected purely from config.
 """
 from __future__ import annotations
+import inspect
 from typing import Callable, Dict, List, Sequence, Type, Union
 
 import torch
@@ -44,7 +45,20 @@ def register_head(name: str) -> Callable[[Type[nn.Module]], Type[nn.Module]]:
 def build_head(name: str, **kwargs) -> nn.Module:
     if name not in HEAD_REGISTRY:
         raise KeyError(f"unknown head {name!r}. Registered: {sorted(HEAD_REGISTRY)}")
-    return HEAD_REGISTRY[name](**kwargs)
+    cls = HEAD_REGISTRY[name]
+    # Callers forward the whole `head:` config block (a superset). Each head
+    # takes only the kwargs its __init__ declares: a head with a fixed signature
+    # (unified_seg_head) gets the matching subset and drops the rest (e.g.
+    # ds_weights, which the loss consumes, or the mask2former-only knobs); a head
+    # that declares **kwargs (mask2former_head) receives the full set so its
+    # extra hyperparameters — mask_feat_stride, dec_layers, ... — are wired
+    # straight from config rather than pinned to the code defaults.
+    params = inspect.signature(cls).parameters
+    if any(p.kind is p.VAR_KEYWORD for p in params.values()):
+        accepted = kwargs
+    else:
+        accepted = {k: v for k, v in kwargs.items() if k in params}
+    return cls(**accepted)
 
 
 def _import_monai():

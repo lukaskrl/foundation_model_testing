@@ -20,10 +20,30 @@ def build_loss(cfg):
         )
     from monai.losses import DiceCELoss
     p = cfg["train"]["loss"]
+
+    # Tier-1 recipe upgrade: optional inverse-frequency class weights (applied to
+    # BOTH the Dice and CE terms by MONAI). `null`/absent => uniform (the prior
+    # behavior). Populate the vector from the dataset fingerprint's per-class
+    # voxel counts; length must equal num_classes (background included).
+    ce_w = p.get("ce_class_weights")
+    weight = None
+    if ce_w is not None:
+        nc = int(cfg["head"]["num_classes"])
+        if len(ce_w) != nc:
+            raise ValueError(
+                f"train.loss.ce_class_weights has length {len(ce_w)}, expected {nc}"
+            )
+        weight = torch.as_tensor(ce_w, dtype=torch.float32)
+
     base = DiceCELoss(
         include_background=p.get("include_background", False),
         softmax=p.get("softmax", True),
         to_onehot_y=p.get("to_onehot_y", True),
+        # Tier-1: batch Dice (nnU-Net default). Computes the Dice denominator over
+        # the whole batch as one pseudo-volume, which stabilizes the gradient for
+        # small/rare classes whose per-sample Dice is noisy. False => per-sample.
+        batch=p.get("batch_dice", False),
+        weight=weight,
     )
 
     if cfg["head"].get("deep_supervision", False):

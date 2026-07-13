@@ -32,6 +32,9 @@ class Trainer:
         self.model.to(self.device)
 
         self.loss_fn = build_loss(cfg)
+        # Move the loss to device so optional CE/Dice class weights (a registered
+        # buffer inside DiceCELoss) live on the same device as the logits.
+        self.loss_fn.to(self.device)
         # Filter so AdamW doesn't track moments for frozen params.
         trainable = [p for p in model.parameters() if p.requires_grad]
         self.optimizer = build_optimizer(cfg, trainable)
@@ -65,8 +68,16 @@ class Trainer:
         )
         self.scheduler = build_scheduler(cfg, self.optimizer, opt_steps_per_epoch)
         self.log = get_logger("trainer")
-        self.best_dice = -1.0
+        self.best_dice = -1.0        # absolute best (drives best.pt)
+        self.best_dice_es = -1.0     # early-stop reference (advances only on a
+                                     # >= min_delta gain), decoupled so best.pt
+                                     # still tracks the true best model.
         self.early_stop_patience = int(cfg["train"].get("early_stop_patience", 0))
+        # Tier-1: a val round counts as "improvement" only if mean_dice beats the
+        # reference by at least this much — so a long tail of sub-noise gains
+        # (e.g. 0.859->0.866 over 200 epochs) stops training instead of running
+        # the full horizon. 0.0 reproduces the prior behavior.
+        self.early_stop_min_delta = float(cfg["train"].get("early_stop_min_delta", 0.0))
         self.val_rounds_since_improve = 0
         self._init_wandb()
         self.global_step = 0
@@ -109,6 +120,9 @@ class Trainer:
                         except Exception as e:  # noqa: BLE001
                             self.log.warning(
                                 "could not read best_dice from %s: %s", best_pt, e)
+                # Seed the early-stop reference from the restored best so a resume
+                # doesn't reset the min_delta baseline to -1.
+                self.best_dice_es = self.best_dice
                 self.global_step = epoch * max(1, len(train_loader))
                 self.log.info(
                     "resumed: start_epoch=%d best_dice=%.4f global_step=%d",
@@ -336,9 +350,11 @@ class Trainer:
                     if torch.cuda.is_available():
                         torch.cuda.empty_cache()
                     dice = self._validate(epoch)
-                    if dice > self.best_dice and not (dice != dice):  # not NaN
+                    is_num = not (dice != dice)  # not NaN
+                    # Save best.pt on any absolute improvement — the true best
+                    # model is always kept regardless of the early-stop margin.
+                    if is_num and dice > self.best_dice:
                         self.best_dice = dice
-                        self.val_rounds_since_improve = 0
                         wandb.log({"val/best_mean_dice": self.best_dice, "epoch": epoch})
                         save_checkpoint(
                             self.output_dir / "best.pt",
@@ -346,13 +362,19 @@ class Trainer:
                             scheduler=self.scheduler, scaler=self.scaler,
                             epoch=epoch, extra={"mean_dice": dice},
                         )
+                    # Early-stop bookkeeping is separate and min_delta-gated: only
+                    # a gain of >= min_delta over the reference resets the counter.
+                    if is_num and dice > self.best_dice_es + self.early_stop_min_delta:
+                        self.best_dice_es = dice
+                        self.val_rounds_since_improve = 0
                     else:
                         self.val_rounds_since_improve += 1
                         if (self.early_stop_patience > 0
                                 and self.val_rounds_since_improve >= self.early_stop_patience):
                             self.log.info(
-                                "early stopping at epoch %d: %d val rounds without dice improvement (best=%.4f)",
-                                epoch, self.val_rounds_since_improve, self.best_dice,
+                                "early stopping at epoch %d: %d val rounds without >=%.4f dice gain (best=%.4f)",
+                                epoch, self.val_rounds_since_improve,
+                                self.early_stop_min_delta, self.best_dice,
                             )
                             stop_early = True
 

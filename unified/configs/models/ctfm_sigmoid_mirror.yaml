@@ -1,0 +1,45 @@
+# CT-FM + U-Net head + laterality-safe L-R mirror, on CT-FM ONLY.
+#
+# Lever under test:
+#   Laterality-safe L-R mirror (data.augment.flip_prob 0.5): flips along the
+#   L-R axis and swaps *_left<->*_right labels -> ~2x spatial diversity to fight
+#   the overfitting the train/val gap exposed, without breaking laterality.
+#   (base.yaml keeps flip_prob=0, so the fair cross-backbone sweep is untouched.)
+#
+# Intensity: reverted to the standard CT-FM LINEAR window [-1024,2048]->[0,1]
+# (the sigmoid soft-tissue window was dropped — it can't add separability to
+# same-HU soft-tissue organs, confirmed empirically + by the CNR analysis).
+#
+# NOT a fair-comparison run (overrides data.augment). vs the ctfm_unet_96
+# baseline (0.8673) the intended variable is the mirror -- BUT note batch_size 5
+# / grad_accum 1 lifts the optimizer batch to 10 (baseline was 8), an added
+# confound; drop to batch_size 2 / grad_accum 2 for a clean single-variable read.
+#
+# The U-Net head is the base default (unified_seg_head) — not overridden.
+model:
+  name: ctfm
+  amp: true
+  batch_size: 5          # x num_samples_per_volume(2) = 10 patches/forward
+  grad_accum_steps: 1    # eff optimizer batch = 5*2*1 = 10 (bigger-batch tuning; VRAM probe 37.2 peak / 43.5 reserved GB @96^3, fits 49GB). NOTE this also lifts opt-batch 8->10 vs the ctfm_unet_96 baseline, an added variable on top of the mirror.
+  weights: /store/home/skrljl/projects/foundation_models/weights/CT-FM/ct_fm_feature_extractor/model.safetensors
+  preprocessing:
+    axcodes: SPL
+    # Standard CT-FM linear HU window (matches base.yaml + CT-FM pretraining).
+    intensity:
+      mode: range
+      a_min: -1024.0
+      a_max: 2048.0
+      b_min: 0.0
+      b_max: 1.0
+      clip: true
+  kwargs:
+    init_filters: 32
+    blocks_down: [1, 2, 2, 4, 4]
+    in_channels: 1
+    norm: instance
+
+# Deep-merged over base.yaml (only the changed leaf); the rest of the augment
+# block (affine, intensity jitter, gamma, low-res) is inherited unchanged.
+data:
+  augment:
+    flip_prob: 0.5       # laterality-safe L-R mirror probability

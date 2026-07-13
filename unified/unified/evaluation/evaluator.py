@@ -19,6 +19,9 @@ rather than all 117 — the both-present set is bounded by the handful of organs
 actually in each scan, which is where the bulk of the old HD95 cost went.
 """
 from __future__ import annotations
+import ctypes
+import ctypes.util
+import gc
 import math
 import warnings
 from typing import Dict, List, Optional
@@ -33,6 +36,27 @@ from ..utils import get_logger
 # either side. We only feed HD95 the both-present classes, but keep the filter
 # as a guard. Matched at the start of the message (filters are start-anchored).
 _EMPTY_CLASS_WARN = r"the (ground truth|prediction) of class"
+
+# glibc keeps freed arenas instead of returning them to the OS, so the big
+# transient one-hot volumes built per case in ``_hd95_present`` (one float
+# channel per present organ at full resolution) make RSS climb ~+3.6 GB/case ->
+# ~224 GB over a 57-case val set on body CT, tripping the shared node's
+# OOM-killer. Forcing a trim after each case returns those arenas; paired with
+# MALLOC_ARENA_MAX=1 it holds the HD95 eval at the per-case working set. Only
+# reached on the HD95 (eval) path -- the dice-only training validation, which
+# never builds a dense one-hot, does not call this.
+try:
+    _LIBC = ctypes.CDLL(ctypes.util.find_library("c") or "libc.so.6")
+except OSError:  # pragma: no cover - non-glibc platforms
+    _LIBC = None
+
+
+def _malloc_trim():
+    if _LIBC is not None:
+        try:
+            _LIBC.malloc_trim(0)
+        except Exception:
+            pass
 
 
 class Evaluator:
@@ -127,7 +151,13 @@ class Evaluator:
             )
             hm(y_pred=pred_oh, y=label_oh)
             per = hm.aggregate().cpu()
-        return {j: v for j, v in zip(present, per.tolist()) if math.isfinite(v)}
+        result = {j: v for j, v in zip(present, per.tolist()) if math.isfinite(v)}
+        # Drop the big per-case one-hot volumes and return their arenas to the OS
+        # so RSS does not climb across the eval set (see _malloc_trim note above).
+        del pred_oh, label_oh, p, l, hm, per
+        gc.collect()
+        _malloc_trim()
+        return result
 
     def _reduce_per_class(self, running, count, prefix, out):
         """Write per-class series (mean over cases where the class was present)

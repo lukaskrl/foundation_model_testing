@@ -118,6 +118,23 @@ def main():
     log.info("splits: train=%d val=%d classes=%d",
              len(train_ids), len(val_ids), len(classes))
 
+    # Low-shot data-fraction protocol (the frozen/low-shot benchmark track).
+    # Keep a seeded prefix of one fixed permutation of the TRAIN split — the
+    # val split is NEVER subset. Prefixes are NESTED across fractions (5% ⊂ 25%
+    # ⊂ 100%) and the permutation depends only on the seed, not the model, so
+    # every encoder sees the identical subset at a given fraction. 1.0 = full
+    # split (default, no-op). See configs/base.yaml data.train_fraction.
+    frac = float(cfg["data"].get("train_fraction", 1.0))
+    if frac < 1.0:
+        import random
+        seed = int(cfg["data"].get("train_fraction_seed", 1234))
+        order = sorted(train_ids)              # canonical, file-order-independent
+        random.Random(seed).shuffle(order)     # one fixed permutation per seed
+        n = max(1, round(len(order) * frac))
+        train_ids = sorted(order[:n])          # nested prefix
+        log.info("low-shot: train_fraction=%.4f seed=%d -> %d/%d train cases",
+                 frac, seed, len(train_ids), len(order))
+
     train_raw = TotalSegmentatorDataset(cfg["data"]["dataset_root"], train_ids, classes)
     val_raw = TotalSegmentatorDataset(cfg["data"]["dataset_root"], val_ids, classes)
 
@@ -150,19 +167,21 @@ def main():
 
     # Build model.
     mcfg = cfg["model"]
+    # Pretrained-vs-scratch control. pretrained=false drops the checkpoint path
+    # so the backbone keeps its architecture but starts from random init — the
+    # twin baseline that localizes where (frozen? low-shot?) pretraining helps.
+    pretrained = bool(mcfg.get("pretrained", True))
     backbone = build_backbone(
         mcfg["name"],
-        weights=mcfg.get("weights"),
+        weights=(mcfg.get("weights") if pretrained else None),
         **mcfg.get("kwargs", {}),
     )
+    if not pretrained:
+        log.info("model %s: SCRATCH (random init, pretrained weights skipped)",
+                 mcfg["name"])
     head = build_head(
         cfg["head"].get("name", "unified_seg_head"),
-        num_classes=cfg["head"]["num_classes"],
-        feature_channels=cfg["head"]["feature_channels"],
-        feature_strides=cfg["head"]["feature_strides"],
-        decoder_channels=cfg["head"]["decoder_channels"],
-        norm=cfg["head"]["norm"],
-        deep_supervision=cfg["head"].get("deep_supervision", False),
+        **{k: v for k, v in cfg["head"].items() if k != "name"},
     )
     model = SegModel(backbone, head,
                      freeze_backbone=bool(mcfg.get("freeze_backbone", False)))

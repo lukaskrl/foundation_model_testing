@@ -1,0 +1,39 @@
+# CT-FM + Mask2Former head — RESOLUTION ABLATION (step 2).
+#
+# Identical to ctfm_mask2former.yaml EXCEPT the mask branch now decodes to full
+# resolution (head.mask_feat_stride: 1) instead of the stride-2 default. This is
+# the "naive Option A" from the analysis: every per-layer mask is full-res, so
+# to fit the ~8x memory blow-up we (a) shorten the transformer to dec_layers: 3
+# (9 is overkill for 3D semantic seg) and (b) halve the micro-batch to bs=2 with
+# grad_accum_steps: 2 — keeping the optimizer-update batch at 4x2=8 patches,
+# exactly matching the stride-2 baseline run so the ONLY variable is mask
+# resolution. If the thin/small classes (ribs, vertebrae, adrenals) recover,
+# the resolution hypothesis is confirmed and Option B (two-tier, bs=4, full
+# dec_layers) is worth building.
+#
+# NOTE: head hyperparameters below are now config-wired (build_head forwards the
+# whole head: block; each head takes the kwargs it declares).
+model:
+  name: ctfm
+  amp: true
+  batch_size: 2          # micro-batch; *num_samples_per_volume(2) = 4 patches/fwd
+  grad_accum_steps: 2    # eff optimizer batch = 2*2*2 = 8, matches stride-2 baseline
+  weights: /store/home/skrljl/projects/foundation_models/weights/CT-FM/ct_fm_feature_extractor/model.safetensors
+  preprocessing:
+    axcodes: SPL
+    intensity:
+      a_min: -1024.0
+      a_max: 2048.0
+      b_min: 0.0
+      b_max: 1.0
+      clip: true
+  kwargs:
+    init_filters: 32
+    blocks_down: [1, 2, 2, 4, 4]
+    in_channels: 1
+    norm: instance
+
+head:
+  name: mask2former_head
+  mask_feat_stride: 1    # full-resolution masks (was 2 = half-res, the suspected cause)
+  dec_layers: 3          # shorter decoder to offset the full-res memory cost
