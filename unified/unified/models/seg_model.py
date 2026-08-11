@@ -74,6 +74,18 @@ class BackboneInterface(nn.Module):
                     f"(shape {(D//s_exp, H//s_exp, W//s_exp)}), got {(d,h,w)}"
                 )
 
+    def trainable_modules(self) -> List[nn.Module]:
+        """Modules that must stay in ``train()`` mode when the encoder is frozen.
+
+        Defaults to ``[self.adapter]``, which matches every single-level backbone.
+        A wrapper that nests another backbone (``StemFusionBackbone``) overrides
+        this so the *inner* neck is restored too — otherwise a frozen Arm S run
+        would leave it in eval while the equivalent Arm N run trains it, which is
+        a difference between the arms that has nothing to do with the stem.
+        """
+        adapter = getattr(self, "adapter", None)
+        return [adapter] if adapter is not None else []
+
     def freeze_encoder(self) -> None:
         """Freeze all backbone params EXCEPT those in ``self.adapter``.
 
@@ -121,11 +133,15 @@ class SegModel(nn.Module):
         super().train(mode)
         if self.freeze_backbone:
             # Encoder stays in eval (Dropout / running-stat tracking off);
-            # adapter stays in train mode so its norms behave correctly.
+            # every trainable module stays in train mode so its norms behave
+            # correctly. Nested wrappers report more than one — see
+            # BackboneInterface.trainable_modules.
             self.backbone.eval()
-            adapter = getattr(self.backbone, "adapter", None)
-            if adapter is not None:
-                adapter.train(mode)
+            get = getattr(self.backbone, "trainable_modules", None)
+            mods = get() if get is not None else [getattr(self.backbone, "adapter", None)]
+            for mod in mods:
+                if mod is not None:
+                    mod.train(mode)
         return self
 
     def forward(self, x: torch.Tensor) -> Union[torch.Tensor, List[torch.Tensor]]:

@@ -4,10 +4,17 @@ Identical for every model EXCEPT for two narrow per-encoder overrides that are
 part of each encoder's pretraining interface, not its hyperparameter recipe:
 
   * ``model.preprocessing.axcodes``   — orientation the encoder was pretrained on
-  * ``model.preprocessing.intensity`` — HU window used at pretrain time
+  * ``model.preprocessing.intensity`` — intensity normalization used at pretrain
+    time: a ``mode`` (``range`` / ``percentile`` / ``sigmoid`` / ``znorm``) plus
+    its parameters. Matching each encoder's own normalization is part of feeding
+    it a valid input, not a per-model tuning knob.
 
 Everything else (spacing, patch size, augmentation, sampler, label space) is
-shared across encoders and locked by base.yaml.
+shared across encoders and locked by base.yaml. Because the modes emit different
+output ranges, the two ADDITIVE intensity augmentations are rescaled by
+``_intensity_aug_scale`` so augmentation strength relative to signal stays
+uniform across encoders — otherwise per-encoder normalization would smuggle a
+per-encoder recipe difference in with it.
 """
 from __future__ import annotations
 from typing import Sequence
@@ -214,6 +221,81 @@ def _sigmoid_intensity_transform(center, scale):
     return SigmoidIntensityd()
 
 
+def _znorm_intensity_transform(a_min, a_max, mask_threshold):
+    """Clamp to ``[a_min, a_max]`` then z-score over voxels above a threshold.
+
+    SAM-Med3D's pretraining normalization: ``tio.Clamp(-1000, 1000)`` followed by
+    ``tio.ZNormalization(masking_method=lambda x: x > 0)`` (SAM-Med3D
+    ``utils/data_loader.py:62`` and ``train.py:133``). Statistics are computed
+    over the masked voxels only — for CT that is roughly the soft-tissue-and-
+    denser body, so air/background does not drag the mean down.
+
+    Placed in ``_orient_intensity_list``, this runs on the whole
+    foreground-cropped VOLUME (before ``RandCropByLabelClassesd``), matching
+    upstream's per-volume statistics rather than per-patch ones.
+
+    Unlike ``range``/``percentile`` the output scale is "one standard
+    deviation", not a declared ``[b_min, b_max]`` — see ``_intensity_aug_scale``
+    for how the additive augmentations are matched to it.
+    """
+    import torch
+    from monai.transforms import MapTransform
+
+    class ZNormIntensityd(MapTransform):
+        def __init__(self):
+            super().__init__(keys="image")
+            self.a_min = float(a_min)
+            self.a_max = float(a_max)
+            self.mask_threshold = float(mask_threshold)
+
+        def __call__(self, data):
+            d = dict(data)
+            for k in self.key_iterator(d):
+                x = torch.clamp(d[k], self.a_min, self.a_max)
+                mask = x > self.mask_threshold
+                # Degenerate patch (e.g. pure air): fall back to whole-volume
+                # stats so we never divide by a zero-element std.
+                vals = x[mask] if bool(mask.any()) else x
+                std = vals.std()
+                if not bool(torch.isfinite(std)) or float(std) == 0.0:
+                    std = torch.ones_like(std)
+                d[k] = (x - vals.mean()) / std
+            return d
+
+    return ZNormIntensityd()
+
+
+def _intensity_aug_scale(intens) -> float:
+    """Output dynamic range of the resolved intensity normalization.
+
+    The two ADDITIVE intensity augmentations — ``RandShiftIntensityd`` offsets
+    and ``RandGaussianNoised`` std — are specified in absolute units, so their
+    strength relative to the signal depends on the encoder's output range. With
+    per-encoder normalization now in play (CT-CLIP and 3DINO land on [-1, 1],
+    everyone else on [0, 1]) an unscaled 0.10 offset would be HALF as strong for
+    the [-1, 1] encoders — a silent per-model recipe difference, exactly the kind
+    of confound this framework exists to avoid.
+
+    Multiplying those two magnitudes by this scale keeps the augmentation
+    strength relative-to-signal identical across encoders. The multiplicative
+    augmentations (``RandScaleIntensityd``) and the range-normalized ones
+    (``RandAdjustContrastd``) are already scale-invariant, and the spatial ones
+    (smooth / low-res / affine) never touch intensity.
+    """
+    mode = str(intens.get("mode", "range")).lower()
+    if mode in ("range", "percentile"):
+        return abs(float(intens["b_max"]) - float(intens["b_min"]))
+    if mode == "sigmoid":
+        return 1.0            # sigmoid always emits (0, 1)
+    if mode == "znorm":
+        # Output is in standard deviations, so there is no declared range. 1.0
+        # means "augment at 0.1 sigma" for the base 0.10 offset. Override
+        # `aug_scale` in the intensity block to match a [0, 1] window's relative
+        # strength if a dedicated ablation needs it.
+        return float(intens.get("aug_scale", 1.0))
+    raise ValueError(f"unknown data.intensity.mode {mode!r}")
+
+
 def _lateral_flip_transform(lr_axis, remap, prob, label_key="label",
                             keys=("image", "label")):
     """Laterality-safe left<->right mirror (flip + label swap).
@@ -270,7 +352,9 @@ def _orient_intensity_list(cfg, *, reindex_class_indices=False):
     ``RandCropByLabelClassesd`` consumes those indices; it is a no-op for RAS
     encoders and unnecessary on the validation path (no class-balanced crop).
     """
-    from monai.transforms import Orientationd, ScaleIntensityRanged
+    from monai.transforms import (
+        Orientationd, ScaleIntensityRanged, ScaleIntensityRangePercentilesd,
+    )
     axcodes, intens = _resolved_preprocessing(cfg)
     keys = ("image", "label")
     t = []
@@ -279,9 +363,15 @@ def _orient_intensity_list(cfg, *, reindex_class_indices=False):
         # label to compute the same permute/flip Orientationd will apply.
         t.append(_reindex_class_indices_transform(axcodes))
     t.append(Orientationd(keys=keys, axcodes=axcodes))
-    # Intensity normalization. mode "range" (default) = the linear HU window
-    # (ScaleIntensityRanged); mode "sigmoid" = the nonlinear soft-tissue window.
-    # Both are per-encoder-overridable via model.preprocessing.intensity.
+    # Intensity normalization — every mode is per-encoder-overridable via
+    # model.preprocessing.intensity, because the normalization an encoder was
+    # PRETRAINED with is part of its input interface, not a tunable recipe knob.
+    #   "range"      (default) linear HU window                 -> [b_min, b_max]
+    #   "percentile" per-volume 0.05/99.95 percentile window    -> [b_min, b_max]
+    #   "sigmoid"    nonlinear soft-tissue window               -> (0, 1)
+    #   "znorm"      clamp + masked z-score                     -> ~N(0, 1)
+    # See _intensity_aug_scale: the additive augmentations are rescaled to each
+    # mode's output range so augmentation strength stays uniform.
     mode = str(intens.get("mode", "range")).lower()
     if mode == "range":
         t.append(ScaleIntensityRanged(
@@ -290,14 +380,33 @@ def _orient_intensity_list(cfg, *, reindex_class_indices=False):
             b_min=intens["b_min"], b_max=intens["b_max"],
             clip=intens.get("clip", True),
         ))
+    elif mode == "percentile":
+        # 3DINO's downstream convention (dinov2/data/transforms.py:64, called
+        # with min_int=-1.0 from eval/linear3d.py and eval/segmentation3d.py):
+        # per-volume percentile window, NOT a fixed HU window. a_min/a_max
+        # inherited from base.yaml are unused in this mode.
+        t.append(ScaleIntensityRangePercentilesd(
+            keys="image",
+            lower=float(intens.get("lower", 0.05)),
+            upper=float(intens.get("upper", 99.95)),
+            b_min=intens["b_min"], b_max=intens["b_max"],
+            clip=intens.get("clip", True),
+            channel_wise=True,
+        ))
     elif mode == "sigmoid":
         t.append(_sigmoid_intensity_transform(
             center=intens.get("center", 40.0),
             scale=intens.get("scale", 80.0),
         ))
+    elif mode == "znorm":
+        t.append(_znorm_intensity_transform(
+            a_min=intens["a_min"], a_max=intens["a_max"],
+            mask_threshold=intens.get("mask_threshold", 0.0),
+        ))
     else:
         raise ValueError(
-            f"unknown data.intensity.mode {mode!r}; expected 'range' or 'sigmoid'")
+            f"unknown data.intensity.mode {mode!r}; expected 'range', "
+            "'percentile', 'sigmoid' or 'znorm'")
     return t
 
 
@@ -332,6 +441,11 @@ def _rand_transform_list(cfg):
         )
 
     aug = d["augment"]
+    # Additive intensity augmentations are specified in absolute units, so they
+    # must be rescaled to whatever range this encoder's normalization emits or
+    # the effective recipe would differ per model. See _intensity_aug_scale.
+    _, _intens = _resolved_preprocessing(cfg)
+    aug_scale = _intensity_aug_scale(_intens)
     t = [
         SpatialPadd(keys=keys, spatial_size=tuple(d["patch_size"]),
                     mode=("constant", "constant")),
@@ -366,7 +480,8 @@ def _rand_transform_list(cfg):
         t.append(RandRotate90d(keys=keys, prob=aug["rot_prob"], max_k=3))
     t.append(
         RandShiftIntensityd(
-            keys="image", offsets=aug.get("shift_intensity_factor", 0.10),
+            keys="image",
+            offsets=aug.get("shift_intensity_factor", 0.10) * aug_scale,
             prob=aug["shift_intensity_prob"],
         )
     )
@@ -401,7 +516,7 @@ def _rand_transform_list(cfg):
     if aug.get("gauss_noise_prob", 0.0) > 0:
         t.append(RandGaussianNoised(
             keys="image", prob=aug["gauss_noise_prob"],
-            std=aug.get("gauss_noise_std", 0.1),
+            std=aug.get("gauss_noise_std", 0.1) * aug_scale,
         ))
     # Tier-1 recipe upgrade: two nnU-Net quality/appearance augmentations. Both
     # are image-only and laterality-safe (unlike flips), so they lift the shared

@@ -1,0 +1,76 @@
+# CT-CLIP with a LAYER-WISE residual-stream pyramid.
+#
+# A/B partner of configs/models/ctclip.yaml (pyramid_mode: upsample). Both are
+# probe-honest (no raw-input conv branch) and PARAMETER-MATCHED — one 1x1
+# projection per contract level, 0.51 M trainable either way. Both run exactly
+# ONE encoder pass. The only thing that changes is which tensor each level
+# reads:
+#
+#   upsample  : all 5 levels = resampled copies of the FINAL bottleneck
+#   layerwise : level k = a read of the residual stream at tap_layers[k],
+#               earliest tap -> finest level (the UNETR / DPT convention)
+#
+# The last default tap IS the bottleneck, so the coarsest level is identical
+# between the two modes and the comparison is single-variable.
+#
+# WHAT THIS DOES NOT DO. CTViT is columnar — it never downsamples, so all eight
+# layers emit the same 512-wide token grid. Taps differ in CONTEXT, not scale.
+# This fixes the `upsample` defect that every decoder skip carried the same
+# tensor, but it does NOT relax the token-scale bound: the finest level is still
+# a resampled stride-16 grid, and nothing in CTViT is finer than one token.
+# Do not expect it to rescue thin structures — for that you need `spm` (which
+# costs probe honesty in the frozen arm) or a smaller canvas.
+#
+# Expect a modest effect, and run it as an A/B rather than assuming: the stream
+# is residual, so taps are nested — a late tap still carries what an early one
+# contributed. The fine levels get less-abstracted access to information that
+# largely survives downstream, not information that would otherwise be lost.
+#
+# Keep model.batch_size identical to ctclip.yaml so the comparison is clean.
+model:
+  name: ctclip
+  batch_size: 3   # matched to ctclip.yaml; do NOT raise it for the A/B
+  weights: /store/home/skrljl/projects/foundation_models/weights/CT-CLIP/models/CT-CLIP-Related/CT-CLIP_v2.pt
+  preprocessing:
+    # CT-CLIP's own normalization (CT-CLIP/scripts/data.py:122-125):
+    #   clip to [-1000, 1000] HU, then /1000  ->  [-1, 1], ZERO-CENTERED.
+    # It previously got [-1024, 2048] -> [0, 1], i.e. the wrong center AND the
+    # wrong scale: real anatomy landed in ~[0.25, 0.65] of a one-sided range.
+    # This is the largest normalization mismatch in the suite.
+    # The additive augmentations are auto-rescaled to this [-1, 1] range
+    # (transforms.py:_intensity_aug_scale) so the recipe stays uniform.
+    intensity:
+      mode: range
+      a_min: -1000.0
+      a_max: 1000.0
+      b_min: -1.0
+      b_max: 1.0
+      clip: true
+  kwargs:
+    # Identical encoder construction to ctclip.yaml — these match
+    # CT-CLIP/scripts/run_train.py exactly (dim_head was 32 in pretraining;
+    # CTViT's default is 64, don't trust it).
+    dim: 512
+    codebook_size: 8192
+    image_size: 480
+    patch_size: 20
+    temporal_patch_size: 10
+    spatial_depth: 4
+    temporal_depth: 4
+    dim_head: 32
+    heads: 8
+    use_image_encoder_only: true
+    pyramid_mode: layerwise
+    # Residual-stream tap points, ascending, one per contract level (5).
+    # Indices run over BOTH stacks in execution order:
+    #   0-3 = after each in-plane layer   (no depth mixing has happened yet)
+    #   4-7 = after each depth layer
+    # Omit to get the default [3, 4, 5, 6, 7] — the in-plane stack's output
+    # plus each of the four depth layers, i.e. the last 5 of the 8 layers.
+    #
+    # Note the depth-context ladder this induces: the FINEST level reads a tap
+    # that has seen no depth mixing at all, the coarsest one that has seen all
+    # of it. That is a deliberate handle on the depth-localization question —
+    # see the Discussion in the SPIE draft — not an oversight.
+    #
+    # tap_layers: [3, 4, 5, 6, 7]

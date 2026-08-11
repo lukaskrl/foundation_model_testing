@@ -4,6 +4,21 @@ model:
   name: ctclip
   batch_size: 3   # VRAM sweep: 40.7/51.5 GB reserved at eff=6 (96^3 patch); bs4 = 50.2 GB
   weights: /store/home/skrljl/projects/foundation_models/weights/CT-CLIP/models/CT-CLIP-Related/CT-CLIP_v2.pt
+  preprocessing:
+    # CT-CLIP's own normalization (CT-CLIP/scripts/data.py:122-125):
+    #   clip to [-1000, 1000] HU, then /1000  ->  [-1, 1], ZERO-CENTERED.
+    # It previously got [-1024, 2048] -> [0, 1], i.e. the wrong center AND the
+    # wrong scale: real anatomy landed in ~[0.25, 0.65] of a one-sided range.
+    # This is the largest normalization mismatch in the suite.
+    # The additive augmentations are auto-rescaled to this [-1, 1] range
+    # (transforms.py:_intensity_aug_scale) so the recipe stays uniform.
+    intensity:
+      mode: range
+      a_min: -1000.0
+      a_max: 1000.0
+      b_min: -1.0
+      b_max: 1.0
+      clip: true
   kwargs:
     # These match CT-CLIP/scripts/run_train.py exactly. dim_head was 32 in
     # pretraining (CTViT default is 64 — don't trust the default).

@@ -2,6 +2,13 @@
 model:
   name: biomedparse
   weights: /store/home/skrljl/projects/foundation_models/weights/BiomedParse/biomedparse_v2.ckpt
+  preprocessing:
+    intensity:
+      a_min: -1000.0
+      a_max: 1000.0
+      b_min: 0.0
+      b_max: 1.0
+      clip: true
   kwargs:
     backbone: focal
     embed_dim: 192

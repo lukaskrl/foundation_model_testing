@@ -199,3 +199,171 @@ class UpsampleNeck(nn.Module):
                 f = F.interpolate(f, size=target, mode="trilinear", align_corners=False)
             feats.append(f)
         return feats
+
+
+class MultiCanvasNeck(nn.Module):
+    """Assemble the contract pyramid from several encoder passes at *different
+    input canvases*.
+
+    The probe-honest middle ground between ``UpsampleNeck`` and
+    ``SpatialPriorModule3D``. ``UpsampleNeck`` gives every level a resampled
+    copy of one feature map, so the fine levels carry no information the coarse
+    one lacks. ``SpatialPriorModule3D`` fixes that by adding a fresh conv branch
+    on raw voxels — which means a frozen-encoder probe partly measures that
+    branch instead of the pretrained representation. Here the extra scales come
+    from *re-running the pretrained encoder* on a differently-sized input, so
+    the pyramid carries genuine multi-scale information while every level stays
+    a pure function of the pretrained weights.
+
+    ``level_sources[i]`` indexes which encoder output feeds contract level
+    ``i``. The convention used by the CT-CLIP adapter is: canvases sorted
+    ascending, smallest canvas → coarsest level (few tokens, each covering a
+    large physical extent = global context), largest canvas → finest levels
+    (many tokens, each covering a small extent = local detail). Levels finer
+    than the largest canvas can serve are resampled from it.
+
+    Only per-level 1×1 projections are trainable, identical in count to
+    ``UpsampleNeck`` (one ``ChannelNeck`` per level), so the two modes are
+    parameter-matched and differ *only* in where each level's features come
+    from. That makes them a clean A/B pair.
+    """
+
+    def __init__(
+        self,
+        in_channels: int,
+        level_sources,
+        contract_channels=(32, 64, 128, 256, 512),
+        contract_strides=(1, 2, 4, 8, 16),
+    ):
+        super().__init__()
+        if not (len(contract_channels) == len(contract_strides) == len(level_sources)):
+            raise ValueError(
+                "contract_channels, contract_strides and level_sources must all "
+                f"have the same length; got {len(contract_channels)}, "
+                f"{len(contract_strides)}, {len(level_sources)}"
+            )
+        self.contract_strides = tuple(int(s) for s in contract_strides)
+        self.level_sources = tuple(int(s) for s in level_sources)
+        self.projections = nn.ModuleList(
+            [ChannelNeck(in_channels, oc) for oc in contract_channels]
+        )
+
+    def forward(self, sources, input_shape):
+        n = len(sources)
+        if max(self.level_sources) >= n:
+            raise ValueError(
+                f"level_sources {self.level_sources} references encoder output "
+                f"{max(self.level_sources)} but only {n} were provided"
+            )
+        D, H, W = (int(s) for s in input_shape)
+        feats = []
+        for stride, src, proj in zip(
+            self.contract_strides, self.level_sources, self.projections
+        ):
+            target = (D // stride, H // stride, W // stride)
+            f = proj(sources[src])
+            if tuple(f.shape[2:]) != target:
+                f = F.interpolate(f, size=target, mode="trilinear", align_corners=False)
+            feats.append(f)
+        return feats
+
+
+class LayerTapNeck(MultiCanvasNeck):
+    """Assemble the contract pyramid from several *depths of one encoder pass*.
+
+    Identical machinery to ``MultiCanvasNeck`` — per-level 1×1 projection of a
+    chosen source, then resample — but the sources are reads of the residual
+    stream at different transformer layers rather than passes at different input
+    canvases. One forward pass instead of several, which is why it is the cheap
+    option for a columnar (non-hierarchical) ViT.
+
+    The semantics of the source set differ, and it matters for what a result
+    means. Multi-canvas sources differ in *scale*: each pass has its own token
+    grid. Layer taps all share one token grid and one width; they differ in how
+    much context has been mixed in. So this neck buys the decoder per-level
+    variation in abstraction, NOT in resolution — the finest level is still a
+    resampled copy of a stride-16 grid, and nothing here relaxes the encoder's
+    token-scale bound.
+
+    A second consequence of reading a residual stream: the taps are nested, not
+    independent. A late tap still carries what an early one contributed, so the
+    fine levels get less-abstracted access to information that largely survives
+    downstream rather than information that would otherwise be gone. Expect a
+    smaller effect than a CNN pyramid's skips, where downsampling genuinely
+    destroys the fine detail.
+
+    ``level_sources`` follows the same convention as the parent (index into the
+    source list, finest level first). For the earliest-tap-to-finest-level
+    ordering used by the CT-CLIP adapter — the convention plain-ViT dense
+    prediction settled on — pass ascending taps and an identity mapping.
+
+    Trainable parameters are one ``ChannelNeck`` per level, exactly as in
+    ``UpsampleNeck``, so ``upsample`` and ``layerwise`` are parameter-matched
+    and differ only in which tensor each level reads.
+    """
+
+
+class SpatialPriorModule3D(nn.Module):
+    """Conv stem on raw input that emits features at strides {1, 2, 4, 8}.
+
+    Adapted from 3DINO's ``SpatialPriorModule`` (with the first conv changed
+    from stride 2 to stride 1 so we keep a stride-1 level, and ``GroupNorm``
+    in place of ``SyncBatchNorm``). Parameter count is dominated by the two
+    deepest stages — keep ``inplanes`` small.
+
+    Lives here rather than in a backbone module because two different consumers
+    need it: the per-backbone ``pyramid_mode='spm'`` adapters (where it
+    *replaces* the fine levels), and the generic ``StemFusionBackbone`` wrapper
+    (where it is *added* to whatever the backbone already produces). Keeping one
+    definition means every Arm-S run gets a bit-identical stem, which is the
+    property that makes the arm a controlled comparison.
+    """
+
+    def __init__(
+        self,
+        in_channels: int = 1,
+        inplanes: int = 16,
+        out_channels=(32, 64, 128, 256),
+    ):
+        super().__init__()
+        c0, c1, c2, c3 = out_channels
+
+        def gn(ch):
+            return nn.GroupNorm(_group_count(ch), ch)
+
+        # stride 1 stem
+        self.stem = nn.Sequential(
+            nn.Conv3d(in_channels, inplanes, kernel_size=3, stride=1, padding=1, bias=False),
+            gn(inplanes), nn.ReLU(inplace=True),
+            nn.Conv3d(inplanes, inplanes, kernel_size=3, stride=1, padding=1, bias=False),
+            gn(inplanes), nn.ReLU(inplace=True),
+            nn.Conv3d(inplanes, inplanes, kernel_size=3, stride=1, padding=1, bias=False),
+            gn(inplanes), nn.ReLU(inplace=True),
+        )
+        # stride 1 -> 2
+        self.down1 = nn.Sequential(
+            nn.Conv3d(inplanes, 2 * inplanes, kernel_size=3, stride=2, padding=1, bias=False),
+            gn(2 * inplanes), nn.ReLU(inplace=True),
+        )
+        # stride 2 -> 4
+        self.down2 = nn.Sequential(
+            nn.Conv3d(2 * inplanes, 4 * inplanes, kernel_size=3, stride=2, padding=1, bias=False),
+            gn(4 * inplanes), nn.ReLU(inplace=True),
+        )
+        # stride 4 -> 8
+        self.down3 = nn.Sequential(
+            nn.Conv3d(4 * inplanes, 8 * inplanes, kernel_size=3, stride=2, padding=1, bias=False),
+            gn(8 * inplanes), nn.ReLU(inplace=True),
+        )
+
+        self.proj0 = nn.Conv3d(inplanes,     c0, kernel_size=1, bias=False)
+        self.proj1 = nn.Conv3d(2 * inplanes, c1, kernel_size=1, bias=False)
+        self.proj2 = nn.Conv3d(4 * inplanes, c2, kernel_size=1, bias=False)
+        self.proj3 = nn.Conv3d(8 * inplanes, c3, kernel_size=1, bias=False)
+
+    def forward(self, x):
+        c0 = self.stem(x)
+        c1 = self.down1(c0)
+        c2 = self.down2(c1)
+        c3 = self.down3(c2)
+        return [self.proj0(c0), self.proj1(c1), self.proj2(c2), self.proj3(c3)]

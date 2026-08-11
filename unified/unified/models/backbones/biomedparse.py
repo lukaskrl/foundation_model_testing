@@ -188,13 +188,38 @@ class BiomedParseBackbone(BackboneInterface):
             contract_channels=self.EXPECTED_CHANNELS,
         )
 
+        # BiomedParse normalizes its input with an ImageNet-style mean/std over
+        # 0-255 pixel values (src/model/biomedparse.py:222-227). With
+        # `gray_scale=True` — the setting BiomedParse v2 ships — the per-channel
+        # ImageNet constants are AVERAGED into a single scalar reused for all
+        # three channels, so we can normalize the 1-channel volume before the
+        # broadcast rather than after.
+        #   mean = mean([123.675, 116.280, 103.530]) = 114.495
+        #   std  = mean([ 58.395,  57.120,  57.375]) =  57.630
+        # The data pipeline hands us a [0, 1] window (see configs/models/
+        # biomedparse.yaml), so we rescale to [0, 255] first. Registered as
+        # buffers so they follow .to(device)/.half() and are excluded from the
+        # trainable adapter.
+        self.register_buffer("pixel_scale", torch.tensor(255.0), persistent=False)
+        self.register_buffer("pixel_mean", torch.tensor(114.495), persistent=False)
+        self.register_buffer("pixel_std", torch.tensor(57.630), persistent=False)
+
     def encoder_forward(self, x):
-        """Run the per-slice FocalNet and return raw_x + reshaped 3D stages."""
+        """Run the per-slice FocalNet and return raw_x + reshaped 3D stages.
+
+        Note ``x`` is returned UNNORMALIZED — the adapter's stride-1/2 stems are
+        fresh 3D convs that should see the same [0, 1] volume every other
+        backbone's stem sees. Only the FocalNet input gets BiomedParse's
+        ImageNet-style normalization.
+        """
         B, C, D, H, W = x.shape
         if C != 1:
             raise ValueError("BiomedParse adapter expects 1-channel CT input")
         # (B, 1, D, H, W) -> (B*D, 3, H, W) (broadcast intensity into 3 channels)
-        flat = x.permute(0, 2, 1, 3, 4).reshape(B * D, 1, H, W).expand(-1, 3, -1, -1)
+        flat = x.permute(0, 2, 1, 3, 4).reshape(B * D, 1, H, W)
+        # [0, 1] window -> [0, 255] -> ImageNet-style standardization.
+        flat = (flat * self.pixel_scale - self.pixel_mean) / self.pixel_std
+        flat = flat.expand(-1, 3, -1, -1)
         stages = self.focal(flat)
         if not isinstance(stages, dict):
             raise RuntimeError("FocalNet was expected to return a dict of res* features")

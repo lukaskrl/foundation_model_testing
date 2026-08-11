@@ -1,0 +1,43 @@
+# ARM S — 3DINO ViT-L with the matched conv stem.
+#
+# Single-variable partner of configs/models/dino3d_upsample.yaml (Arm N). Identical
+# in every field except `stem_fusion: true`, which makes build_backbone wrap the
+# encoder in StemFusionBackbone: the shared SpatialPriorModule3D runs on the raw
+# volume and is summed into contract levels 0-3, level 4 untouched.
+#
+# The inner pyramid_mode stays `upsample`, NOT `spm`. Two reasons:
+#   * `spm` REPLACES the fine levels, so the ViT contributes nothing below stride
+#     16. Arm S FUSES, so the upsampled bottleneck and the stem both reach the
+#     decoder — the ViT keeps its say at every level.
+#   * StemFusionBackbone rejects `spm` / `vit_adapter` outright, since those
+#     already run a raw-input branch and wrapping them would stack two stems and
+#     break the constant-capacity property the arm depends on.
+#
+# This is where the delta should be large: a columnar ViT at patch_size 16 has no
+# representation finer than a 24 mm token, so the stride-1 wire is exactly what it
+# was missing. Read the result against ctfm_stem.yaml's near-zero delta.
+#
+# Added capacity is 349,584 parameters, bit-identical to every other Arm S model.
+model:
+  name: dino3d
+  batch_size: 4
+  weights: /store/home/skrljl/projects/foundation_models/weights/3DINO/3dino_vit_weights.pth
+  preprocessing:
+    # Per-volume percentiles, matching 3DINO pretraining — not a fixed HU window.
+    intensity:
+      mode: percentile
+      lower: 0.05
+      upper: 99.95
+      b_min: -1.0
+      b_max: 1.0
+      clip: true
+  kwargs:
+    arch: vit_large_3d
+    img_size: 112
+    patch_size: 16
+    in_chans: 1
+    extract_blocks: [5, 11, 17, 23]
+    pyramid_mode: upsample
+    # --- the only difference from dino3d_upsample.yaml ---
+    stem_fusion: true
+    stem_inplanes: 16

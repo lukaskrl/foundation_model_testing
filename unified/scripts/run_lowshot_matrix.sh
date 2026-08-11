@@ -9,13 +9,23 @@
 #   COND=frz_pt|frz_sc     condition column
 #   FRAC=1.0               train_fraction column (e.g. 1.0, 0.25, 0.01)
 #   BACKBONE=ctfm|vista3d  backbone column
+#   ADAPTER=vit_adapter    adapter column (pyramid_mode, or `native` for CNNs)
+#   PROBE=True             probe_comparable column — True = the 220-config
+#                          headline matrix, False = the best-effort extra arms
 #   GPU=0                  physical GPU (default 0)
+#
+# NOTE: BACKBONE matches the config stem, so BACKBONE=dino now hits BOTH
+# `dino3d_upsample` (probe-comparable) and `dino3d_vitadapter` (the best-effort
+# ViT-Adapter arm). Add PROBE=True to any headline launch, or name the stem in
+# full, so the two never land in the same table.
 #
 # Examples:
 #   # Stage 0 (headline): frozen pretrained + frozen-scratch floor @ 100%, all 11
-#   GPU=0 COND='frz_pt|frz_sc' FRAC=1.0 setsid nohup bash scripts/run_lowshot_matrix.sh >/dev/null 2>&1 &
+#   GPU=0 PROBE=True COND='frz_pt|frz_sc' FRAC=1.0 setsid nohup bash scripts/run_lowshot_matrix.sh >/dev/null 2>&1 &
 #   # Split across GPUs by backbone:
-#   GPU=1 COND='frz_pt|frz_sc' FRAC=1.0 BACKBONE='vista3d|voco|sam|dino|ctclip' bash scripts/run_lowshot_matrix.sh
+#   GPU=1 PROBE=True COND='frz_pt|frz_sc' FRAC=1.0 BACKBONE='vista3d|voco|sam|dino3d_upsample|ctclip' bash scripts/run_lowshot_matrix.sh
+#   # The dino3d ViT-Adapter best-effort arm, on its own:
+#   GPU=1 ADAPTER=vit_adapter COND='ft_pt' bash scripts/run_lowshot_matrix.sh
 #
 # Per-fraction epoch caps (fixed-epoch low-shot protocol + early stop). Override
 # any with env, e.g. EP_100=500. Tiny fractions overfit fast; capping saves time
@@ -34,21 +44,23 @@ export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:T
 MANIFEST="$REPO/configs/lowshot/MANIFEST.csv"
 [ -f "$MANIFEST" ] || { echo "no MANIFEST.csv — run: python -m scripts.gen_lowshot_configs"; exit 1; }
 COND="${COND:-.}"; FRAC="${FRAC:-.}"; BACKBONE="${BACKBONE:-.}"
+ADAPTER="${ADAPTER:-.}"; PROBE="${PROBE:-.}"
 MAX_TRIES="${MAX_TRIES:-20}"; FAST_CRASH_SECS="${FAST_CRASH_SECS:-180}"; FAST_CRASH_CAP="${FAST_CRASH_CAP:-3}"
 
-MATRIX_DIR="$REPO/runs/lowshot"; mkdir -p "$MATRIX_DIR"
+MATRIX_DIR="${MATRIX_DIR:-$REPO/runs/lowshot}"; mkdir -p "$MATRIX_DIR"
 QLOG="$MATRIX_DIR/queue_gpu${CUDA_VISIBLE_DEVICES}.log"
 qlog() { echo "[$(date +%F\ %T)] $*" | tee -a "$QLOG"; }
 
 epochs_for() { case "$1" in 0.01) echo "$EP_001";; 0.05) echo "$EP_005";; 0.1|0.10) echo "$EP_010";; 0.25) echo "$EP_025";; 1.0|1.00) echo "$EP_100";; *) echo 500;; esac; }
 
-# Select matching runs from the manifest (columns: run_name,config,backbone,freeze_backbone,pretrained,train_fraction,condition)
+# Select matching runs from the manifest (columns: run_name,config,backbone,
+# freeze_backbone,pretrained,train_fraction,condition,adapter,probe_comparable)
 # Emit: run_name|config|train_fraction
 mapfile -t ROWS < <(tail -n +2 "$MANIFEST" | awk -F, \
-  -v c="$COND" -v fr="$FRAC" -v bb="$BACKBONE" \
-  '$7 ~ c && $6 ~ fr && $3 ~ bb {print $1"|"$2"|"$6}' )
+  -v c="$COND" -v fr="$FRAC" -v bb="$BACKBONE" -v ad="$ADAPTER" -v pr="$PROBE" \
+  '$7 ~ c && $6 ~ fr && $3 ~ bb && $8 ~ ad && $9 ~ pr {print $1"|"$2"|"$6}' )
 
-qlog "=== matrix launcher: gpu=$CUDA_VISIBLE_DEVICES COND=/$COND/ FRAC=/$FRAC/ BACKBONE=/$BACKBONE/ -> ${#ROWS[@]} runs ==="
+qlog "=== matrix launcher: gpu=$CUDA_VISIBLE_DEVICES COND=/$COND/ FRAC=/$FRAC/ BACKBONE=/$BACKBONE/ ADAPTER=/$ADAPTER/ PROBE=/$PROBE/ -> ${#ROWS[@]} runs ==="
 nvidia-smi --query-gpu=index,memory.used,memory.total --format=csv,noheader 2>&1 | tee -a "$QLOG"
 
 for row in "${ROWS[@]}"; do

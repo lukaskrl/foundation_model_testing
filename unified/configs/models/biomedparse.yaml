@@ -3,6 +3,29 @@
 model:
   name: biomedparse
   weights: /store/home/skrljl/projects/foundation_models/weights/BiomedParse/biomedparse_v2.ckpt
+  preprocessing:
+    # BiomedParse windows CT per anatomical site, then rescales to [0, 255] and
+    # applies an ImageNet-style mean/std
+    # (BiomedParse/inference_utils/processing_utils.py:16-45 and
+    #  src/model/biomedparse.py:222-227). Of its CT_WINDOWS presets, `lung`
+    # [-1000, 1000] is the only one broad enough for whole-body
+    # TotalSegmentator, so we use that here.
+    #
+    # This block only produces the [0, 1] window. The ×255 rescale and the
+    # mean/std subtraction live in the BACKBONE (backbones/biomedparse.py),
+    # because they are coupled to the 1->3 channel broadcast that already
+    # happens there and would be meaningless for any other encoder.
+    #
+    # Deviation from upstream, deliberate: upstream rescales each slice by its
+    # own post-clip min/max, which is data-dependent and varies slice to slice.
+    # We use the fixed window instead so the mapping is deterministic and
+    # identical across the dataset, matching every other encoder here.
+    intensity:
+      a_min: -1000.0
+      a_max: 1000.0
+      b_min: 0.0
+      b_max: 1.0
+      clip: true
   kwargs:
     # These match BiomedParse v2's d2focal config; Focal-Huge variant.
     backbone: focal

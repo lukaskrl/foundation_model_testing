@@ -1,0 +1,87 @@
+# CT-CLIP with a MULTI-CANVAS token pyramid.
+#
+# A/B partner of configs/models/ctclip.yaml (pyramid_mode: upsample). Both are
+# probe-honest (no raw-input conv branch) and PARAMETER-MATCHED — one 1x1
+# projection per contract level, 0.51 M trainable either way. The only thing
+# that changes is where each level's features come from:
+#
+#   upsample   : all 5 levels = resampled copies of ONE 480-canvas pass
+#   multiscale : coarse levels from small-canvas passes, fine levels from the
+#                largest-canvas pass — genuinely multi-scale, still purely a
+#                function of the pretrained encoder
+#
+# Keep model.batch_size identical to ctclip.yaml so the comparison is clean.
+model:
+  name: ctclip
+  batch_size: 3   # matched to ctclip.yaml; multiscale is cheaper, do NOT raise it for the A/B
+  weights: /store/home/skrljl/projects/foundation_models/weights/CT-CLIP/models/CT-CLIP-Related/CT-CLIP_v2.pt
+  preprocessing:
+    # CT-CLIP's own normalization (CT-CLIP/scripts/data.py:122-125):
+    #   clip to [-1000, 1000] HU, then /1000  ->  [-1, 1], ZERO-CENTERED.
+    # It previously got [-1024, 2048] -> [0, 1], i.e. the wrong center AND the
+    # wrong scale: real anatomy landed in ~[0.25, 0.65] of a one-sided range.
+    # This is the largest normalization mismatch in the suite.
+    # The additive augmentations are auto-rescaled to this [-1, 1] range
+    # (transforms.py:_intensity_aug_scale) so the recipe stays uniform.
+    intensity:
+      mode: range
+      a_min: -1000.0
+      a_max: 1000.0
+      b_min: -1.0
+      b_max: 1.0
+      clip: true
+  kwargs:
+    # Identical encoder construction to ctclip.yaml — these match
+    # CT-CLIP/scripts/run_train.py exactly (dim_head was 32 in pretraining;
+    # CTViT's default is 64, don't trust it).
+    dim: 512
+    codebook_size: 8192
+    image_size: 480
+    patch_size: 20
+    temporal_patch_size: 10
+    spatial_depth: 4
+    temporal_depth: 4
+    dim_head: 32
+    heads: 8
+    use_image_encoder_only: true
+    pyramid_mode: multiscale
+    # Encoder input canvases, ascending; each must be divisible by patch_size
+    # (20). Smallest -> coarsest contract level, largest -> finest levels.
+    #
+    # Chosen by PHYSICAL token footprint, not by arbitrary scale factors.
+    # CTViT pretrained on 480x480x240 @ 0.75/0.75/1.5 mm = a 360 mm isotropic
+    # cube at a 24^3 token grid = 15.0 mm of anatomy per token on every axis.
+    # For the default 96^3 patch @ 1.5 mm (144 mm FOV):
+    #
+    #   canvas 120 -> 6x6 tokens  -> 24.0 mm/token -> serves stride 16 (exact)
+    #   canvas 200 -> 10x10       -> 14.4 mm/token -> serves stride 8
+    #   canvas 320 -> 16x16       ->  9.0 mm/token -> serves strides 4, 2, 1
+    #
+    # i.e. the set brackets the 15 mm pretraining footprint. The single 480
+    # canvas used by ctclip.yaml sits at 6.0 mm/token (2.5x off) and then
+    # discards 4x of its in-plane grid resampling 24 -> 6.
+    #
+    # Cost, MEASURED on an RTX 6000 Ada at 96^3 / batch 3 / 118 classes.
+    # Spatial attention is quadratic in token count (36 + 100 + 256 vs 576), but
+    # three passes also triple the per-pass fixed overhead, so the FLOP saving
+    # does NOT translate 1:1 — measure, don't extrapolate:
+    #
+    #                            frozen              finetune
+    #   upsample(480)     0.239 s /  9.76 GB   0.413 s / 21.65 GB
+    #   multiscale(3)     0.220 s / 11.29 GB   0.337 s / 16.71 GB
+    #   multiscale(120,200) 0.189 s / 11.03 GB 0.249 s / 12.85 GB
+    #
+    # So: a clear win when fine-tuning (-23% VRAM, -18% time for 3 canvases;
+    # -41% / -40% for 2), roughly a wash when frozen (slightly faster, slightly
+    # more peak VRAM from running three differently-shaped passes). The step-time
+    # direction is batch-size dependent — at effective batch 2 the 3-canvas mode
+    # measured *slower* than the 480 baseline (0.33 vs 0.23 s). Re-measure for
+    # your batch size before quoting a speedup.
+    #
+    # `[120, 200]` is the cheap variant and arguably the most principled minimal
+    # set: 200 is the scale-matched canvas (14.4 vs 15.0 mm/token) plus one
+    # coarser level. It gives 2 genuine scales instead of 3.
+    #
+    # NOTE: if you change data.patch_size, revisit these — mm/token scales with
+    # patch FOV. At a 128^3 patch (192 mm) the same canvases give 32.0/19.2/12.0.
+    canvases: [120, 200, 320]

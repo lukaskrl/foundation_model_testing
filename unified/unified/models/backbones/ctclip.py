@@ -7,20 +7,82 @@ pretrained on **480×480** in-plane patches with temporal patches of
 depth-padded copy of the input and the bottleneck is anisotropic
 (different temporal vs spatial strides relative to the resized input).
 
-There are no intermediate skip features. Mirroring the dino3d adapter:
+There are no intermediate skip features. Three ``pyramid_mode`` options:
 
-  * Fine levels (strides 1, 2, 4, 8) come from a lightweight
+``spm``
+    Fine levels (strides 1, 2, 4, 8) come from a lightweight
     ``SpatialPriorModule3D`` running on the **raw input volume** — a fresh
-    conv branch, the only source of native-resolution detail.
-  * Stride-16 (the contract's coarsest level) comes from the CTViT
-    bottleneck: a 1×1×1 channel projection to 512 ch, followed by a single
-    trilinear resample to the cubic stride-16 target. This is the *only*
-    spatial resample of pretrained features in any adapter; it's required
-    because the CTViT bottleneck is anisotropic and operates on a resized
-    canvas. The CT-CLIP comparison therefore carries an asterisk relative
-    to backbones whose native pyramids fit the contract cleanly.
+    conv branch, the only source of native-resolution detail. Mirrors the
+    dino3d adapter. NOT probe-honest: a frozen run partly measures that
+    fresh branch rather than the pretrained representation.
 
-CT-CLIP results carry that asterisk (see docs/HEAD_DESIGN.md).
+``upsample``
+    Every level is a channel-projected, trilinearly resampled copy of the one
+    bottleneck. Probe-honest but the fine levels carry no information the
+    coarse one lacks.
+
+``layerwise``
+    Read the residual stream at several transformer layers of a **single**
+    pass and give each contract level its own tap, earliest tap to the finest
+    level — the convention plain-ViT dense prediction settled on (UNETR, DPT).
+    Probe-honest (no raw-input branch), parameter-matched to ``upsample`` (one
+    1×1 projection per level), and one encoder pass, so it is strictly cheaper
+    than ``multiscale``.
+
+    What it does and does not buy. CTViT is **columnar**: it never downsamples,
+    so all eight layers emit the same token grid at the same width (512). Taps
+    therefore differ in *context*, not scale — the first stack has mixed
+    in-plane but not yet along depth, and each further layer adds abstraction on
+    the same grid. This removes the ``upsample`` defect that every level is the
+    same tensor (the decoder's skips carried nothing), but it does NOT relax the
+    token-scale bound: the finest level is still a resampled stride-16 grid.
+    Nothing in CTViT is finer than one token — resolution exists only at the
+    tokenizer and its linear transpose (``to_pixels``, a per-token expansion to
+    a 10×20×20 voxel block), so every representation the network holds, encoder
+    or reconstruction decoder, is bounded by 512 dims per such block.
+
+    Because the stream is residual, taps are nested rather than independent: a
+    late tap still carries what an early one contributed. The fine levels get
+    less-abstracted access to information that largely survives downstream, not
+    information that would otherwise be lost — so expect a smaller effect than a
+    CNN pyramid's skips. Worth running as an A/B against ``upsample`` rather
+    than assuming.
+
+    Default taps are the last ``NUM_LEVELS`` layers in execution order, which
+    for CTViT's 4 spatial + 4 temporal stacks is the in-plane stack's output
+    plus each of the four depth layers. The last tap is *exactly* the
+    ``upsample`` bottleneck, so the two modes are a clean single-variable pair.
+    Note the depth-context ladder this induces: the finest level has seen no
+    depth mixing at all, the coarsest has seen all of it.
+
+``multiscale``
+    Run the pretrained encoder **several times at different input canvases**
+    and let each contract level draw from the pass whose native token grid is
+    closest to it. Probe-honest (no raw-input branch) *and* genuinely
+    multi-scale. Parameter-matched to ``upsample`` — one 1×1 projection per
+    level — so the two are a clean A/B pair.
+
+    This is possible because CTViT's spatial position bias is an MLP over
+    relative coordinates (``cache_rel_pos=False``) and its PEG is a conv, so
+    both are size-agnostic; the fixed 480 canvas is an artifact of upstream
+    ``encode()`` reading ``patch_height_width`` rather than an architectural
+    constraint. ``_encode`` below derives the token grid from the tensor
+    instead, which is a strict generalization (identical at 480).
+
+    Canvas choice is physical, not arbitrary. CTViT pretrained on
+    480×480×240 at 0.75/0.75/1.5 mm = a 360 mm isotropic cube at a 24³ token
+    grid, i.e. **15 mm of anatomy per token on every axis**. For a 96³ patch
+    at 1.5 mm (144 mm FOV) the default canvases give 9.0 / 14.4 / 24.0 mm per
+    token — bracketing the pretraining footprint. The default 480 canvas puts
+    it at 6.0 mm/token, 2.5x off, and then discards 4x of the in-plane token
+    grid resampling 24 -> 6. The three default passes together cost roughly a
+    quarter of one 480 pass (spatial attention is quadratic in token count:
+    36 + 100 + 256 tokens vs 576).
+
+    Note the depth axis is NOT multi-scale: the z token count is
+    ``ceil(D / temporal_patch_size)`` regardless of canvas, so every level
+    resamples z from the same 10 tokens (15 mm granularity). Fixing that needs
+    shifted-offset passes, which this mode does not do.
 """
 from __future__ import annotations
 import sys
@@ -33,7 +95,7 @@ import torch.nn.functional as F
 from ..registry import register_backbone
 from ..seg_model import BackboneInterface
 from .dino3d import SpatialPriorModule3D
-from ._neck import UpsampleNeck
+from ._neck import LayerTapNeck, MultiCanvasNeck, UpsampleNeck
 
 CTCLIP_REPO = Path("/store/home/skrljl/projects/foundation_models/CT-CLIP")
 
@@ -81,17 +143,40 @@ def _gn(ch: int) -> nn.GroupNorm:
     return nn.GroupNorm(g, ch)
 
 
-class _CTClipAdapter(nn.Module):
-    """Adapt the CTViT bottleneck onto the contract pyramid.
+def _assign_level_sources(n_canvases: int, n_levels: int = 5):
+    """Map each contract level to one encoder pass (canvases sorted ascending).
 
-    ``pyramid_mode``: ``"spm"`` (default) = SPM on raw input (strides 1..8) +
-    1×1 projection of the CTViT bottleneck (stride 16); ``"upsample"`` = every
-    level is a channel-projected, trilinearly resampled copy of the bottleneck
-    (``UpsampleNeck``), no raw-input path — for frozen-encoder probes.
+    Smallest canvas -> coarsest level (few tokens, large physical extent per
+    token = global context); largest canvas -> finest levels (many tokens,
+    small extent = local detail). Levels finer than the largest canvas can
+    serve share it and are resampled up.
+
+    With a single canvas this degenerates to every level using that one pass,
+    i.e. exactly ``UpsampleNeck`` behaviour.
+    """
+    sources = []
+    for level in range(n_levels):
+        # level 0 = finest. Coarsest level takes canvas 0 (the smallest).
+        idx = (n_levels - 1) - level
+        sources.append(min(idx, n_canvases - 1))
+    return sources
+
+
+class _CTClipAdapter(nn.Module):
+    """Adapt the CTViT bottleneck(s) onto the contract pyramid.
+
+    ``pyramid_mode``: ``"spm"`` = SPM on raw input (strides 1..8) + 1×1
+    projection of the CTViT bottleneck (stride 16); ``"upsample"`` = every
+    level is a channel-projected, trilinearly resampled copy of the single
+    bottleneck (``UpsampleNeck``); ``"multiscale"`` = per-level projection of
+    several encoder passes at different canvases (``MultiCanvasNeck``);
+    ``"layerwise"`` = per-level projection of several residual-stream taps from
+    one pass (``LayerTapNeck``). All but ``spm`` have no raw-input path and are
+    the probe-honest options.
     """
 
     def __init__(self, ctvit_dim: int, contract_channels, spm_inplanes: int = 16,
-                 pyramid_mode: str = "spm"):
+                 pyramid_mode: str = "spm", n_canvases: int = 1):
         super().__init__()
         self.pyramid_mode = pyramid_mode
         if pyramid_mode == "spm":
@@ -111,9 +196,25 @@ class _CTClipAdapter(nn.Module):
                 in_channels=ctvit_dim,
                 contract_channels=contract_channels,
             )
+        elif pyramid_mode == "multiscale":
+            self.multi_neck = MultiCanvasNeck(
+                in_channels=ctvit_dim,
+                level_sources=_assign_level_sources(n_canvases, len(contract_channels)),
+                contract_channels=contract_channels,
+            )
+        elif pyramid_mode == "layerwise":
+            # Identity mapping: taps arrive ascending by layer index and the
+            # contract is finest-first, so the earliest tap feeds the finest
+            # level. Ascending order is enforced in CTClipBackbone.__init__.
+            self.layer_neck = LayerTapNeck(
+                in_channels=ctvit_dim,
+                level_sources=tuple(range(len(contract_channels))),
+                contract_channels=contract_channels,
+            )
         else:
             raise ValueError(
-                f"unknown pyramid_mode {pyramid_mode!r}; expected 'spm' or 'upsample'"
+                f"unknown pyramid_mode {pyramid_mode!r}; expected 'spm', "
+                "'upsample', 'multiscale' or 'layerwise'"
             )
 
 
@@ -134,6 +235,8 @@ class CTClipBackbone(BackboneInterface):
         use_image_encoder_only: bool = True,
         spm_inplanes: int = 16,
         pyramid_mode: str = "spm",
+        canvases=None,
+        tap_layers=None,
     ):
         super().__init__()
         CTViT = _import_ctvit()
@@ -165,11 +268,64 @@ class CTClipBackbone(BackboneInterface):
         # so it respects the passed `device` argument.
         self._patch_pos_bias(self.encoder.spatial_rel_pos_bias)
 
+        # Encoder input canvases. Only used by pyramid_mode="multiscale"; the
+        # other modes run the single pretrained canvas. Sorted ascending so
+        # `_assign_level_sources` can map smallest -> coarsest level.
+        if canvases is None:
+            canvases = (120, 200, 320) if pyramid_mode == "multiscale" else (image_size,)
+        self.canvases = tuple(sorted(int(c) for c in canvases))
+        bad = [c for c in self.canvases if c % patch_size != 0]
+        if bad:
+            raise ValueError(
+                f"canvases {bad} are not divisible by patch_size {patch_size}; "
+                "CTViT tokenizes with a non-overlapping patch grid"
+            )
+
+        # Residual-stream tap points. Only used by pyramid_mode="layerwise".
+        # Indices run over BOTH stacks in execution order: 0..spatial_depth-1
+        # after each in-plane layer, then the temporal layers. The default takes
+        # the last NUM_LEVELS of them, which for CTViT's 4+4 is the in-plane
+        # stack's output plus each of the four depth layers -- so the coarsest
+        # level receives exactly the `upsample` bottleneck.
+        self.n_encoder_layers = int(spatial_depth) + int(temporal_depth)
+        self.tap_layers = None
+        if pyramid_mode == "layerwise":
+            n_levels = len(self.EXPECTED_CHANNELS)
+            if tap_layers is None:
+                if self.n_encoder_layers < n_levels:
+                    raise ValueError(
+                        f"pyramid_mode='layerwise' needs at least {n_levels} encoder "
+                        f"layers to tap, but spatial_depth + temporal_depth = "
+                        f"{self.n_encoder_layers}. Pass explicit `tap_layers` (taps may "
+                        "repeat) or use pyramid_mode='upsample'."
+                    )
+                tap_layers = list(range(self.n_encoder_layers - n_levels,
+                                        self.n_encoder_layers))
+            tap_layers = [int(i) for i in tap_layers]
+            if len(tap_layers) != n_levels:
+                raise ValueError(
+                    f"tap_layers must have one entry per contract level "
+                    f"({n_levels}); got {len(tap_layers)}"
+                )
+            bad = [i for i in tap_layers if not 0 <= i < self.n_encoder_layers]
+            if bad:
+                raise ValueError(
+                    f"tap_layers {bad} out of range for {self.n_encoder_layers} "
+                    "encoder layers"
+                )
+            if tap_layers != sorted(tap_layers):
+                raise ValueError(
+                    f"tap_layers must be ascending so the earliest tap feeds the "
+                    f"finest contract level; got {tap_layers}"
+                )
+            self.tap_layers = tuple(tap_layers)
+
         self.adapter = _CTClipAdapter(
             ctvit_dim=dim,
             contract_channels=self.EXPECTED_CHANNELS,
             spm_inplanes=spm_inplanes,
             pyramid_mode=pyramid_mode,
+            n_canvases=len(self.canvases),
         )
 
     @staticmethod
@@ -195,37 +351,101 @@ class CTClipBackbone(BackboneInterface):
 
         pos_bias_module.forward = types.MethodType(forward, pos_bias_module)
 
-    def _encode(self, tokens):
-        """Reimplementation of CTViT.encode that respects tensor device.
+    def _forward_stacks(self, tokens, tap_layers=None):
+        """Run both encoder stacks; optionally read the residual stream between
+        layers.
 
-        Identical to upstream except the hard-coded ``torch.device('cuda')``
-        on lines 292, 332 of upstream ctvit.py.
+        Reimplementation of ``CTViT.encode`` that differs from upstream in two
+        ways, both strict generalizations:
+          * no hard-coded ``torch.device('cuda')`` (upstream ctvit.py lines
+            292, 332);
+          * the token grid ``(h, w)`` is read off the token tensor rather than
+            from ``self.encoder.patch_height_width``, so a canvas other than
+            the pretrained 480 works. Legal because the spatial position bias
+            is a coordinate MLP and the PEG is a conv — neither is tied to a
+            token count. Identical behaviour at the 480 canvas.
+
+        The per-layer loop is also inlined from ``Transformer.forward``
+        (attention.py) because upstream returns only ``norm_out(x)`` and offers
+        no hidden-state hook. Block order — PEG, self-attention, feed-forward,
+        each residual — is copied exactly; ``cross_attn`` is always None here
+        (CTViT builds its stacks with ``has_cross_attn=False``), and ``encode``
+        passes no ``self_attn_mask``, so both are omitted rather than threaded
+        through. The final output is bit-identical to upstream's.
+
+        ``tap_layers``: iterable of layer indices over BOTH stacks in execution
+        order (``0 .. spatial_depth-1`` in-plane, then the temporal layers).
+        Each requested tap gets its own stack's ``norm_out`` applied — the
+        residual stream is unnormalized between layers and its scale grows with
+        depth — while the stream itself continues un-normalized, so collecting
+        taps cannot change the final output.
+
+        Returns ``(bottleneck, taps)``, all in ``(b, t, h, w, d)`` layout, taps
+        ascending by layer index (empty when ``tap_layers`` is None). The tap at
+        the last temporal layer is exactly the bottleneck.
         """
         from einops import rearrange
-        b = tokens.shape[0]
-        h, w = self.encoder.patch_height_width
+        wanted = set() if tap_layers is None else {int(i) for i in tap_layers}
+        b, _, h, w, _ = tokens.shape
         video_shape = tuple(tokens.shape[:-1])
-        tokens = rearrange(tokens, "b t h w d -> (b t) (h w) d")
-        attn_bias = self.encoder.spatial_rel_pos_bias(h, w, device=tokens.device)
-        tokens = self.encoder.enc_spatial_transformer(
-            tokens, attn_bias=attn_bias, video_shape=video_shape
-        )
-        tokens = rearrange(tokens, "(b t) (h w) d -> b t h w d", b=b, h=h, w=w)
-        tokens = rearrange(tokens, "b t h w d -> (b h w) t d")
-        tokens = self.encoder.enc_temporal_transformer(tokens, video_shape=video_shape)
-        tokens = rearrange(tokens, "(b h w) t d -> b t h w d", b=b, h=h, w=w)
-        return tokens
+        taps = {}
 
-    def _run_ctvit(self, x):
-        """Resize input to the pretrained canvas, encode, return bottleneck."""
+        # --- in-plane stack: attention within each slab, no depth mixing ---
+        sp = self.encoder.enc_spatial_transformer
+        x = rearrange(tokens, "b t h w d -> (b t) (h w) d")
+        attn_bias = self.encoder.spatial_rel_pos_bias(h, w, device=x.device)
+        for i, (peg, self_attn, _cross_attn, ff) in enumerate(sp.layers):
+            if peg is not None:
+                x = peg(x, shape=video_shape) + x
+            x = self_attn(x, attn_bias=attn_bias) + x
+            x = ff(x) + x
+            if i in wanted:
+                taps[i] = rearrange(
+                    sp.norm_out(x), "(b t) (h w) d -> b t h w d", b=b, h=h, w=w
+                )
+        x = rearrange(sp.norm_out(x), "(b t) (h w) d -> b t h w d", b=b, h=h, w=w)
+
+        # --- depth stack: attention along t, no spatial bias (as upstream) ---
+        tp = self.encoder.enc_temporal_transformer
+        offset = len(sp.layers)
+        x = rearrange(x, "b t h w d -> (b h w) t d")
+        for i, (peg, self_attn, _cross_attn, ff) in enumerate(tp.layers):
+            if peg is not None:
+                x = peg(x, shape=video_shape) + x
+            x = self_attn(x) + x
+            x = ff(x) + x
+            if offset + i in wanted:
+                taps[offset + i] = rearrange(
+                    tp.norm_out(x), "(b h w) t d -> b t h w d", b=b, h=h, w=w
+                )
+        x = rearrange(tp.norm_out(x), "(b h w) t d -> b t h w d", b=b, h=h, w=w)
+
+        return x, [taps[i] for i in sorted(taps)]
+
+    def _encode(self, tokens):
+        """The single bottleneck — ``CTViT.encode`` behaviour. See
+        ``_forward_stacks``."""
+        bottleneck, _ = self._forward_stacks(tokens)
+        return bottleneck
+
+    def _to_tokens(self, x, canvas=None):
+        """Resize input to ``canvas``, pad depth to the temporal patch, patchify.
+
+        ``canvas=None`` uses the pretrained in-plane size (``image_size``).
+        Depth is padded, never resized, so the z token count is
+        ``ceil(D / temporal_patch_size)`` regardless of canvas.
+        """
         B, C, D, H, W = x.shape
         if C != 1:
             raise ValueError("ct-clip adapter expects 1-channel CT input")
-        target_hw = (
-            (self.encoder.image_size, self.encoder.image_size)
-            if isinstance(self.encoder.image_size, int)
-            else tuple(self.encoder.image_size)
-        )
+        if canvas is not None:
+            target_hw = (int(canvas), int(canvas))
+        else:
+            target_hw = (
+                (self.encoder.image_size, self.encoder.image_size)
+                if isinstance(self.encoder.image_size, int)
+                else tuple(self.encoder.image_size)
+            )
         flat = x.reshape(B * D, 1, H, W)
         flat = F.interpolate(flat, size=target_hw, mode="bilinear", align_corners=False)
         x_resized = flat.reshape(B, 1, D, *target_hw)
@@ -235,19 +455,41 @@ class CTClipBackbone(BackboneInterface):
         if pad_d > 0:
             x_resized = F.pad(x_resized, (0, 0, 0, 0, 0, pad_d))
 
-        tokens = self.encoder.to_patch_emb(x_resized)   # (B, t', h', w', d)
-        tokens = self._encode(tokens)
-        return tokens.permute(0, 4, 1, 2, 3).contiguous()  # (B, dim, t', h', w')
+        return self.encoder.to_patch_emb(x_resized)     # (B, t', h', w', d)
+
+    def _run_ctvit(self, x, canvas=None):
+        """One encoder pass; return the bottleneck as (B, dim, t', h', w')."""
+        tokens = self._encode(self._to_tokens(x, canvas))
+        return tokens.permute(0, 4, 1, 2, 3).contiguous()
+
+    def _run_ctvit_taps(self, x):
+        """One encoder pass; return ``self.tap_layers`` residual-stream reads,
+        each as (B, dim, t', h', w'), ascending by layer index."""
+        _, taps = self._forward_stacks(self._to_tokens(x), tap_layers=self.tap_layers)
+        return [t.permute(0, 4, 1, 2, 3).contiguous() for t in taps]
 
     def encoder_forward(self, x):
+        mode = self.adapter.pyramid_mode
+        if mode == "multiscale":
+            # One pretrained-encoder pass per canvas, ascending. No raw input:
+            # every contract level stays a function of the pretrained weights.
+            return [self._run_ctvit(x, canvas=c) for c in self.canvases]
+        if mode == "layerwise":
+            # One pass, several reads of its residual stream. Also no raw input.
+            return self._run_ctvit_taps(x)
         bottleneck = self._run_ctvit(x)
         # Pass raw input alongside the bottleneck so the trainable SPM in the
         # adapter can consume it.
         return [x, bottleneck]
 
     def adapter_forward(self, native, input_shape):
+        mode = self.adapter.pyramid_mode
+        if mode == "multiscale":
+            return self.adapter.multi_neck(native, input_shape)
+        if mode == "layerwise":
+            return self.adapter.layer_neck(native, input_shape)
         x_in, bottleneck = native
-        if self.adapter.pyramid_mode == "upsample":
+        if mode == "upsample":
             return self.adapter.upsample_neck(bottleneck, input_shape)
         D, H, W = input_shape
         fine = self.adapter.spm(x_in)                       # strides 1..8

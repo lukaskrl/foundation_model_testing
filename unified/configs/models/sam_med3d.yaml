@@ -6,6 +6,29 @@ model:
   # resamples the bottleneck back to cubic stride 16.
   batch_size: 2
   weights: /store/home/skrljl/projects/foundation_models/weights/SAM-Med3D/sam_med3d_turbo.pth
+  preprocessing:
+    # SAM-Med3D clamps to [-1000, 1000] HU then z-scores over voxels > 0
+    # (SAM-Med3D/utils/data_loader.py:62 + train.py:133
+    #  tio.ZNormalization(masking_method=lambda x: x > 0)).
+    #
+    # We use the linear window here rather than `mode: znorm` because the WINDOW
+    # is the substantive mismatch — [-1024, 2048] compresses soft tissue ~1.5x
+    # vs [-1000, 1000] — whereas z-score-vs-linear is (per volume) close to an
+    # affine reparametrization the first conv can absorb. `mode: znorm` is
+    # implemented and reproduces upstream exactly; swap it in for an ablation:
+    #   intensity: {mode: znorm, a_min: -1000.0, a_max: 1000.0, mask_threshold: 0.0}
+    # NOTE: znorm emits standard-deviation units, so check `aug_scale` in
+    # transforms.py:_intensity_aug_scale before comparing it to a windowed run.
+    #
+    # Unfixed and NOT fixable here: SAM-Med3D pretrained on 128^3 @ 1.5 mm
+    # (192 mm FOV) but the adapter resizes our 96^3 @ 1.5 mm patch (144 mm) up
+    # to its 128^3 canvas -> 1.125 mm effective voxels, a 1.33x scale mismatch.
+    intensity:
+      a_min: -1000.0
+      a_max: 1000.0
+      b_min: 0.0
+      b_max: 1.0
+      clip: true
   kwargs:
     arch: vit_b_ori
     patch_size: 16

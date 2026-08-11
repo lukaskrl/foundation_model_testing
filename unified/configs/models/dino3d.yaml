@@ -1,21 +1,47 @@
 model:
   name: dino3d
-  # observed 17.9 GB at bs=2 (AMP) — small per-sample footprint (small token grid).
-  # bs=4 -> ~30 GB, plenty of slack on a 48 GB GPU.
-  batch_size: 4
+  # DEFAULT: 3DINO ViT-L wrapped in the repo's 3D ViT-Adapter (Chen et al.) —
+  # a SpatialPriorModule pyramid bidirectionally fused with the plain ViT via
+  # deformable Injector/Extractor interaction blocks, so the pretrained
+  # representation feeds every contract scale (not just stride-16). This is the
+  # faithful plain-ViT dense-prediction recipe. Ablations live in siblings:
+  #   dino3d_upsample.yaml  -> probe-honest (no raw-input conv branch)
+  #   pyramid_mode: spm     -> parallel SpatialPriorModule (set kwarg to switch)
+  # SyncBatchNorm is swapped for GroupNorm so it trains at small batch on 1 GPU.
+  #
+  # Heavier than the get_intermediate_layers path (deformable attention + SPM +
+  # retained ViT-block activations), so batch_size is dropped and gradient
+  # checkpointing (with_cp) is on. Tune with grad_accum to recover eff-batch.
+  # 96^3, with_cp+bf16: bs=2 -> ~14 GB reserved (probed on GPU1). eff-batch 4
+  # via grad_accum matches the original dino3d full-finetune run.
+  batch_size: 2
+  grad_accum_steps: 2
   weights: /store/home/skrljl/projects/foundation_models/weights/3DINO/3dino_vit_weights.pth
+  preprocessing:
+    # 3DINO normalizes by PER-VOLUME PERCENTILES, not a fixed HU window
+    # (3DINO/dinov2/data/transforms.py:64, called with min_int=-1.0 from
+    # eval/linear3d.py:471 and eval/segmentation3d.py:130):
+    #   ScaleIntensityRangePercentilesd(lower=0.05, upper=99.95,
+    #                                   b_min=-1.0, b_max=1.0, clip=True)
+    # A fixed HU window is a different transform family, not just a different
+    # window. The additive augmentations are auto-rescaled to this [-1, 1]
+    # range (transforms.py:_intensity_aug_scale).
+    intensity:
+      mode: percentile
+      lower: 0.05
+      upper: 99.95
+      b_min: -1.0
+      b_max: 1.0
+      clip: true
   kwargs:
-    arch: vit_large_3d        # vit_base_3d or vit_large_3d
-    # 3DINO was pretrained with 112³ patches (7×7×7 token grid). Constructing
-    # the ViT at img_size=112 matches the pretrained pos_embed exactly; the
-    # ViT's interpolate_pos_encoding handles arbitrary input sizes at forward.
+    arch: vit_large_3d
+    # img_size sets the pos-embed pretrain grid (112 -> 7^3, matches the
+    # 3DINO checkpoint); interpolate_pos_encoding handles the runtime patch.
     img_size: 112
     patch_size: 16
     in_chans: 1
-    extract_blocks: [5, 11, 17, 23]
-    # Probe-honest pyramid: synthesize all 5 contract levels by channel-
-    # projecting + trilinearly upsampling the ViT bottleneck (no fresh
-    # SpatialPriorModule conv on the raw input). A frozen run then measures the
-    # pretrained representation itself, symmetric with the CNN encoders' 1x1
-    # neck. Set to `spm` to restore the raw-input conv branch (ablation).
-    pyramid_mode: upsample
+    pyramid_mode: vit_adapter
+    conv_inplane: 32
+    deform_num_heads: 8
+    drop_path_rate: 0.1
+    with_cp: true

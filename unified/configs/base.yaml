@@ -19,7 +19,19 @@ data:
   classes_file: unified/data/classes.txt
   spacing: [1.5, 1.5, 1.5]             # mm, isotropic resample target
   # Default HU window matches the CT-FM pretraining recipe (broad CT range).
-  # Per-encoder overrides live in model.preprocessing.intensity.
+  #
+  # Per-encoder overrides live in model.preprocessing.intensity and are EXPECTED
+  # for every encoder: the normalization a model was pretrained with is part of
+  # its input interface, not a tunable recipe knob, so matching it is what makes
+  # the comparison fair rather than what breaks it. Supported `mode` values
+  # (see unified/data/transforms.py:_orient_intensity_list):
+  #   range      linear HU window          -> [b_min, b_max]   (default)
+  #   percentile per-volume 0.05/99.95     -> [b_min, b_max]   (3DINO)
+  #   sigmoid    nonlinear soft-tissue     -> (0, 1)
+  #   znorm      clamp + masked z-score    -> ~N(0, 1)         (SAM-Med3D)
+  # The additive intensity augmentations below are auto-rescaled to whatever
+  # range the chosen mode emits (transforms.py:_intensity_aug_scale) so a model
+  # on [-1, 1] is not silently augmented at half strength.
   intensity:
     a_min: -1024.0
     a_max: 2048.0

@@ -4,6 +4,13 @@ model:
   batch_size: 2
   amp: false
   weights: /store/home/skrljl/projects/foundation_models/weights/VISTA/vista3d_pretrained_model/model_monai1.3.pt
+  preprocessing:
+    intensity:
+      a_min: -963.8247715525971
+      a_max: 1053.678477684517
+      b_min: 0.0
+      b_max: 1.0
+      clip: true
   kwargs:
     init_filters: 48
     blocks_down:

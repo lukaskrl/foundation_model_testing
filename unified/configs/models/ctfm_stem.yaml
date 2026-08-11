@@ -1,0 +1,36 @@
+# ARM S — CT-FM with the matched conv stem.
+#
+# Single-variable partner of configs/models/ctfm.yaml (Arm N). Identical in every
+# field except `stem_fusion: true`, which makes build_backbone wrap the encoder in
+# StemFusionBackbone: the shared SpatialPriorModule3D runs on the raw volume and is
+# summed into contract levels 0-3 (strides 1, 2, 4, 8), level 4 untouched.
+#
+# For a CNN this adds a FRESH stem alongside the pretrained one. That is the point:
+# CT-FM's own stride-1 level is `conv_init` plus one residual block — a two-conv
+# stem on raw voxels — so the honest contrast against a ViT is pretrained-stem vs
+# fresh-stem, not stem vs no-stem. Expect the Arm S - Arm N delta here to be ~0;
+# a CNN has little fine detail left to recover. That near-zero is the control that
+# makes a large ViT delta interpretable.
+#
+# Added capacity is 349,584 parameters, bit-identical to every other Arm S model.
+model:
+  name: ctfm
+  amp: true
+  batch_size: 4
+  weights: /store/home/skrljl/projects/foundation_models/weights/CT-FM/ct_fm_feature_extractor/model.safetensors
+  preprocessing:
+    axcodes: SPL
+    intensity:
+      a_min: -1024.0
+      a_max: 2048.0
+      b_min: 0.0
+      b_max: 1.0
+      clip: true
+  kwargs:
+    init_filters: 32
+    blocks_down: [1, 2, 2, 4, 4]
+    in_channels: 1
+    norm: instance
+    # --- the only difference from ctfm.yaml ---
+    stem_fusion: true
+    stem_inplanes: 16
