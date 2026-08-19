@@ -94,7 +94,10 @@ def main():
 
     trainable_params = [p for p in model.parameters() if p.requires_grad]
     optimizer = build_optimizer(cfg, trainable_params)
-    loss_fn = build_loss(cfg)
+    # .to(device) matters: with train.loss.ce_class_weights set, CrossEntropyLoss
+    # holds the weight vector as a buffer, and leaving it on CPU fails the
+    # forward with a device mismatch. Trainer already does this (trainer.py).
+    loss_fn = build_loss(cfg).to(device)
 
     # Random data shaped like a single batch.
     p = args.patch

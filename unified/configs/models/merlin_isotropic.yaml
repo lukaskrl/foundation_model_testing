@@ -1,0 +1,35 @@
+# A/B partner of configs/models/merlin.yaml (input_mode: native_spacing).
+#
+# Both run the same I3D-ResNet-152 tower with the same 722,784-parameter adapter;
+# they differ ONLY in where the factor-2 depth reduction happens:
+#
+#   native_spacing  pool the INPUT depth by 2 -> the encoder sees the
+#                   1.5 x 1.5 x 3.0 mm geometry it was pretrained on, and every
+#                   native level lands exactly on a cubic contract stride.
+#   isotropic       run the encoder on the framework's 1.5 mm isotropic patch and
+#                   pool each LEVEL's depth by 2 instead. The encoder sees depth at
+#                   twice the resolution it was pretrained for.
+#
+# Parameter-identical (pooling has no parameters), so this is a clean
+# single-variable test of whether respecting Merlin's pretrained voxel geometry
+# matters. See docs/HEAD_DESIGN.md.
+model:
+  name: merlin
+  batch_size: 2
+  grad_accum_steps: 2
+  weights: /store/home/skrljl/projects/foundation_models/weights/Merlin/merlin_i3resnet_image_tower.pt
+  preprocessing:
+    # SRA, not RAS — must stay identical to merlin.yaml or this stops being a
+    # single-variable A/B. See the axis note there: d0 must be S because merlin.py
+    # consumes d0 as the I3D time axis, which is what upstream's forward-time
+    # permute makes S.
+    axcodes: SRA
+    intensity:
+      mode: range
+      a_min: -1000.0
+      a_max: 1000.0
+      b_min: 0.0
+      b_max: 1.0
+      clip: true
+  kwargs:
+    input_mode: isotropic

@@ -5,11 +5,11 @@ model:
   weights: /store/home/skrljl/projects/foundation_models/weights/SAM-Med3D/sam_med3d_turbo.pth
   preprocessing:
     intensity:
+      mode: znorm
       a_min: -1000.0
       a_max: 1000.0
-      b_min: 0.0
-      b_max: 1.0
-      clip: true
+      mask_threshold: 0.0
+      aug_scale: 14.0
   kwargs:
     arch: vit_b_ori
     patch_size: 16

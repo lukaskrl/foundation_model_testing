@@ -1,0 +1,49 @@
+# ARM N — 3DINO ViT-L, multi-layer assembly. The probe-honest default.
+#
+# Each contract level reads a DIFFERENT transformer block instead of five
+# projections of one: blocks 5/11/17/23 (the DPT + UNETR tap set for a 24-block
+# ViT-L) feed levels 0/1/2/3, and block 23 also serves level 4. Earliest tap to
+# the finest level, since early blocks are less abstracted and the fine levels
+# are where local detail belongs.
+#
+# This replaces dino3d_upsample.yaml as Arm N. That config read `layers[-1]` and
+# discarded the other three — 1 of 24 blocks, against a published standard of 4,
+# with the discarded blocks computed either way. That was an unforced handicap,
+# not a fairness choice, so fixing it costs nothing: same parameter count
+# (1,017,792 adapter params, identical to upsample), same single forward pass, no
+# raw-input branch.
+#
+# What it does NOT fix: resolution. Every block emits the same 6x6x6 token grid at
+# a 96^3 patch, so the finest level is still a resampled stride-16 map and the
+# patch embed's 4:1 compression (16^3 voxels -> 1024 dims) is untouched. The taps
+# are also nested — a late block still carries what an early one contributed — so
+# expect a modest effect, not a gap-closer. Run against dino3d_upsample.yaml to
+# quantify it; the two differ only in which tensor each level reads, and the
+# coarsest level receives the same block-23 tensor in both.
+model:
+  name: dino3d
+  # observed 17.9 GB at bs=2 (AMP); bs=4 -> ~30 GB on a 48 GB GPU.
+  batch_size: 4
+  weights: /store/home/skrljl/projects/foundation_models/weights/3DINO/3dino_vit_weights.pth
+  preprocessing:
+    # 3DINO normalizes by PER-VOLUME PERCENTILES, not a fixed HU window
+    # (3DINO/dinov2/data/transforms.py:64). A fixed window is a different
+    # transform family, not just a different window.
+    intensity:
+      mode: percentile
+      lower: 0.05
+      upper: 99.95
+      b_min: -1.0
+      b_max: 1.0
+      clip: true
+  kwargs:
+    arch: vit_large_3d
+    # Constructing at img_size=112 matches the pretrained pos_embed exactly;
+    # interpolate_pos_encoding handles other input sizes at forward.
+    img_size: 112
+    patch_size: 16
+    in_chans: 1
+    # Ascending, and now actually all used. Fewer taps than levels is allowed —
+    # the deepest serves the remaining coarse levels.
+    extract_blocks: [5, 11, 17, 23]
+    pyramid_mode: layerwise

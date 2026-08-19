@@ -1,13 +1,13 @@
 # ARM S — 3DINO ViT-L with the matched conv stem.
 #
-# Single-variable partner of configs/models/dino3d_upsample.yaml (Arm N). Identical
+# Single-variable partner of configs/models/dino3d_layerwise.yaml (Arm N). Identical
 # in every field except `stem_fusion: true`, which makes build_backbone wrap the
 # encoder in StemFusionBackbone: the shared SpatialPriorModule3D runs on the raw
 # volume and is summed into contract levels 0-3, level 4 untouched.
 #
-# The inner pyramid_mode stays `upsample`, NOT `spm`. Two reasons:
+# The inner pyramid_mode is `layerwise`, matching Arm N, NOT `spm`. Two reasons:
 #   * `spm` REPLACES the fine levels, so the ViT contributes nothing below stride
-#     16. Arm S FUSES, so the upsampled bottleneck and the stem both reach the
+#     16. Arm S FUSES, so the per-layer taps and the stem both reach the
 #     decoder — the ViT keeps its say at every level.
 #   * StemFusionBackbone rejects `spm` / `vit_adapter` outright, since those
 #     already run a raw-input branch and wrapping them would stack two stems and
@@ -37,7 +37,7 @@ model:
     patch_size: 16
     in_chans: 1
     extract_blocks: [5, 11, 17, 23]
-    pyramid_mode: upsample
-    # --- the only difference from dino3d_upsample.yaml ---
+    pyramid_mode: layerwise
+    # --- the only difference from dino3d_layerwise.yaml ---
     stem_fusion: true
     stem_inplanes: 16

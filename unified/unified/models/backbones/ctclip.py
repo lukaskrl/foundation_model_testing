@@ -434,6 +434,15 @@ class CTClipBackbone(BackboneInterface):
         ``canvas=None`` uses the pretrained in-plane size (``image_size``).
         Depth is padded, never resized, so the z token count is
         ``ceil(D / temporal_patch_size)`` regardless of canvas.
+
+        Dim 2 is treated as CTViT's temporal axis and dims 3-4 as its in-plane
+        grid, matching the ``b c (t pt) (h p1) (w p2)`` rearrange in
+        ``to_patch_emb``. **That only reproduces pretraining if dim 2 is the
+        axial slice axis**, which is set by ``model.preprocessing.axcodes``, not
+        here: upstream's tensor reaches the encoder as (C, Z, X, Y), so the
+        configs orient to ``SRA``. Under RAS the coarse 10-slice temporal patches
+        would run left-right and the fine 20x20 grid would sit on a sagittal
+        plane — CTViT's anisotropy transposed. See configs/models/ctclip.yaml.
         """
         B, C, D, H, W = x.shape
         if C != 1:

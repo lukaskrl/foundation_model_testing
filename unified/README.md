@@ -1,125 +1,158 @@
-# Unified TotalSegmentator Fine-Tuning Framework
+# Unified Fine-Tuning Framework for 3D CT Foundation Models
 
-A single, config-driven fine-tuning and evaluation framework for comparing medical-imaging
-foundation models on the [TotalSegmentator v2](https://github.com/wasserth/TotalSegmentator)
-CT dataset. The premise: **swap the pretrained encoder, keep everything else identical.**
+A config-driven framework for comparing pretrained medical-imaging encoders under one
+adaptation interface. The premise: **swap the pretrained encoder, keep everything else
+identical** — then measure what pretraining is actually worth, at which annotation
+budget, and for which structures.
 
 ```
-config = pick(unified/configs/models/*.yaml)
-→ same TotalSegmentator preprocessing
-→ same patch size, batch size, optimizer, LR schedule, loss, augmentation, # epochs
-→ same uniform segmentation head (decoder)
-→ same evaluator (Dice/HD95 per class, on the same held-out subjects)
-→ different pretrained backbone
+config = configs/models/*.yaml
+→ same TotalSegmentator preprocessing, patch size, sampler, augmentation
+→ same optimizer, LR schedule, loss, epoch budget          (train: is config-locked)
+→ same 5-level feature contract and shared decoder
+→ same evaluator (gt-present Dice / HD95 per class, same held-out subjects)
+→ different pretrained encoder
 ```
 
-## Status
+Two benchmark tracks: **segmentation** on TotalSegmentatorV2 (117 structures) and a
+**classification** linear probe on CT-RATE (18-way chest abnormalities).
 
-This repo is a **scaffold**. It compiles a clean interface around six foundation-model
-encoders, a shared U-Net-style decoder, a shared trainer, and a shared evaluator. Some
-per-model adapters are reference implementations (3DINO, VoCo, VISTA) and some are
-stubs that still need wiring (STU-Net, BiomedParse, CT-CLIP) — see
-[docs/ADDING_A_MODEL.md](docs/ADDING_A_MODEL.md) for the contract each adapter must
-satisfy.
+## Encoders
 
-| Model | Backbone | Status | Notes |
+All 12 adapters below are implemented, weight-loading asserted, and shape-verified
+against the contract. Two are report-supervised (`ctclip`, `merlin`) and they differ in
+architecture family, so "vision-language pretraining" is not confounded with "columnar
+ViT".
+
+| Config | Encoder | Pretraining | Contract mode |
 |---|---|---|---|
-| `voco_b` / `voco_h` | SwinUNETR-B / H | adapter implemented | Native 5-level hierarchy |
-| `vista3d` | SegResNet-DS encoder | adapter implemented | Drops VISTA's class/point heads |
-| `dino3d` | DinoVisionTransformer3d | adapter implemented | UNETR-style pyramid from ViT layers [5,11,17,23] |
-| `stunet_small` / `stunet_huge` | nnU-Net V1 encoder | adapter stub | Needs upstream `uni-medical/STU-Net` cloned to access encoder code |
-| `biomedparse` | Focal backbone (2D) | adapter stub | Slice-wise; not strictly comparable, see `docs/HEAD_DESIGN.md` |
-| `ctclip` | CTViT spatial encoder | adapter stub | Single-scale bottleneck; head uses learned upsampling pyramid |
+| `ctfm` | SegResNet-DS encoder | SSL, ~148 k CT volumes | `native` (1:1, 5 levels) |
+| `vista3d` | SegResNet-DS encoder | supervised segmentation | `native` (1:1, 5 levels) |
+| `voco_b` / `voco_h` | SwinUNETR-B / H | SSL, ~160 k volumes | `native` + stride-1 conv stem |
+| `suprem_unet` | UNet3D encoder | supervised (AbdomenAtlas) | `native` + stride-16 strided conv |
+| `suprem_segresnet` | MONAI SegResNet | supervised (AbdomenAtlas) | `native` + stride-16 strided conv |
+| `suprem_swinunetr` | MONAI Swin | supervised (AbdomenAtlas) | `native` + stride-1 conv stem |
+| `biomedparse` | FocalNet (2D, per-slice) | supervised, multi-modality | `native` + depth mixers + stem |
+| `ctclip` | CTViT image tower | vision-language (reports) | `upsample` |
+| `merlin` | I3D-ResNet-152 image tower | vision-language (reports + EHR codes) | `native` + stride-1 conv stem |
+| `sam_med3d` | ViT (promptable SAM) | promptable segmentation | `upsample` |
+| `dino3d` | ViT-L/16 (3DINO) | SSL (DINOv2-style) | `layerwise` |
 
-Models intentionally excluded: **SAM-Med3D** (prompt-based — no automatic full-volume
-seg), **LVM-Med** (2D SAM, single-mask decoder).
+Variant configs for controlled A/B pairs: `ctclip_layerwise`, `ctclip_multiscale`,
+`dino3d_upsample`, `dino3d_vitadapter`, `merlin_isotropic`, `ctfm_stem`, `dino3d_stem`,
+`ctfm_mask2former`, `ctfm_unet_128`.
+
+**Not implemented:** `stunet_*` is a registered stub that raises `NotImplementedError`.
+It needs the upstream repo vendored plus a PyTorch 1.10 / nnU-Net V1 environment, and it
+is not part of the benchmark. Treat those configs and `requirements-stunet.txt` as dead.
+
+## The contract
+
+Encoders disagree about feature hierarchy: SegResNet gives 5 native scales, Swin gives 5
+at shifted strides, a plain ViT gives one scale (or N at the same scale), a VAE-style
+tower gives one bottleneck. If each used its native decoder you would be comparing
+encoder + decoder + schedule, not the encoder. So every backbone is wrapped to expose
+
+**5 feature maps at strides `(1, 2, 4, 8, 16)` with channels `(32, 64, 128, 256, 512)`,
+finest first**
+
+and one shared decoder (8,674,072 parameters) is trained on top. Everything trainable
+after the encoder lives under `self.adapter`, which is what makes a frozen run a
+representation probe. Adapter budgets span 292 k – 1.22 M across the 12 encoders.
+
+See [docs/HEAD_DESIGN.md](docs/HEAD_DESIGN.md) for the contract rationale, the adapter
+modes, measured parameter counts, and the arm structure.
+
+## Experiment arms
+
+| Arm | What it measures | Probe? |
+|---|---|---|
+| **N** | the encoder as delivered — pretrained weights → thin neck → shared head | **yes** |
+| **S** | Arm N plus a shared raw-input stem fused into strides 1–8, at a bit-identical +349,584 params | no |
+| **B** | best-effort dense recipe (3D ViT-Adapter, bidirectional fusion) | no |
+
+Arm S exists for the delta, not the level: `compensable = gap_N − gap_S` separates
+"missing fine detail, a cheap stem fixes it" from "missing pretrained semantics."
+Never merge S or B rows into the Arm N column — filter on the manifest's `arm` /
+`probe_comparable` columns.
 
 ## Layout
 
 ```
 unified/
 ├── configs/
-│   ├── base.yaml                  # shared data/training/eval — never change to make a model "fit"
-│   └── models/
-│       ├── voco_b.yaml
-│       ├── voco_h.yaml
-│       ├── vista3d.yaml
-│       ├── dino3d.yaml
-│       ├── stunet_small.yaml
-│       ├── stunet_huge.yaml
-│       ├── biomedparse.yaml
-│       └── ctclip.yaml
+│   ├── base.yaml              # shared recipe; train: is locked against overrides
+│   ├── models/                # one per encoder + variant configs
+│   └── lowshot/               # generated matrix + MANIFEST.csv
 ├── unified/
-│   ├── data/                      # TotalSegmentator dataset + shared preprocessing
+│   ├── data/                  # TotalSegmentator + CT-RATE datasets, transforms, cache
 │   ├── models/
-│   │   ├── backbones/             # per-model wrappers (one file per foundation model)
-│   │   ├── head.py                # the shared UnifiedSegHead
-│   │   ├── seg_model.py           # SegModel = backbone + head, the thing being trained
+│   │   ├── backbones/         # per-encoder adapters + _neck.py (shared necks)
+│   │   ├── stem_fusion.py     # Arm S wrapper
+│   │   ├── head.py            # HEAD_REGISTRY + UnifiedSegHead
+│   │   ├── mask2former_head.py
+│   │   ├── seg_model.py       # SegModel = backbone + head
 │   │   └── registry.py
-│   ├── training/                  # trainer, loss, optimizer/scheduler
-│   ├── evaluation/                # sliding-window inference + Dice/HD95
-│   └── utils/                     # config loader, logging, checkpoint
-├── scripts/
-│   ├── prepare_data.py            # one-shot: build train/val/test manifests from meta.csv
-│   ├── train.py                   # CLI: python -m scripts.train --config configs/models/voco_b.yaml
-│   ├── evaluate.py
-│   └── verify_setup.py
+│   ├── training/              # trainer, loss, optimizer/scheduler
+│   ├── evaluation/            # sliding-window inference + Dice/HD95
+│   └── utils/                 # config loader (the fairness lock), logging, checkpoint
+├── scripts/                   # train, evaluate, matrix generation + launchers
 └── docs/
-    ├── ARCHITECTURE.md            # the framework design, in detail
-    ├── HEAD_DESIGN.md             # why this decoder, what's "fair", what's not
-    └── ADDING_A_MODEL.md          # how to add a new backbone in <100 LoC
+    ├── HEAD_DESIGN.md         # contract, adapter modes, arms  ← start here
+    ├── ARCHITECTURE.md        # module map, config precedence, both tracks
+    └── ADDING_A_MODEL.md      # how to add an encoder
 ```
-
-## Why a unified head?
-
-Pretrained backbones differ in feature hierarchy: SwinUNETR gives 5 native scales,
-SegResNet gives 4, a ViT gives 1 (or N at the same scale), a VAE encoder gives 1
-bottleneck. If each model used its native decoder, you'd be comparing
-backbone + decoder + loss + schedule — not just the backbone. So we standardize the
-decoder: every backbone is wrapped to expose **four feature maps at strides
-{4, 8, 16, 32}** with **fixed channel counts {64, 128, 256, 512}**, and a single
-U-Net-style decoder is trained on top. See `docs/HEAD_DESIGN.md` for the channel/stride
-math and the known limitations of this choice for CT-CLIP and BiomedParse.
 
 ## Environment
 
-This scaffold installs nothing. Once you decide to run it:
-
 ```bash
-python -m venv .venv && source .venv/bin/activate
+python -m venv env && source env/bin/activate
 pip install -r requirements.txt
 ```
 
-Two environments are unavoidable:
-
-- **Default** (`requirements.txt`): PyTorch ≥ 2.2, MONAI ≥ 1.3, nibabel, tqdm,
-  pyyaml. Covers 3DINO, VoCo, VISTA-3D, CT-CLIP, BiomedParse.
-- **STU-Net** (`requirements-stunet.txt`): PyTorch 1.10 + nnU-Net V1 (1.7.0). STU-Net's
-  weights are nnU-Net V1 checkpoints — they need the upstream `uni-medical/STU-Net` code
-  cloned at `vendor/STU-Net/` and the old PyTorch.
+PyTorch ≥ 2.2, MONAI ≥ 1.3, nibabel, tqdm, pyyaml. Several adapters import from sibling
+checkouts in the parent directory (`3DINO/`, `BiomedParse/`, `CT-CLIP/`, `Merlin/`), so keep the
+repo layout intact.
 
 ## Data
 
-Path is hard-coded in `configs/base.yaml`:
-`/store/Datasets/TotalSegmentatorDataset/`. The dataset directory is **read-only**;
-all preprocessing happens in-memory at training time (resample → intensity normalize →
-random crop). Train/val/test split comes from `meta.csv`'s `split` column
-(1082 / 57 / 89 subjects).
+`configs/base.yaml` points at `/store/Datasets/TotalSegmentatorDataset/` (read-only).
+Split comes from `meta.csv`'s `split` column: **1082 train / 57 val / 89 test**. The
+117-class map is the alphabetical enumeration of `segmentations/*.nii.gz` with background
+as class 0 — see `unified/data/totalsegmentator.py`.
 
-The 117-class label map is built by enumerating `segmentations/*.nii.gz` in any subject
-(class index = sorted alphabetical order of organ names + background as class 0).
-See `unified/data/totalsegmentator.py` for the canonical class list.
+CT-RATE is streamed and cached separately by `scripts/ctrate_cache.py`.
 
 ## Running
 
 ```bash
-# build the train/val/test manifest (one-time)
+# one-time manifest build
 python -m scripts.prepare_data
 
-# fine-tune VoCo-B
-python -m scripts.train --config configs/models/voco_b.yaml --output runs/voco_b_run1
+# single run
+python -m scripts.train --config configs/models/ctfm.yaml --output runs/ctfm_run1
 
-# evaluate
-python -m scripts.evaluate --config configs/models/voco_b.yaml \
-    --checkpoint runs/voco_b_run1/best.pt
+# final evaluation (full metric list incl. HD95)
+python -m scripts.evaluate --config configs/models/ctfm.yaml \
+    --checkpoint runs/ctfm_run1/best.pt
+
+# low-shot matrix: regenerate configs, then launch a filtered slice
+python -m scripts.gen_lowshot_configs
+GPU=1 COND=frz_pt FRAC=1.0 PROBE=True bash scripts/run_lowshot_matrix.sh
+
+# classification track
+python -m scripts.ctrate_linprobe --models ctfm vista3d --roi 128 128 128
 ```
+
+The launcher is manifest-driven and resume-resilient (it skips completed `.done` runs),
+which matters on a shared node where the OOM killer intervenes. Filters: `COND`, `FRAC`,
+`BACKBONE`, `ADAPTER`, `PROBE`.
+
+## Two results worth knowing before you read numbers
+
+- **Dice must be averaged over gt-present classes only.** A case holds ~60 of 117
+  structures; scoring absent classes as 0.0 halves the apparent result. The evaluator
+  masks on label-derived gt-presence, matching CT-FM's `ignore_empty=True`.
+- **A frozen run is only a probe if every trainable parameter sits in a thin neck.**
+  `pyramid_mode` values `spm` and `vit_adapter` put a randomly-initialised conv branch on
+  the raw input and are flagged `probe_comparable=False` throughout.

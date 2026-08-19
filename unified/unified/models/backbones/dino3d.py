@@ -24,7 +24,9 @@ import torch.nn as nn
 
 from ..registry import register_backbone
 from ..seg_model import BackboneInterface
-from ._neck import UpsampleNeck, ChannelNeck, SpatialPriorModule3D  # noqa: F401
+from ._neck import (  # noqa: F401
+    UpsampleNeck, ChannelNeck, LayerTapNeck, SpatialPriorModule3D,
+)
 # SpatialPriorModule3D moved to _neck.py (the generic StemFusionBackbone needs it
 # too, and a shared wrapper must not import from a specific backbone). Re-exported
 # here so `from .dino3d import SpatialPriorModule3D` in ctclip / sam_med3d keeps
@@ -169,19 +171,48 @@ class _DinoAdapter(nn.Module):
     """Adapt ViT features onto the contract pyramid.
 
     ``pyramid_mode``:
-      * ``"spm"`` (default): SPM on the raw input (strides 1..8) + 1×1
-        projection of the ViT tokens (stride 16). The fine levels come from a
-        fresh conv branch, so a frozen run is NOT a clean representation probe.
+      * ``"layerwise"`` (default): each contract level reads a DIFFERENT
+        transformer block, earliest tap to the finest level — the DPT / UNETR
+        convention for plain-ViT dense prediction. Probe-honest (no raw-input
+        branch) and parameter-matched to ``upsample``, so the two are a clean
+        single-variable pair.
       * ``"upsample"``: every level is a channel-projected, trilinearly
-        upsampled copy of the ViT tokens (``UpsampleNeck``). No raw-input
-        path — use this for frozen-encoder probes.
+        upsampled copy of ONE block's tokens (``UpsampleNeck``). Kept as the
+        ablation that quantifies what reading a single block costs.
+      * ``"spm"``: SPM on the raw input (strides 1..8) + 1×1 projection of the
+        ViT tokens (stride 16). The fine levels come from a fresh conv branch,
+        so a frozen run is NOT a clean representation probe. Superseded by the
+        generic ``StemFusionBackbone`` wrapper, which *fuses* rather than
+        replaces; kept for backward compatibility.
+
+    Why ``layerwise`` is the default. ``upsample`` gives all five levels to one
+    tensor, so the decoder's skips are re-projections of the tensor that produced
+    the thing they skip into — they carry nothing new. Worse, it reads 1 of the
+    ViT's 24 blocks while the published recipes read 4, and the discarded blocks
+    are computed either way. That was an unforced handicap, not a fairness
+    choice.
+
+    What it does NOT buy: resolution. Every block emits the same token grid, so
+    the finest level is still a resampled stride-16 map and the tokenizer's 4:1
+    compression is untouched. And because the residual stream is nested, a late
+    tap still carries what an early one contributed — the fine levels get
+    less-abstracted access to information that largely survived anyway, not
+    information that would otherwise be gone. Expect a modest effect.
     """
 
     def __init__(self, embed_dim: int, contract_channels, spm_inplanes: int = 16,
-                 pyramid_mode: str = "spm"):
+                 pyramid_mode: str = "layerwise", level_sources=None):
         super().__init__()
         self.pyramid_mode = pyramid_mode
-        if pyramid_mode == "spm":
+        if pyramid_mode == "layerwise":
+            if level_sources is None:
+                raise ValueError("pyramid_mode='layerwise' requires level_sources")
+            self.layer_neck = LayerTapNeck(
+                in_channels=embed_dim,
+                level_sources=level_sources,
+                contract_channels=contract_channels,
+            )
+        elif pyramid_mode == "spm":
             # Fine levels come from a SpatialPriorModule on raw input.
             self.spm = SpatialPriorModule3D(
                 in_channels=1,
@@ -208,7 +239,8 @@ class _DinoAdapter(nn.Module):
             )
         else:
             raise ValueError(
-                f"unknown pyramid_mode {pyramid_mode!r}; expected 'spm' or 'upsample'"
+                f"unknown pyramid_mode {pyramid_mode!r}; expected 'layerwise', "
+                "'upsample' or 'spm'"
             )
 
 
@@ -223,8 +255,8 @@ class DinoBackbone(BackboneInterface):
         in_chans: int = 1,
         extract_blocks=(5, 11, 17, 23),
         spm_inplanes: int = 16,
-        pyramid_mode: str = "vit_adapter",
-        # vit_adapter-mode knobs (ignored by spm/upsample modes)
+        pyramid_mode: str = "layerwise",
+        # vit_adapter-mode knobs (ignored by layerwise/spm/upsample modes)
         conv_inplane: int = 32,
         deform_num_heads: int = 8,
         drop_path_rate: float = 0.0,
@@ -257,12 +289,33 @@ class DinoBackbone(BackboneInterface):
             block_chunks=4,
             **_arch_kwargs(arch),
         )
-        # We only need the last extract_block for the stride-16 semantic level,
-        # but we still accept the historical 4-block list (the others are
-        # ignored). This keeps existing per-model configs compatible.
-        self.extract_blocks = tuple(extract_blocks)
+        # `layerwise` reads every entry; `upsample` / `spm` use only the deepest
+        # for their single stride-16 tensor. The default (5, 11, 17, 23) is the
+        # DPT / UNETR tap set for a 24-block ViT-L.
+        self.extract_blocks = tuple(int(b) for b in extract_blocks)
         if not self.extract_blocks:
             raise ValueError("dino3d requires at least one extract_block")
+        depth = _arch_kwargs(arch)["depth"]
+        bad = [b for b in self.extract_blocks if not 0 <= b < depth]
+        if bad:
+            raise ValueError(
+                f"extract_blocks {bad} out of range for a {depth}-block {arch}"
+            )
+        if list(self.extract_blocks) != sorted(self.extract_blocks):
+            raise ValueError(
+                f"extract_blocks must be ascending so the earliest tap feeds the "
+                f"finest contract level; got {list(self.extract_blocks)}"
+            )
+
+        # Tap -> contract level. Ascending taps, earliest to the finest level:
+        # the DPT / UNETR convention, since early blocks are less abstracted and
+        # the fine levels are where local detail belongs. With fewer taps than
+        # levels the deepest tap serves the remaining coarse levels — so the
+        # COARSEST level always receives exactly the tensor `upsample` would have
+        # used, which keeps upsample-vs-layerwise a clean single-variable A/B.
+        n_levels = len(self.EXPECTED_CHANNELS)
+        n_taps = len(self.extract_blocks)
+        self.level_sources = tuple(min(i, n_taps - 1) for i in range(n_levels))
 
         if weights:
             _assert_vit_loaded(*_load_dino_weights(self.vit, weights))
@@ -272,6 +325,7 @@ class DinoBackbone(BackboneInterface):
             contract_channels=self.EXPECTED_CHANNELS,
             spm_inplanes=spm_inplanes,
             pyramid_mode=pyramid_mode,
+            level_sources=self.level_sources if pyramid_mode == "layerwise" else None,
         )
 
     def _build_vit_adapter(self, *, weights, arch, img_size, patch_size,
@@ -318,9 +372,10 @@ class DinoBackbone(BackboneInterface):
             # ViT-Adapter runs in adapter_forward (ViT params are frozen via
             # requires_grad, not via a no_grad wrapper).
             return [x]
-        # We use just the deepest extracted layer for the stride-16 level.
         # `get_intermediate_layers` returns a tuple in the order of
-        # `extract_blocks`; the last one is the deepest.
+        # `extract_blocks` (ascending), each already reshaped to (B, C, d, h, w)
+        # and normed. The blocks are computed by the ViT either way — `upsample`
+        # and `spm` simply discard all but the deepest.
         layers = self.vit.get_intermediate_layers(
             x,
             n=self.extract_blocks,
@@ -328,17 +383,22 @@ class DinoBackbone(BackboneInterface):
             return_class_token=False,
             norm=True,
         )
-        tokens = layers[-1]
+        if self.pyramid_mode == "layerwise":
+            # Every tap reaches the adapter, ascending by block index.
+            return [x, *layers]
         # Pass raw input alongside the ViT tokens so the trainable SPM can
         # consume it in the adapter step.
-        return [x, tokens]
+        return [x, layers[-1]]
 
     def adapter_forward(self, native, input_shape):
         if self.pyramid_mode == "vit_adapter":
             (x_in,) = native
             feats4 = self.vit_adapter(x_in)      # [stride2,4,8,16] @ embed_dim
             return self.adapter(feats4)          # -> contract [stride1..16]
-        x_in, tokens = native
+        x_in, *rest = native
+        if self.adapter.pyramid_mode == "layerwise":
+            return self.adapter.layer_neck(rest, input_shape)
+        (tokens,) = rest
         if self.adapter.pyramid_mode == "upsample":
             return self.adapter.upsample_neck(tokens, input_shape)
         fine = self.adapter.spm(x_in)            # 4 tensors @ strides 1..8

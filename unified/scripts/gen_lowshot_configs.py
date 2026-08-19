@@ -59,7 +59,38 @@ BACKBONES = {
     "voco_h": "vocoH",
     "ctclip": "ctclip",
     "sam_med3d": "samMed3d",
-    "dino3d_upsample": "dino3d",
+    "dino3d_layerwise": "dino3d",
+    # Second report-supervised encoder, and the only hierarchical one. With
+    # ctclip alone, "report-supervised" was confounded with "columnar ViT", so no
+    # claim about the pretraining PARADIGM was possible from n=1.
+    "merlin": "merlin",
+}
+
+# Within-arm ablations: same arm letter and same probe-honesty as their BACKBONES
+# twin, isolating ONE neck choice. Not extra encoders — they carry their own run
+# tag so the headline column stays one row per model.
+#
+# `dino3d_upsample` is the single-block neck the matrix used to run: all five
+# contract levels were projections of block 23, with blocks 5/11/17 computed and
+# discarded. Arm N now reads all four (dino3d_layerwise), so this row measures
+# what the 1-of-24 choice cost. Parameter-matched to its twin (1,017,792 adapter
+# params either way) and the coarsest level reads the same block-23 tensor in
+# both, so the pair differs only in which tensor each level reads.
+#
+# Only a couple of cells need running (frz_pt at f010 and f100 is enough to size
+# the effect) — the full 20 are generated for consistency, not because they should
+# all be queued.
+# `merlin_isotropic` is the same tower and the same 722,784-param adapter as the
+# Arm N `merlin` row, differing only in WHERE the factor-2 depth reduction happens
+# (input before the encoder vs each level after it). Merlin was pretrained at
+# 1.5 x 1.5 x 3.0 mm while this framework locks 1.5 mm isotropic, so this row
+# measures what respecting its pretrained voxel geometry is worth. Pooling has no
+# parameters, so the pair is exactly parameter-matched. Like dino3dU, only a couple
+# of cells need running (frz_pt at f010 and f100 sizes the effect); the full 20 are
+# generated for consistency, not because they should all be queued.
+ABLATIONS = {
+    "dino3d_upsample": "dino3dU",
+    "merlin_isotropic": "merlinISO",
 }
 
 # Best-effort arms that share the matrix's recipe and batch but are NOT
@@ -138,10 +169,11 @@ def build(dry_run: bool = False) -> None:
     rows = []
     arm_of = {
         **{s: "N" for s in BACKBONES},
+        **{s: "N" for s in ABLATIONS},   # same arm, one neck choice varied
         **{s: "S" for s in ARM_S},
         **{s: "B" for s in EXTRA_ARMS},
     }
-    for stem, tag in {**BACKBONES, **ARM_S, **EXTRA_ARMS}.items():
+    for stem, tag in {**BACKBONES, **ABLATIONS, **ARM_S, **EXTRA_ARMS}.items():
         base_model = _load_model_block(stem)
         kw = base_model.get("kwargs", {})
         # CNN encoders have a native pyramid and no pyramid_mode knob at all.
@@ -194,11 +226,15 @@ def build(dry_run: bool = False) -> None:
     n = len(rows)
     per_arm = len(CONDITIONS) * len(FRACTIONS)
     print(f"{'PLANNED' if dry_run else 'WROTE'} {n} configs "
-          f"({len(BACKBONES)} backbones + {len(ARM_S)} arm-S + {len(EXTRA_ARMS)} "
-          f"extra arms, x {len(CONDITIONS)} conditions x {len(FRACTIONS)} fractions)")
+          f"({len(BACKBONES)} backbones + {len(ABLATIONS)} ablation + {len(ARM_S)} "
+          f"arm-S + {len(EXTRA_ARMS)} extra arms, x {len(CONDITIONS)} conditions "
+          f"x {len(FRACTIONS)} fractions)")
     print(f"  conditions : {[c for *_, c in CONDITIONS]}")
     print(f"  fractions  : {[f'{int(f*100)}%' for f in FRACTIONS]}")
     print(f"  arm N      : {len(BACKBONES) * per_arm} probe-comparable configs")
+    for stem, tag in ABLATIONS.items():
+        print(f"  arm N abl  : {per_arm} configs  ls_{tag}_*  <- {stem} "
+              f"(neck ablation; only a couple of cells need running)")
     for stem, tag in ARM_S.items():
         print(f"  arm S      : {per_arm} configs  ls_{tag}_*  <- {stem} "
               f"(matched stem; subtract against its arm-N twin)")

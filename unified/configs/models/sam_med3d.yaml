@@ -11,24 +11,43 @@ model:
     # (SAM-Med3D/utils/data_loader.py:62 + train.py:133
     #  tio.ZNormalization(masking_method=lambda x: x > 0)).
     #
-    # We use the linear window here rather than `mode: znorm` because the WINDOW
-    # is the substantive mismatch — [-1024, 2048] compresses soft tissue ~1.5x
-    # vs [-1000, 1000] — whereas z-score-vs-linear is (per volume) close to an
-    # affine reparametrization the first conv can absorb. `mode: znorm` is
-    # implemented and reproduces upstream exactly; swap it in for an ablation:
-    #   intensity: {mode: znorm, a_min: -1000.0, a_max: 1000.0, mask_threshold: 0.0}
-    # NOTE: znorm emits standard-deviation units, so check `aug_scale` in
-    # transforms.py:_intensity_aug_scale before comparing it to a windowed run.
+    # This previously used a linear window on the argument that z-score-vs-linear
+    # is "close to an affine reparametrization the first conv can absorb". That
+    # argument does not hold, on two counts:
+    #   1. It assumes the conv can adapt. In the frozen arm — half the matrix, and
+    #      the headline probe column — the encoder is fixed, so nothing absorbs
+    #      anything and the offset/scale mismatch is fed straight to pretrained
+    #      weights.
+    #   2. ZNormalization is per-volume and data-dependent (mean/std over the
+    #      >0 HU mask), so it is not a fixed affine at all. It is adaptive
+    #      contrast normalization, which is a substantive part of what makes the
+    #      encoder scanner-robust, not a reparametrization.
+    # `mode: znorm` reproduces upstream exactly, mask_threshold 0.0 included.
+    #
+    # znorm emits standard-deviation units rather than a declared range, so the
+    # additive intensity augmentations (shift 0.10, noise std 0.10) need
+    # `aug_scale` or they stop being the same strength relative to signal as they
+    # are for the [0,1]-window encoders — see transforms.py:_intensity_aug_scale.
+    #
+    # 14.0 is MEASURED, not assumed: over 8 val cases the masked (HU > 0) signal
+    # std is ~0.068 in window units and 1.0 in znorm units, i.e. a ratio of
+    # median 13.9 / mean 14.3 (range 10.5-21.3). At the default aug_scale 1.0 the
+    # additive augs would have been ~14x weaker here than for every other
+    # encoder, which would have traded the normalization confound this fix
+    # removes for an augmentation-strength one. The 10.5-21.3 spread is
+    # irreducible — ZNormalization is per-volume adaptive, so no single constant
+    # is exact for every case; it is a property of the normalization, not of this
+    # choice of constant.
     #
     # Unfixed and NOT fixable here: SAM-Med3D pretrained on 128^3 @ 1.5 mm
     # (192 mm FOV) but the adapter resizes our 96^3 @ 1.5 mm patch (144 mm) up
     # to its 128^3 canvas -> 1.125 mm effective voxels, a 1.33x scale mismatch.
     intensity:
+      mode: znorm
       a_min: -1000.0
       a_max: 1000.0
-      b_min: 0.0
-      b_max: 1.0
-      clip: true
+      mask_threshold: 0.0
+      aug_scale: 14.0
   kwargs:
     arch: vit_b_ori
     patch_size: 16

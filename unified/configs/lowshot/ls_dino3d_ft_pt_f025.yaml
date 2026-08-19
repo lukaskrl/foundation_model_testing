@@ -21,7 +21,7 @@ model:
     - 11
     - 17
     - 23
-    pyramid_mode: upsample
+    pyramid_mode: layerwise
   grad_accum_steps: 2
   freeze_backbone: false
   pretrained: true

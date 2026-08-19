@@ -5,6 +5,28 @@ model:
   batch_size: 3   # VRAM sweep: 40.7/51.5 GB reserved at eff=6 (96^3 patch); bs4 = 50.2 GB
   weights: /store/home/skrljl/projects/foundation_models/weights/CT-CLIP/models/CT-CLIP-Related/CT-CLIP_v2.pt
   preprocessing:
+    # AXIS ORDER. CTViT is a "video" model: `to_patch_emb` rearranges
+    # `b c (t pt) (h p1) (w p2)`, so dim 2 is the temporal axis (10-deep patches)
+    # and dims 3-4 are in-plane (20x20 patches). Tracing CT-CLIP/scripts/data.py
+    # (transpose(2,0,1) -> resize -> transpose(1,2,0) -> crop/pad to 480x480x240
+    # -> permute(2,0,1)) shows the tensor reaching the encoder is (C, Z, X, Y):
+    # the temporal axis is the AXIAL SLICE axis and the 480^2 in-plane grid is the
+    # axial plane.
+    #
+    # This adapter feeds the encoder d0 as temporal and (d1, d2) as in-plane
+    # (ctclip.py:_to_tokens), so d0 must be S. Under RAS d0 is R, which put the
+    # coarse 10-slice temporal patches across the patient and the fine 20x20
+    # in-plane grid on a SAGITTAL plane — an anisotropy exactly transposed from
+    # the one CTViT was pretrained with. SRA fixes the plane.
+    #
+    # Residual uncertainty, stated rather than hidden: the in-plane HANDEDNESS
+    # (R,A vs L,P) depends on CT-RATE's on-disk orientation, and no raw CT-RATE
+    # NIfTI is available on this machine to check it (only the HU-int16 cache).
+    # SRA matches merlin.yaml and the rest of the suite's RAS in-plane convention.
+    # If it turns out CT-RATE ships LPS, the correct code is SLP and the
+    # difference is an in-plane 180 degree rotation — second-order next to having
+    # had the wrong plane entirely, but worth confirming if raw data reappears.
+    axcodes: SRA
     # CT-CLIP's own normalization (CT-CLIP/scripts/data.py:122-125):
     #   clip to [-1000, 1000] HU, then /1000  ->  [-1, 1], ZERO-CENTERED.
     # It previously got [-1024, 2048] -> [0, 1], i.e. the wrong center AND the

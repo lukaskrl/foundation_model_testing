@@ -1,0 +1,52 @@
+# Merlin (Stanford MIMI, Nature 2026): I3D-ResNet-152 image tower of a 3D CT
+# vision-language model trained on radiology reports + structured EHR codes.
+#
+# The suite's SECOND report-supervised encoder alongside ctclip, and the only
+# hierarchical one — so "report-supervised" is no longer confounded with
+# "columnar ViT". See docs/HEAD_DESIGN.md.
+model:
+  name: merlin
+  batch_size: 2          # matrix-uniform (bs2 x accum2 = 8 patches); see note below
+  grad_accum_steps: 2
+  # Image tower extracted from the released CLIP checkpoint
+  # (i3_resnet_clinical_longformer_..._epoch_99.pt, 1.08 GB, keys prefixed
+  # `encode_image.i3_resnet.`). The adapter also accepts that full checkpoint
+  # directly and strips the prefix itself; the slimmed file just avoids loading
+  # the Clinical-Longformer text tower we cannot even construct here
+  # (`transformers` is deliberately not installed).
+  weights: /store/home/skrljl/projects/foundation_models/weights/Merlin/merlin_i3resnet_image_tower.pt
+  preprocessing:
+    # Merlin's own preprocessing (Nature 2026 methods): reorient to RAS, window
+    # to [-1000, 1000] HU. Its spacing (1.5 x 1.5 x 3.0 mm) is NOT reproducible
+    # here — `data.spacing` is 1.5 mm isotropic and locked for cross-backbone
+    # comparison — so the depth mismatch is handled inside the adapter by
+    # `input_mode` instead.
+    #
+    # WHY SRA AND NOT RAS. Upstream reorients to RAS and then `I3ResNet.forward`
+    # permutes the LAST axis onto dim 2, so the inflated convs' "time" axis is S
+    # (the axial slice direction) and the in-plane axes are R, A. This framework
+    # hands the backbone (B, 1, d0, d1, d2) and merlin.py consumes d0 as the time
+    # axis with no permute — so under RAS (d0 = R) the time axis would be
+    # left-right: Merlin's pretraining geometry rotated 90 degrees, with
+    # `native_spacing`'s 3.0 mm landing ACROSS the patient instead of along the
+    # scan axis, and the inflated 2D kernels seeing sagittal planes.
+    #
+    # SRA puts S on d0 and keeps in-plane (R, A) exactly as upstream, i.e. it
+    # performs in the orientation step precisely the permutation upstream does in
+    # its forward. Orientation is applied on the fly and is NOT part of the disk
+    # cache key (see ARCHITECTURE.md), so changing it costs no cache rebuild.
+    axcodes: SRA
+    intensity:
+      mode: range
+      a_min: -1000.0
+      a_max: 1000.0
+      b_min: 0.0
+      b_max: 1.0
+      clip: true
+  kwargs:
+    # native_spacing: average-pool input depth by 2 so the encoder sees the
+    # 1.5 x 1.5 x 3.0 mm geometry it was pretrained on, which also makes every
+    # native level land exactly on a cubic contract stride. Set to `isotropic`
+    # to run the encoder at 1.5 mm iso and pool each level's depth instead —
+    # parameter-identical, so the two are a clean single-variable A/B.
+    input_mode: native_spacing

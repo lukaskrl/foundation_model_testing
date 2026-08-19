@@ -21,7 +21,7 @@ model:
     - 11
     - 17
     - 23
-    pyramid_mode: upsample
+    pyramid_mode: layerwise
     stem_fusion: true
     stem_inplanes: 16
   grad_accum_steps: 2

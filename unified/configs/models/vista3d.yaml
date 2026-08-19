@@ -1,9 +1,19 @@
 model:
   name: vista3d
   batch_size: 3   # VRAM sweep: 37.3/51.5 GB reserved (fp32) at eff=6; bs4 = 49.5 GB
-  # fp16 AMP diverged in the prior sweep around epoch 78 (loss-scaler couldn't
-  # recover); fp32 is ~30% slower but stable.
-  amp: false
+  # NO `amp:` override — vista3d inherits train.amp like every other encoder.
+  #
+  # It used to carry `amp: false` because fp16 AMP diverged around epoch 78 (the
+  # loss scaler could not recover). That workaround is obsolete: the trainer now
+  # prefers bf16 autocast wherever the GPU supports it (trainer.py:45-53), and
+  # bf16 shares fp32's 8-bit exponent, so the overflow that caused that
+  # divergence cannot occur and no GradScaler is involved.
+  #
+  # Leaving it in was a fairness defect, not just dead weight. `model.amp` is
+  # read ahead of `train.amp`, so it escapes the base.yaml `train:` lock — and it
+  # made the suite's top scorer the one model running a different numerical
+  # recipe from the other sixteen. Do not reintroduce it without re-running the
+  # whole matrix in fp32.
   weights: /store/home/skrljl/projects/foundation_models/weights/VISTA/vista3d_pretrained_model/model_monai1.3.pt
   preprocessing:
     # VISTA-3D's own HU window (VISTA/vista3d/configs/finetune/*.yaml:

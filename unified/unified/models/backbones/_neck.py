@@ -45,6 +45,37 @@ class ChannelNeck(nn.Module):
         return self.act(self.norm(self.proj(x)))
 
 
+class ConvStem(nn.Module):
+    """Two 3×3×3 convs on the raw input volume → the stride-1 contract level.
+
+    For encoders whose native pyramid starts at stride 2 or coarser (the Swin
+    family, an inflated 2D ResNet, a per-slice 2D backbone) the finest contract
+    level cannot come from pretrained features, and we never upsample them. A
+    small fresh stem fills exactly that one level while strides 2–16 still come
+    from the encoder, which is why ``native``-mode backbones using it remain
+    probe-comparable — unlike ``spm``, which supplies four of the five levels.
+
+    ``voco.py`` keeps a structurally identical stem inline rather than importing
+    this one: its parameter names appear in already-trained ``best.pt`` files, and
+    renaming them would break resuming or re-evaluating those runs. Keep the two
+    in sync — same layers, same parameter count (28,640 at the defaults).
+    """
+
+    def __init__(self, out_ch: int, in_ch: int = 1, hidden_ch: int = 32):
+        super().__init__()
+        self.body = nn.Sequential(
+            nn.Conv3d(in_ch, hidden_ch, kernel_size=3, padding=1, bias=False),
+            nn.GroupNorm(_group_count(hidden_ch), hidden_ch),
+            nn.ReLU(inplace=True),
+            nn.Conv3d(hidden_ch, out_ch, kernel_size=3, padding=1, bias=False),
+            nn.GroupNorm(_group_count(out_ch), out_ch),
+            nn.ReLU(inplace=True),
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.body(x)
+
+
 class DownsampleNeck(nn.Module):
     """2×2×2 stride-2 conv + GroupNorm + ReLU. One factor-2 downsample step.
 
