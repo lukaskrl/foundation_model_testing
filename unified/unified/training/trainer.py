@@ -13,7 +13,7 @@ import torch
 import wandb
 from tqdm.auto import tqdm
 
-from ..utils import get_logger, save_checkpoint, load_checkpoint
+from ..utils import get_logger, save_checkpoint, load_checkpoint, finalize_run
 from .loss import build_loss
 from .optim import build_optimizer, build_scheduler
 
@@ -140,19 +140,29 @@ class Trainer:
         Logging config lives in a top-level ``wandb:`` block in base.yaml — it is
         infrastructure, not a fair-comparison hyperparameter, so it sits outside
         the locked train/data/eval blocks. The run id is derived from the output
-        directory name so ``--resume`` continues the same W&B run rather than
-        spawning a duplicate. WANDB_MODE in the environment overrides the config
+        directory name (plus ``wandb.run_tag``) so ``--resume`` continues the same
+        W&B run rather than spawning a duplicate — bump ``run_tag`` to keep a
+        rerun from appending to a previous generation's history under the same
+        output-dir name. WANDB_MODE in the environment overrides the config
         mode (set it to ``offline`` on nodes without network, ``disabled`` to mute
         logging entirely — wandb.log then becomes a no-op).
         """
         wcfg = self.cfg.get("wandb", {}) or {}
         run_id = "".join(c if c.isalnum() or c in "-_" else "-"
                          for c in self.output_dir.name)
+        # A generation tag keeps a rerun off an older run's history: resume="allow"
+        # means a colliding id APPENDS rather than starting fresh, so reusing an
+        # output-dir name across framework versions silently interleaves the two.
+        run_tag = str(wcfg.get("run_tag", "") or "").strip()
+        run_name = f"{self.output_dir.name}-{run_tag}" if run_tag else self.output_dir.name
+        if run_tag:
+            run_id = f"{run_id}-{run_tag}"
         wandb.init(
             project=wcfg.get("project", "unified-foundation-models"),
             entity=wcfg.get("entity"),
-            name=self.output_dir.name,
+            name=run_name,
             id=run_id,
+            group=run_tag or None,
             resume="allow",
             dir=str(self.output_dir),
             mode=os.environ.get("WANDB_MODE", wcfg.get("mode", "online")),
@@ -385,12 +395,14 @@ class Trainer:
                         scheduler=self.scheduler, scaler=self.scaler,
                         epoch=epoch, extra={"best_dice": self.best_dice},
                     )
-                    # Rotate: keep only the 2 most recent epoch checkpoints.
-                    # /store filled at 22 TB during the earlier sweep with
-                    # 20 x 3.8 GB checkpoints per model; best.pt is preserved
-                    # separately and is what downstream eval uses.
+                    # Rotate: keep only the N most recent epoch checkpoints
+                    # (checkpoint.keep_epoch_ckpts). An earlier sweep filled the
+                    # volume at 22 TB with 20 x 3.8 GB checkpoints per model.
+                    # best.pt is preserved separately and is what eval uses; the
+                    # rolling ones exist purely so the OOM-resume loop can resume.
+                    keep = int(self.cfg.get("checkpoint", {}).get("keep_epoch_ckpts", 2))
                     epoch_ckpts = sorted(self.output_dir.glob("epoch_*.pt"))
-                    for old in epoch_ckpts[:-2]:
+                    for old in epoch_ckpts[:-keep] if keep > 0 else epoch_ckpts:
                         try:
                             old.unlink()
                         except OSError as e:
@@ -404,5 +416,16 @@ class Trainer:
                 time.time() - t_total, self.best_dice,
                 self.start_epoch + 1, total_epochs, total_epochs,
             )
+
+            # Clean finish (ran to completion or early-stopped) — drop the
+            # resume state and keep only the deliverable. Deliberately inside
+            # the `try`: a crashed or OOM-killed run must keep its epoch_*.pt so
+            # the launcher's retry loop can resume it.
+            if self.cfg.get("checkpoint", {}).get("finalize_on_finish", True):
+                summary = finalize_run(self.output_dir, cfg=self.cfg)
+                self.log.info(
+                    "finalized: removed %d epoch checkpoint(s), freed %.2f GB",
+                    summary["removed"], summary["freed_bytes"] / 1e9,
+                )
         finally:
             wandb.finish()

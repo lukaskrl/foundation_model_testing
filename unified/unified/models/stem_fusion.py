@@ -46,10 +46,41 @@ from .seg_model import BackboneInterface
 from .backbones._neck import SpatialPriorModule3D, _group_count
 
 
-# Inner pyramid modes that already run a raw-input conv branch. Wrapping one of
-# these would stack two stems and silently double the added capacity, which
-# breaks the "constant across backbones" property the arm depends on.
+# Inner pyramid modes that already source MOST of the contract from a raw-input
+# conv branch. Wrapping one of these would stack two stems and silently double the
+# added capacity, which breaks the "constant across backbones" property the arm
+# depends on.
+#
+# Note the distinction this set encodes. Several probe-honest backbones run a
+# SMALL raw-input stem for the one or two levels their encoder cannot reach
+# (``voco``/``suprem_swinunetr`` and ``merlin`` at stride 1, ``biomedparse`` at
+# strides 1-2). Those are fine to wrap — the wrapper's SPM is summed alongside,
+# the added capacity is still the same constant, and the contrast is simply
+# "one fresh stem" vs "two". The modes below are different in kind: they already
+# supply strides 1-8 (all four levels the wrapper touches) from raw voxels, so
+# wrapping them adds a redundant second copy of the same thing.
 _ALREADY_HAS_STEM = {"spm", "vit_adapter"}
+
+
+def _effective_pyramid_mode(inner) -> str | None:
+    """The inner backbone's pyramid mode, wherever that backbone records it.
+
+    ``dino3d`` sets ``self.pyramid_mode`` on the backbone. ``ctclip`` and
+    ``sam_med3d`` set it only on their inner ``self.adapter``. Reading just the
+    backbone attribute therefore returned ``None`` for those two, so a ``spm``
+    ctclip / sam_med3d slipped past the ``_ALREADY_HAS_STEM`` check and got
+    wrapped — stacking a second SpatialPriorModule on the raw input, doubling the
+    added capacity, and destroying the bit-identical constant that makes Arm S a
+    controlled comparison rather than per-backbone tuning.
+
+    Harmless while Arm S was a two-model pilot on ctfm + dino3d; load-bearing now
+    that the arm covers ctclip and sam_med3d.
+    """
+    for obj in (inner, getattr(inner, "adapter", None)):
+        mode = getattr(obj, "pyramid_mode", None)
+        if mode is not None:
+            return mode
+    return None
 
 
 class _StemFusionAdapter(nn.Module):
@@ -100,7 +131,7 @@ class StemFusionBackbone(BackboneInterface):
                     "encoder/adapter split so the frozen probe keeps the "
                     "pretrained encoder under no_grad."
                 )
-        mode = getattr(inner, "pyramid_mode", None)
+        mode = _effective_pyramid_mode(inner)
         if mode in _ALREADY_HAS_STEM:
             raise ValueError(
                 f"pyramid_mode={mode!r} already runs a raw-input conv branch; "

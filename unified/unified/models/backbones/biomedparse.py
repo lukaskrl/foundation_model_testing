@@ -30,8 +30,10 @@ import torch.nn.functional as F
 
 from ..registry import register_backbone
 from ..seg_model import BackboneInterface
+from ._loading import assert_encoder_loaded
+from ...utils.paths import upstream
 
-BIOMED_REPO = Path("/store/home/skrljl/projects/foundation_models/BiomedParse")
+BIOMED_REPO = upstream("BiomedParse")
 
 
 def _import_focal():
@@ -175,13 +177,10 @@ class BiomedParseBackbone(BackboneInterface):
                         break
             if not focal_state:
                 focal_state = state
-            missing, unexpected = self.focal.load_state_dict(focal_state, strict=False)
-            n_loaded = len(focal_state) - len(unexpected)
-            if n_loaded < 50:
-                raise RuntimeError(
-                    f"BiomedParse: only {n_loaded} keys actually loaded into FocalNet; "
-                    "prefix likely still mismatched"
-                )
+            assert_encoder_loaded(
+                "biomedparse", self.focal,
+                self.focal.load_state_dict(focal_state, strict=False),
+            )
 
         self.adapter = _BiomedAdapter(
             native_channels=native_channels,

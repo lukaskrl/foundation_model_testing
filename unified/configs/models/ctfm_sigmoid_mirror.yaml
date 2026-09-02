@@ -21,7 +21,7 @@ model:
   amp: true
   batch_size: 5          # x num_samples_per_volume(2) = 10 patches/forward
   grad_accum_steps: 1    # eff optimizer batch = 5*2*1 = 10 (bigger-batch tuning; VRAM probe 37.2 peak / 43.5 reserved GB @96^3, fits 49GB). NOTE this also lifts opt-batch 8->10 vs the ctfm_unet_96 baseline, an added variable on top of the mirror.
-  weights: /store/home/skrljl/projects/foundation_models/weights/CT-FM/ct_fm_feature_extractor/model.safetensors
+  weights: /home/lukas/projects/foundation_model_testing/weights/CT-FM/ct_fm_feature_extractor/model.safetensors
   preprocessing:
     axcodes: SPL
     # Standard CT-FM linear HU window (matches base.yaml + CT-FM pretraining).

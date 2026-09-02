@@ -16,8 +16,8 @@
 # Pins CUDA_VISIBLE_DEVICES=1 (train.py uses cuda:0 -> physical GPU 1). Override
 # with GPU=0 env if GPU 0 is the free card:  GPU=0 bash scripts/run_ctfm_unet_128.sh
 
-REPO="/store/home/skrljl/projects/foundation_models/unified"
-PY="/store/home/skrljl/projects/foundation_models/env/bin/python"
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PY="${PY:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/env/bin/python}"
 cd "$REPO" || { echo "cannot cd to $REPO"; exit 1; }
 
 export CUDA_VISIBLE_DEVICES="${GPU:-1}"

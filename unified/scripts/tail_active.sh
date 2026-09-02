@@ -5,7 +5,7 @@
 # next model. Read-only; safe to start/stop/reattach at any time.
 #
 # Usage: tail_active.sh [PTR_FILE]   (default runs/ACTIVE_LOG)
-REPO="/store/home/skrljl/projects/foundation_models/unified"
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PTR="${1:-$REPO/runs/ACTIVE_LOG}"
 
 echo "viewer: following active training log via $PTR"

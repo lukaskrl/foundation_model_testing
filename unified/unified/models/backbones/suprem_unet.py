@@ -25,9 +25,11 @@ import torch.nn as nn
 
 from ..registry import register_backbone
 from ..seg_model import BackboneInterface
+from ._loading import assert_encoder_loaded
 from ._neck import PyramidNeck
+from ...utils.paths import upstream
 
-SUPREM_REPO = Path("/store/home/skrljl/projects/foundation_models/SuPreM")
+SUPREM_REPO = upstream("SuPreM")
 
 
 def _import_unet3d():
@@ -76,16 +78,10 @@ class SupremUNet3DBackbone(BackboneInterface):
                 raise RuntimeError(
                     "SuPreM U-Net: no 'backbone.*' keys found in checkpoint"
                 )
-            missing, unexpected = self.unet.load_state_dict(state, strict=False)
-            critical_missing = [
-                k for k in missing
-                if k.startswith(("down_tr64.", "down_tr128.", "down_tr256.", "down_tr512."))
-            ]
-            if len(critical_missing) > 5:
-                raise RuntimeError(
-                    f"SuPreM U-Net: too many missing encoder keys "
-                    f"({len(critical_missing)}). Sample: {critical_missing[:5]}"
-                )
+            assert_encoder_loaded(
+                "suprem_unet", self.unet,
+                self.unet.load_state_dict(state, strict=False),
+            )
 
         # Native channels at strides (1, 2, 4, 8).
         native_ch = (64, 128, 256, 512)

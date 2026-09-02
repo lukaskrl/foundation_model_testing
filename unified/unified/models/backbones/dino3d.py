@@ -27,12 +27,13 @@ from ..seg_model import BackboneInterface
 from ._neck import (  # noqa: F401
     UpsampleNeck, ChannelNeck, LayerTapNeck, SpatialPriorModule3D,
 )
+from ...utils.paths import upstream
 # SpatialPriorModule3D moved to _neck.py (the generic StemFusionBackbone needs it
 # too, and a shared wrapper must not import from a specific backbone). Re-exported
 # here so `from .dino3d import SpatialPriorModule3D` in ctclip / sam_med3d keeps
 # working.
 
-DINO_REPO = Path("/store/home/skrljl/projects/foundation_models/3DINO")
+DINO_REPO = upstream("3DINO")
 
 
 def _import_dino_vit():
@@ -423,3 +424,34 @@ class DinoBackbone(BackboneInterface):
                 p.requires_grad_(False)
             return
         super().freeze_encoder()
+
+    def trainable_modules(self):
+        """Modules that must stay in ``train()`` mode when the encoder is frozen.
+
+        The base rule returns ``[self.adapter]``, which is correct for every mode
+        whose trainable parameters all live there. ``vit_adapter`` is the same
+        exception it is for ``freeze_encoder`` above: its SpatialPriorModule and
+        Injector/Extractor interaction blocks (~25.9 M trainable parameters) are
+        bundled inside ``self.vit_adapter`` alongside the frozen ViT, so the
+        default would leave them in **eval** for the whole of a frozen run.
+
+        That is not cosmetic. ``configs/models/dino3d_vitadapter.yaml`` sets
+        ``drop_path_rate: 0.1``, and ``adapter_modules.DropPath.forward`` reads
+        ``self.training`` — so without this override DropPath is silently OFF for
+        the ``frz_pt`` / ``frz_sc`` rows and ON for ``ft_pt`` / ``ft_sc``, putting
+        a regularization difference inside Arm B's frozen-vs-finetuned contrast,
+        which is the one comparison that arm exists to support. Same class of bug
+        ``StemFusionBackbone.trainable_modules`` was written to avoid.
+
+        Every child of ``vit_adapter`` except the pretrained ``vit_model`` stays
+        trainable under ``freeze_encoder``, so those are exactly what is restored;
+        ``vit_model`` is deliberately left in eval. ``level_embed`` is a bare
+        ``nn.Parameter``, which train/eval does not affect.
+        """
+        if self.pyramid_mode != "vit_adapter":
+            return super().trainable_modules()
+        return [
+            self.adapter,
+            *(child for name, child in self.vit_adapter.named_children()
+              if name != "vit_model"),
+        ]

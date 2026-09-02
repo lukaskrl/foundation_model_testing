@@ -1,17 +1,28 @@
-"""Disk cache for the deterministic preprocessing prefix.
+"""Disk cache for the MODEL-INDEPENDENT preprocessing prefix.
 
-The deterministic prefix (Orientationd → Spacingd → ScaleIntensityRanged →
-CropForegroundd) is the same for a given (axcodes, spacing, intensity, margin)
-tuple across every epoch — and the resample is the bulk of per-sample CPU. We
-run it once, pickle the result to ``<cache_dir>/<fingerprint>/<sid>.pt``, and
-load from there on every subsequent access.
+The cached prefix is ``EnsureTyped → Spacingd → CropForegroundd →
+ClassesToIndicesd`` — deterministic, and identical for every encoder. The
+resample is the bulk of per-sample CPU, so we run it once, pickle the result to
+``<cache_dir>/<fingerprint>/<sid>.pt``, and load from there on every subsequent
+access.
+
+Orientation and intensity windowing are deliberately NOT cached even though they
+are deterministic: they are per-encoder (``model.preprocessing``), so caching
+them would fork the cache per encoder. They run on the fly after the load, from
+``build_train_post_transforms`` / ``build_val_post_transforms``, which is what
+lets ONE cache directory serve every model.
+
+The fingerprint follows from that: it hashes only spacing, crop-foreground margin
+and the class-index bake — **not** axcodes or the HU window. Two consequences
+worth knowing:
+
+* every Arm W window variant shares the existing cache, so forcing a window costs
+  no repopulation;
+* changing spacing or the crop margin forks the cache, and the old directory has
+  to be deleted by hand once the new one is warm.
 
 Random transforms (patch sampling, flips, intensity jitter, …) must stay
 per-epoch and are passed in as ``post_transforms``.
-
-The fingerprint is a short hash of every deterministic transform arg, so
-configs with different orientation or HU windows naturally live in separate
-subdirectories — caches never silently collide.
 """
 from __future__ import annotations
 import hashlib

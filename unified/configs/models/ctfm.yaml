@@ -15,7 +15,7 @@ model:
   # Encoder-only safetensors. The full-SegResNet variant
   # (weights/CT-FM/ct_fm_segresnet/model.safetensors) also works — the adapter
   # strips the decoder weights at load time.
-  weights: /store/home/skrljl/projects/foundation_models/weights/CT-FM/ct_fm_feature_extractor/model.safetensors
+  weights: /home/lukas/projects/foundation_model_testing/weights/CT-FM/ct_fm_feature_extractor/model.safetensors
   preprocessing:
     # CT-FM was pretrained in SPL orientation; feed it data in the same frame.
     axcodes: SPL

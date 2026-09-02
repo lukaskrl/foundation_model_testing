@@ -138,10 +138,10 @@ def _merge_labels(
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--dataset-root", default="/store/Datasets/TotalSegmentatorDataset")
+    ap.add_argument("--dataset-root", default="/home/lukas/data/TotalSegmentatorDataset")
     ap.add_argument(
         "--meta-csv",
-        default="/store/Datasets/TotalSegmentatorDataset/meta.csv",
+        default="/home/lukas/data/TotalSegmentatorDataset/meta.csv",
     )
     ap.add_argument(
         "--splits-dir",

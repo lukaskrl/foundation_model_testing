@@ -11,7 +11,7 @@ Fairness knobs come from each model's own config (like the seg track):
 The HU cache (unified.data.ctrate) is model-independent, so ALL backbones share
 one cache.
 
-  python -m scripts.ctrate_linprobe --cache-root /store/Datasets/CTRATE \
+  python -m scripts.ctrate_linprobe --cache-root /home/lukas/data/CTRATE \
       --models ctfm vista3d voco_b suprem_unet --roi 128 128 128
 """
 from __future__ import annotations
@@ -183,17 +183,17 @@ def run_model(name, args, dev):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--cache-root", default="/store/Datasets/CTRATE")
+    ap.add_argument("--cache-root", default="/home/lukas/data/CTRATE")
     ap.add_argument("--models", nargs="+",
                     default=["ctfm", "vista3d", "voco_b", "suprem_unet"])
     ap.add_argument("--roi", nargs=3, type=int, default=[128, 128, 128])
     ap.add_argument("--batch-size", type=int, default=2)
-    ap.add_argument("--emb-dir", default="/store/Datasets/CTRATE/_emb")
+    ap.add_argument("--emb-dir", default="/home/lukas/data/CTRATE/_emb")
     ap.add_argument("--probe-epochs", type=int, default=500)
     ap.add_argument("--probe-lr", type=float, default=1e-2)
     ap.add_argument("--probe-wd", type=float, default=1e-3)
     ap.add_argument("--seed", type=int, default=42)
-    ap.add_argument("--out", default="/store/Datasets/CTRATE/_emb/linprobe_results.json")
+    ap.add_argument("--out", default="/home/lukas/data/CTRATE/_emb/linprobe_results.json")
     args = ap.parse_args()
 
     dev = "cuda" if torch.cuda.is_available() else "cpu"

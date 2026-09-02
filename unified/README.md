@@ -19,8 +19,10 @@ Two benchmark tracks: **segmentation** on TotalSegmentatorV2 (117 structures) an
 
 ## Encoders
 
-All 12 adapters below are implemented, weight-loading asserted, and shape-verified
-against the contract. Two are report-supervised (`ctclip`, `merlin`) and they differ in
+All 12 adapters below are implemented, shape-verified against the contract, and
+weight-loading asserted through one shared guard (`assert_encoder_loaded`) that requires
+**every** encoder key to be populated — all twelve load 100 % of their keys from the
+real released checkpoints. Two are report-supervised (`ctclip`, `merlin`) and they differ in
 architecture family, so "vision-language pretraining" is not confounded with "columnar
 ViT".
 
@@ -39,8 +41,11 @@ ViT".
 | `dino3d` | ViT-L/16 (3DINO) | SSL (DINOv2-style) | `layerwise` |
 
 Variant configs for controlled A/B pairs: `ctclip_layerwise`, `ctclip_multiscale`,
-`dino3d_upsample`, `dino3d_vitadapter`, `merlin_isotropic`, `ctfm_stem`, `dino3d_stem`,
-`ctfm_mask2former`, `ctfm_unet_128`.
+`dino3d_upsample`, `dino3d_vitadapter`, `merlin_isotropic`, `ctfm_mask2former`,
+`ctfm_unet_128`. The Arm S and Arm W variants are *generated* per encoder by
+`scripts/gen_lowshot_configs.py` rather than hand-written, so every one gets a
+bit-identical stem / window (`ctfm_stem.yaml` and `dino3d_stem.yaml` remain only for
+standalone one-off runs).
 
 **Not implemented:** `stunet_*` is a registered stub that raises `NotImplementedError`.
 It needs the upstream repo vendored plus a PyTorch 1.10 / nnU-Net V1 environment, and it
@@ -65,15 +70,29 @@ modes, measured parameter counts, and the arm structure.
 
 ## Experiment arms
 
-| Arm | What it measures | Probe? |
-|---|---|---|
-| **N** | the encoder as delivered — pretrained weights → thin neck → shared head | **yes** |
-| **S** | Arm N plus a shared raw-input stem fused into strides 1–8, at a bit-identical +349,584 params | no |
-| **B** | best-effort dense recipe (3D ViT-Adapter, bidirectional fusion) | no |
+Each arm holds the encoder fixed and varies exactly one thing, so each is a controlled
+subtraction against its Arm N twin.
 
-Arm S exists for the delta, not the level: `compensable = gap_N − gap_S` separates
-"missing fine detail, a cheap stem fixes it" from "missing pretrained semantics."
-Never merge S or B rows into the Arm N column — filter on the manifest's `arm` /
+| Arm | What it varies | What it controls for | Probe? |
+|---|---|---|---|
+| **N** | nothing — the encoder as delivered | — | **yes** |
+| **S** | + a shared raw-input stem fused into strides 1–8, a bit-identical +349,584 params | **capacity** for fine detail | no |
+| **B** | best-effort dense recipe (3D ViT-Adapter, bidirectional fusion) | — (upper bound) | no |
+| **W** | the HU window, forced to one of two shared values | the **input** interface | no |
+
+The arms exist for the deltas, not the levels:
+
+```
+compensable(m)    = gap_N(m) - gap_S(m)          missing fine detail, a stem fixes it
+irreducible(m)    = gap_S(m)                     missing pretrained mid-level features
+window_cost(m, w) = score(m, w) - score(m, native)   what the input interface costs
+```
+
+Read `compensable` against the manifest's `arm_n_fine_source` column — for the four
+encoders whose Arm N stride-1 level was *already* a fresh stem, `compensable ≈ 0` means
+"detail was already routed", not "this encoder routes detail well".
+
+Never merge S, B or W rows into the Arm N column — filter on the manifest's `arm` /
 `probe_comparable` columns.
 
 ## Layout
@@ -112,16 +131,64 @@ pip install -r requirements.txt
 
 PyTorch ≥ 2.2, MONAI ≥ 1.3, nibabel, tqdm, pyyaml. Several adapters import from sibling
 checkouts in the parent directory (`3DINO/`, `BiomedParse/`, `CT-CLIP/`, `Merlin/`), so keep the
-repo layout intact.
+repo layout intact:
+
+```bash
+git submodule update --init --depth 1            # the 10 pinned upstream repos
+git clone --depth 1 https://github.com/StanfordMIMI/Merlin.git ../Merlin
+```
+
+`unified/utils/paths.py` resolves both roots from its own location, so a fresh clone
+needs no edits. Override with `FM_ROOT` (upstream checkouts) or `WEIGHTS_ROOT`
+(checkpoints) when the layout differs.
+
+## Weights
+
+```bash
+bash scripts/download_weights.sh                 # all encoders, ~15 GB
+bash scripts/download_weights.sh ctfm voco_b     # or a subset, by key
+```
+
+Resumable and idempotent — every public file is sha256-verified, so re-running after
+an interruption costs nothing. Transfers go through the `hf` CLI when it is on PATH
+(xet-chunked and parallel; one checkpoint served at ~50 kB/s over the plain resolve
+endpoint moved at ~85 MB/s through `hf`) and fall back to `curl` otherwise.
+**Three repos are gated on HuggingFace**
+(`microsoft/BiomedParse`, `AICONSlab/3DINO-ViT`, and the `ibrahimhamamci/CT-RATE`
+dataset that holds the CT-CLIP checkpoint): accept the terms on each repo page once,
+run `hf auth login`, then re-run the script — without a token those three are skipped
+and listed in the summary.
+
+`model.weights` in each config is an absolute path under `WEIGHTS_ROOT`'s default
+location. Merlin is the one derived file: the script slices the image tower out of the
+released CLIP checkpoint via `scripts/slim_merlin_tower.py` (the adapter accepts either).
 
 ## Data
 
-`configs/base.yaml` points at `/store/Datasets/TotalSegmentatorDataset/` (read-only).
-Split comes from `meta.csv`'s `split` column: **1082 train / 57 val / 89 test**. The
-117-class map is the alphabetical enumeration of `segmentations/*.nii.gz` with background
-as class 0 — see `unified/data/totalsegmentator.py`.
+```bash
+bash scripts/download_totalsegmentator.sh        # ~22 GiB, into $DATA_ROOT (default ~/data)
+python -m scripts.prepare_data                   # splits + merged label.nii.gz per subject
+```
 
-CT-RATE is streamed and cached separately by `scripts/ctrate_cache.py`.
+**v2.0.1 is pinned deliberately** (Zenodo [10047292](https://doi.org/10.5281/zenodo.10047292),
+CC BY 4.0): 1228 subjects / 117 structures, which is the split the committed
+`unified/data/splits/*.txt` and `configs/base.yaml` were built against. A different
+release silently changes the benchmark's subject set. The script cross-checks the
+extracted `meta.csv` against the expected **1082 train / 57 val / 89 test** counts.
+
+Zenodo drops long connections partway through the archive, so the script re-invokes
+`curl -C -` until the byte count matches and then verifies the md5 — a plain
+one-shot `curl` will usually die around 25% with error 18.
+
+`data.dataset_root` / `data.meta_csv` in `configs/base.yaml` name the extracted tree.
+Note the dataset root must be **writable**: `prepare_data` writes each subject's merged
+`label.nii.gz` next to its `ct.nii.gz`, which is what keeps the loader from gunzipping
+118 files per sample. The 117-class map is the alphabetical enumeration of
+`segmentations/*.nii.gz` with background as class 0 — see
+`unified/data/totalsegmentator.py`.
+
+CT-RATE (the classification track) is a separate gated HuggingFace dataset, streamed
+and cached by `scripts/ctrate_cache.py`.
 
 ## Running
 
@@ -146,9 +213,14 @@ python -m scripts.ctrate_linprobe --models ctfm vista3d --roi 128 128 128
 
 The launcher is manifest-driven and resume-resilient (it skips completed `.done` runs),
 which matters on a shared node where the OOM killer intervenes. Filters: `COND`, `FRAC`,
-`BACKBONE`, `ADAPTER`, `PROBE`.
+`BACKBONE`, `ADAPTER`, `PROBE`, `ARM`, `WINDOW`.
 
-## Two results worth knowing before you read numbers
+```bash
+GPU=2 ARM=S COND='frz_pt|ft_pt' FRAC=1.0 bash scripts/run_lowshot_matrix.sh   # 24 runs
+GPU=3 ARM=W COND='frz_pt|ft_pt' FRAC=1.0 bash scripts/run_lowshot_matrix.sh   # 36 runs
+```
+
+## Three results worth knowing before you read numbers
 
 - **Dice must be averaged over gt-present classes only.** A case holds ~60 of 117
   structures; scoring absent classes as 0.0 halves the apparent result. The evaluator
@@ -156,3 +228,10 @@ which matters on a shared node where the OOM killer intervenes. Filters: `COND`,
 - **A frozen run is only a probe if every trainable parameter sits in a thin neck.**
   `pyramid_mode` values `spm` and `vit_adapter` put a randomly-initialised conv branch on
   the raw input and are flagged `probe_comparable=False` throughout.
+- **The per-encoder HU window is not a neutral choice.** Five encoders
+  (`voco_b/h`, `suprem_*`) were pretrained with a `[-175, 250]` soft-tissue window; on
+  this whole-body task that clips **27.6 % of foreground voxels** and flattens the lungs
+  entirely (97–99 % of lung-lobe and trachea voxels). Matching each encoder's pretraining
+  normalization is a defensible default, but it means an Arm N ranking cannot separate
+  "worse representation" from "narrower input window". Arm W measures the difference —
+  quote `window_cost` beside any cross-encoder claim.

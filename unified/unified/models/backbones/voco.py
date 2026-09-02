@@ -19,6 +19,7 @@ import torch.nn as nn
 
 from ..registry import register_backbone
 from ..seg_model import BackboneInterface
+from ._loading import assert_encoder_loaded
 from ._neck import ChannelNeck
 
 
@@ -99,13 +100,10 @@ class VoCoBackbone(BackboneInterface):
         if weights:
             state = torch.load(weights, map_location="cpu", weights_only=False)
             state = _strip_prefixes(state)
-            missing, unexpected = self.swinViT.load_state_dict(state, strict=False)
-            unexpected_swin = [k for k in unexpected if "decoder" not in k and "out." not in k]
-            if unexpected_swin and len(unexpected_swin) > 20:
-                raise RuntimeError(
-                    f"VoCo: too many unexpected swinViT keys ({len(unexpected_swin)}); "
-                    "checkpoint prefix likely mismatched"
-                )
+            assert_encoder_loaded(
+                "voco", self.swinViT,
+                self.swinViT.load_state_dict(state, strict=False),
+            )
 
         # Native channels at the 5 levels of swinViT are feature_size·(1,2,4,8,16).
         # We use levels [0..3] (strides 2..16). Level 4 (stride 32) is discarded.

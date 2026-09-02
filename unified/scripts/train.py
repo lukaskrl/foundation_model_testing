@@ -82,6 +82,9 @@ def main():
     ap.add_argument("--resume", nargs="?", const=True, default=None, metavar="CKPT",
                     help="resume from a checkpoint; omit path to auto-detect the "
                          "latest checkpoint inside --output")
+    ap.add_argument("--allow-cpu", action="store_true",
+                    help="permit training on CPU; without it a missing GPU is a "
+                         "hard error instead of a ~100x slower silent fallback")
     args = ap.parse_args()
 
     cfg = load_config(args.config)
@@ -93,8 +96,18 @@ def main():
     import torch
     if torch.cuda.is_available():
         dev_desc = f"cuda ({torch.cuda.get_device_name(0)})"
-    else:
+    elif args.allow_cpu:
         dev_desc = "cpu"
+    else:
+        # A container that loses its GPU handles still has /dev/nvidia* present and
+        # still imports torch fine — it just reports no devices, and training then
+        # falls back to CPU at roughly 100x the wall time without ever erroring.
+        # That silently burned ~5 days of queue time on 2026-08-29. Fail loudly and
+        # let the queue's retry surface it; pass --allow-cpu for a deliberate CPU run.
+        log.error("no CUDA device visible (torch.cuda.is_available() is False). "
+                  "The container has probably lost its GPU handles — check "
+                  "nvidia-smi. Refusing to train on CPU; pass --allow-cpu to override.")
+        raise SystemExit(2)
     log.info("=" * 72)
     log.info("model=%s config=%s", cfg["model"]["name"], args.config)
     log.info("output=%s device=%s", args.output, dev_desc)

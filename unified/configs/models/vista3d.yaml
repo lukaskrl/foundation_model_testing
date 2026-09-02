@@ -14,7 +14,7 @@ model:
   # made the suite's top scorer the one model running a different numerical
   # recipe from the other sixteen. Do not reintroduce it without re-running the
   # whole matrix in fp32.
-  weights: /store/home/skrljl/projects/foundation_models/weights/VISTA/vista3d_pretrained_model/model_monai1.3.pt
+  weights: /home/lukas/projects/foundation_model_testing/weights/VISTA/vista3d_pretrained_model/model_monai1.3.pt
   preprocessing:
     # VISTA-3D's own HU window (VISTA/vista3d/configs/finetune/*.yaml:
     # ScaleIntensityRanged a_min=-963.8247715525971, a_max=1053.678477684517).

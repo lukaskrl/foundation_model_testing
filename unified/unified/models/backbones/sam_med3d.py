@@ -36,10 +36,12 @@ import torch.nn.functional as F
 
 from ..registry import register_backbone
 from ..seg_model import BackboneInterface
+from ._loading import assert_encoder_loaded
 from .dino3d import SpatialPriorModule3D
 from ._neck import UpsampleNeck
+from ...utils.paths import upstream
 
-SAM_REPO = Path("/store/home/skrljl/projects/foundation_models/SAM-Med3D")
+SAM_REPO = upstream("SAM-Med3D")
 
 
 def _import_image_encoder():
@@ -178,12 +180,10 @@ class SAMMed3DBackbone(BackboneInterface):
             }
             if not encoder_state:
                 encoder_state = state
-            missing, unexpected = self.encoder.load_state_dict(encoder_state, strict=False)
-            if len(missing) > 5 and not any("rel_pos" in m or "pos_embed" in m for m in missing):
-                raise RuntimeError(
-                    f"SAM-Med3D: {len(missing)} encoder keys missing — "
-                    f"checkpoint prefix mismatch? Sample: {missing[:5]}"
-                )
+            assert_encoder_loaded(
+                "sam_med3d", self.encoder,
+                self.encoder.load_state_dict(encoder_state, strict=False),
+            )
 
         self.adapter = _SAMMed3DAdapter(
             bottleneck_dim=out_chans,

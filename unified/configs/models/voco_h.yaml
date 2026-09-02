@@ -1,6 +1,6 @@
 model:
   name: voco_h
-  weights: /store/home/skrljl/projects/foundation_models/weights/VoCo/VoComni_H.pt
+  weights: /home/lukas/projects/foundation_model_testing/weights/VoCo/VoComni_H.pt
   preprocessing:
     # Same VoCo pretraining window as voco_b — see voco_b.yaml.
     intensity:

@@ -13,7 +13,7 @@
 # Launch detached so it survives this shell:
 #   setsid nohup bash scripts/watch_ctfm_mask2former.sh >/dev/null 2>&1 &
 
-REPO="/store/home/skrljl/projects/foundation_models/unified"
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT="$REPO/runs/ctfm_mask2former"
 CRASH="$OUT/crashes.log"
 POLL="${POLL:-30}"

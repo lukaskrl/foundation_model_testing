@@ -1,0 +1,1331 @@
+2026-07-17 07:57:48,933 [INFO] train: ========================================================================
+2026-07-17 07:57:48,934 [INFO] train: model=voco_b config=configs/lowshot/ls_vocoB_ft_pt_f025.yaml
+2026-07-17 07:57:48,934 [INFO] train: output=/scratch/lskrlj/runs/ls_vocoB_ft_pt_f025 device=cuda (NVIDIA A100-SXM4-40GB)
+2026-07-17 07:57:48,934 [INFO] train: epochs=500 batch_size=2 grad_accum=2 eff_batch=4 lr=0.0002 amp=True
+2026-07-17 07:57:48,934 [INFO] train: ========================================================================
+2026-07-17 07:57:48,937 [INFO] train: splits: train=1082 val=57 classes=117
+2026-07-17 07:57:48,938 [INFO] train: low-shot: train_fraction=0.2500 seed=1234 -> 270/1082 train cases
+2026-07-17 07:57:49,344 [INFO] train: disk cache: /scratch/lskrlj/cache/TotalSeg/833d9d046402 (fingerprint=833d9d046402)
+2026-07-17 07:58:12,659 [INFO] train: model voco_b, trainable params: 27603114 / 27603114 total (freeze_backbone=False)
+2026-07-17 07:58:13,786 [WARNING] trainer: --resume set but no checkpoint found in /scratch/lskrlj/runs/ls_vocoB_ft_pt_f025; starting fresh
+2026-07-17 07:58:13,786 [INFO] trainer: start: epochs 1-500/500 device=cuda amp=bf16 train_batches=135 val_batches=57
+2026-07-17 07:58:34,538 [INFO] trainer: epoch 1 step 50/135 loss=11.5051 lr=7.35e-06
+2026-07-17 07:58:52,758 [INFO] trainer: epoch 1 step 100/135 loss=11.0506 lr=1.47e-05
+2026-07-17 07:59:05,504 [INFO] trainer: epoch 1 done train_loss=11.0472 dt=51.7s
+2026-07-17 07:59:24,631 [INFO] trainer: epoch 2 step 50/135 loss=9.7410 lr=2.74e-05
+2026-07-17 07:59:42,831 [INFO] trainer: epoch 2 step 100/135 loss=9.1498 lr=3.47e-05
+2026-07-17 07:59:55,571 [INFO] trainer: epoch 2 done train_loss=9.2519 dt=50.1s
+2026-07-17 08:00:14,589 [INFO] trainer: epoch 3 step 50/135 loss=8.3733 lr=4.74e-05
+2026-07-17 08:00:32,790 [INFO] trainer: epoch 3 step 100/135 loss=7.9608 lr=5.47e-05
+2026-07-17 08:00:45,536 [INFO] trainer: epoch 3 done train_loss=8.0613 dt=50.0s
+2026-07-17 08:01:04,608 [INFO] trainer: epoch 4 step 50/135 loss=7.5072 lr=6.74e-05
+2026-07-17 08:01:22,835 [INFO] trainer: epoch 4 step 100/135 loss=7.2584 lr=7.47e-05
+2026-07-17 08:01:35,572 [INFO] trainer: epoch 4 done train_loss=7.3029 dt=50.0s
+2026-07-17 08:01:54,573 [INFO] trainer: epoch 5 step 50/135 loss=6.8079 lr=8.74e-05
+2026-07-17 08:02:12,808 [INFO] trainer: epoch 5 step 100/135 loss=6.6011 lr=9.47e-05
+2026-07-17 08:02:25,572 [INFO] trainer: epoch 5 done train_loss=6.6284 dt=50.0s
+2026-07-17 08:02:44,693 [INFO] trainer: epoch 6 step 50/135 loss=6.2062 lr=1.07e-04
+2026-07-17 08:03:02,934 [INFO] trainer: epoch 6 step 100/135 loss=5.9533 lr=1.15e-04
+2026-07-17 08:03:15,722 [INFO] trainer: epoch 6 done train_loss=6.0023 dt=50.2s
+2026-07-17 08:03:34,888 [INFO] trainer: epoch 7 step 50/135 loss=5.5691 lr=1.27e-04
+2026-07-17 08:03:53,131 [INFO] trainer: epoch 7 step 100/135 loss=5.3753 lr=1.35e-04
+2026-07-17 08:04:05,893 [INFO] trainer: epoch 7 done train_loss=5.4128 dt=50.2s
+2026-07-17 08:04:24,879 [INFO] trainer: epoch 8 step 50/135 loss=5.0673 lr=1.47e-04
+2026-07-17 08:04:43,120 [INFO] trainer: epoch 8 step 100/135 loss=4.8206 lr=1.55e-04
+2026-07-17 08:04:55,889 [INFO] trainer: epoch 8 done train_loss=4.8936 dt=50.0s
+2026-07-17 08:05:15,050 [INFO] trainer: epoch 9 step 50/135 loss=4.5852 lr=1.67e-04
+2026-07-17 08:05:33,309 [INFO] trainer: epoch 9 step 100/135 loss=4.3916 lr=1.75e-04
+2026-07-17 08:05:46,065 [INFO] trainer: epoch 9 done train_loss=4.4147 dt=50.2s
+2026-07-17 08:06:05,050 [INFO] trainer: epoch 10 step 50/135 loss=4.1153 lr=1.87e-04
+2026-07-17 08:06:23,310 [INFO] trainer: epoch 10 step 100/135 loss=3.9634 lr=1.95e-04
+2026-07-17 08:06:36,071 [INFO] trainer: epoch 10 done train_loss=3.9894 dt=50.0s
+2026-07-17 08:06:55,728 [INFO] trainer: epoch 11 step 50/135 loss=3.6410 lr=2.00e-04
+2026-07-17 08:07:13,989 [INFO] trainer: epoch 11 step 100/135 loss=3.5098 lr=2.00e-04
+2026-07-17 08:07:26,778 [INFO] trainer: epoch 11 done train_loss=3.5305 dt=50.2s
+2026-07-17 08:07:45,938 [INFO] trainer: epoch 12 step 50/135 loss=3.3373 lr=2.00e-04
+2026-07-17 08:08:04,226 [INFO] trainer: epoch 12 step 100/135 loss=3.2173 lr=2.00e-04
+2026-07-17 08:08:17,010 [INFO] trainer: epoch 12 done train_loss=3.2395 dt=50.2s
+2026-07-17 08:08:36,006 [INFO] trainer: epoch 13 step 50/135 loss=3.0806 lr=2.00e-04
+2026-07-17 08:08:54,245 [INFO] trainer: epoch 13 step 100/135 loss=2.9921 lr=2.00e-04
+2026-07-17 08:09:07,035 [INFO] trainer: epoch 13 done train_loss=2.9912 dt=50.0s
+2026-07-17 08:09:26,198 [INFO] trainer: epoch 14 step 50/135 loss=2.8313 lr=2.00e-04
+2026-07-17 08:09:44,461 [INFO] trainer: epoch 14 step 100/135 loss=2.7937 lr=2.00e-04
+2026-07-17 08:09:57,232 [INFO] trainer: epoch 14 done train_loss=2.7812 dt=50.2s
+2026-07-17 08:10:16,414 [INFO] trainer: epoch 15 step 50/135 loss=2.6790 lr=2.00e-04
+2026-07-17 08:10:34,677 [INFO] trainer: epoch 15 step 100/135 loss=2.6259 lr=2.00e-04
+2026-07-17 08:10:47,454 [INFO] trainer: epoch 15 done train_loss=2.6220 dt=50.2s
+2026-07-17 08:11:06,465 [INFO] trainer: epoch 16 step 50/135 loss=2.5399 lr=2.00e-04
+2026-07-17 08:11:24,790 [INFO] trainer: epoch 16 step 100/135 loss=2.5018 lr=2.00e-04
+2026-07-17 08:11:37,594 [INFO] trainer: epoch 16 done train_loss=2.5066 dt=50.1s
+2026-07-17 08:11:56,830 [INFO] trainer: epoch 17 step 50/135 loss=2.4507 lr=2.00e-04
+2026-07-17 08:12:15,084 [INFO] trainer: epoch 17 step 100/135 loss=2.3909 lr=2.00e-04
+2026-07-17 08:12:27,910 [INFO] trainer: epoch 17 done train_loss=2.4052 dt=50.3s
+2026-07-17 08:12:47,084 [INFO] trainer: epoch 18 step 50/135 loss=2.3647 lr=2.00e-04
+2026-07-17 08:13:05,401 [INFO] trainer: epoch 18 step 100/135 loss=2.3216 lr=2.00e-04
+2026-07-17 08:13:18,192 [INFO] trainer: epoch 18 done train_loss=2.3253 dt=50.3s
+2026-07-17 08:13:37,278 [INFO] trainer: epoch 19 step 50/135 loss=2.2566 lr=2.00e-04
+2026-07-17 08:13:55,589 [INFO] trainer: epoch 19 step 100/135 loss=2.2496 lr=2.00e-04
+2026-07-17 08:14:08,426 [INFO] trainer: epoch 19 done train_loss=2.2505 dt=50.2s
+2026-07-17 08:14:27,510 [INFO] trainer: epoch 20 step 50/135 loss=2.1988 lr=2.00e-04
+2026-07-17 08:14:45,825 [INFO] trainer: epoch 20 step 100/135 loss=2.1519 lr=2.00e-04
+2026-07-17 08:14:58,631 [INFO] trainer: epoch 20 done train_loss=2.1702 dt=50.2s
+2026-07-17 08:15:18,095 [INFO] trainer: epoch 21 step 50/135 loss=2.0982 lr=2.00e-04
+2026-07-17 08:15:36,395 [INFO] trainer: epoch 21 step 100/135 loss=2.0888 lr=2.00e-04
+2026-07-17 08:15:49,171 [INFO] trainer: epoch 21 done train_loss=2.0905 dt=50.2s
+2026-07-17 08:16:08,254 [INFO] trainer: epoch 22 step 50/135 loss=2.0720 lr=2.00e-04
+2026-07-17 08:16:26,589 [INFO] trainer: epoch 22 step 100/135 loss=2.0442 lr=2.00e-04
+2026-07-17 08:16:39,413 [INFO] trainer: epoch 22 done train_loss=2.0497 dt=50.2s
+2026-07-17 08:16:58,528 [INFO] trainer: epoch 23 step 50/135 loss=2.0341 lr=2.00e-04
+2026-07-17 08:17:16,857 [INFO] trainer: epoch 23 step 100/135 loss=1.9437 lr=2.00e-04
+2026-07-17 08:17:29,686 [INFO] trainer: epoch 23 done train_loss=1.9925 dt=50.3s
+2026-07-17 08:17:48,682 [INFO] trainer: epoch 24 step 50/135 loss=1.9464 lr=2.00e-04
+2026-07-17 08:18:06,996 [INFO] trainer: epoch 24 step 100/135 loss=1.9644 lr=2.00e-04
+2026-07-17 08:18:19,804 [INFO] trainer: epoch 24 done train_loss=1.9470 dt=50.1s
+2026-07-17 08:18:39,088 [INFO] trainer: epoch 25 step 50/135 loss=1.9100 lr=2.00e-04
+2026-07-17 08:18:57,445 [INFO] trainer: epoch 25 step 100/135 loss=1.9453 lr=2.00e-04
+2026-07-17 08:19:10,260 [INFO] trainer: epoch 25 done train_loss=1.9188 dt=50.5s
+2026-07-17 08:20:35,832 [INFO] trainer: epoch 25 val_mean_dice=0.4494
+2026-07-17 08:20:55,264 [INFO] trainer: epoch 26 step 50/135 loss=1.8669 lr=2.00e-04
+2026-07-17 08:21:13,515 [INFO] trainer: epoch 26 step 100/135 loss=1.8604 lr=1.99e-04
+2026-07-17 08:21:26,297 [INFO] trainer: epoch 26 done train_loss=1.8581 dt=50.2s
+2026-07-17 08:21:45,558 [INFO] trainer: epoch 27 step 50/135 loss=1.8378 lr=1.99e-04
+2026-07-17 08:22:03,857 [INFO] trainer: epoch 27 step 100/135 loss=1.8111 lr=1.99e-04
+2026-07-17 08:22:16,654 [INFO] trainer: epoch 27 done train_loss=1.8190 dt=50.4s
+2026-07-17 08:22:35,925 [INFO] trainer: epoch 28 step 50/135 loss=1.7686 lr=1.99e-04
+2026-07-17 08:22:54,242 [INFO] trainer: epoch 28 step 100/135 loss=1.7918 lr=1.99e-04
+2026-07-17 08:23:07,024 [INFO] trainer: epoch 28 done train_loss=1.7857 dt=50.4s
+2026-07-17 08:23:26,079 [INFO] trainer: epoch 29 step 50/135 loss=1.7471 lr=1.99e-04
+2026-07-17 08:23:44,371 [INFO] trainer: epoch 29 step 100/135 loss=1.7430 lr=1.99e-04
+2026-07-17 08:23:57,156 [INFO] trainer: epoch 29 done train_loss=1.7458 dt=50.1s
+2026-07-17 08:24:16,172 [INFO] trainer: epoch 30 step 50/135 loss=1.6984 lr=1.99e-04
+2026-07-17 08:24:34,475 [INFO] trainer: epoch 30 step 100/135 loss=1.7341 lr=1.99e-04
+2026-07-17 08:24:47,267 [INFO] trainer: epoch 30 done train_loss=1.7085 dt=50.1s
+2026-07-17 08:25:06,831 [INFO] trainer: epoch 31 step 50/135 loss=1.7016 lr=1.99e-04
+2026-07-17 08:25:25,122 [INFO] trainer: epoch 31 step 100/135 loss=1.6557 lr=1.99e-04
+2026-07-17 08:25:37,914 [INFO] trainer: epoch 31 done train_loss=1.6732 dt=50.3s
+2026-07-17 08:25:57,063 [INFO] trainer: epoch 32 step 50/135 loss=1.6602 lr=1.99e-04
+2026-07-17 08:26:15,373 [INFO] trainer: epoch 32 step 100/135 loss=1.6646 lr=1.99e-04
+2026-07-17 08:26:28,180 [INFO] trainer: epoch 32 done train_loss=1.6688 dt=50.3s
+2026-07-17 08:26:47,316 [INFO] trainer: epoch 33 step 50/135 loss=1.6489 lr=1.99e-04
+2026-07-17 08:27:05,628 [INFO] trainer: epoch 33 step 100/135 loss=1.6217 lr=1.99e-04
+2026-07-17 08:27:18,419 [INFO] trainer: epoch 33 done train_loss=1.6350 dt=50.2s
+2026-07-17 08:27:37,430 [INFO] trainer: epoch 34 step 50/135 loss=1.6435 lr=1.99e-04
+2026-07-17 08:27:55,717 [INFO] trainer: epoch 34 step 100/135 loss=1.5974 lr=1.99e-04
+2026-07-17 08:28:08,513 [INFO] trainer: epoch 34 done train_loss=1.6091 dt=50.1s
+2026-07-17 08:28:27,762 [INFO] trainer: epoch 35 step 50/135 loss=1.6130 lr=1.99e-04
+2026-07-17 08:28:46,086 [INFO] trainer: epoch 35 step 100/135 loss=1.5681 lr=1.99e-04
+2026-07-17 08:28:58,885 [INFO] trainer: epoch 35 done train_loss=1.5860 dt=50.4s
+2026-07-17 08:29:18,099 [INFO] trainer: epoch 36 step 50/135 loss=1.5643 lr=1.99e-04
+2026-07-17 08:29:36,393 [INFO] trainer: epoch 36 step 100/135 loss=1.5859 lr=1.99e-04
+2026-07-17 08:29:49,197 [INFO] trainer: epoch 36 done train_loss=1.5636 dt=50.3s
+2026-07-17 08:30:08,307 [INFO] trainer: epoch 37 step 50/135 loss=1.6008 lr=1.99e-04
+2026-07-17 08:30:26,624 [INFO] trainer: epoch 37 step 100/135 loss=1.5439 lr=1.99e-04
+2026-07-17 08:30:39,411 [INFO] trainer: epoch 37 done train_loss=1.5888 dt=50.2s
+2026-07-17 08:30:58,546 [INFO] trainer: epoch 38 step 50/135 loss=1.4999 lr=1.98e-04
+2026-07-17 08:31:16,840 [INFO] trainer: epoch 38 step 100/135 loss=1.4514 lr=1.98e-04
+2026-07-17 08:31:29,640 [INFO] trainer: epoch 38 done train_loss=1.5051 dt=50.2s
+2026-07-17 08:31:48,772 [INFO] trainer: epoch 39 step 50/135 loss=1.5222 lr=1.98e-04
+2026-07-17 08:32:07,082 [INFO] trainer: epoch 39 step 100/135 loss=1.4792 lr=1.98e-04
+2026-07-17 08:32:19,898 [INFO] trainer: epoch 39 done train_loss=1.5146 dt=50.3s
+2026-07-17 08:32:39,016 [INFO] trainer: epoch 40 step 50/135 loss=1.5276 lr=1.98e-04
+2026-07-17 08:32:57,322 [INFO] trainer: epoch 40 step 100/135 loss=1.4672 lr=1.98e-04
+2026-07-17 08:33:10,130 [INFO] trainer: epoch 40 done train_loss=1.4992 dt=50.2s
+2026-07-17 08:33:29,655 [INFO] trainer: epoch 41 step 50/135 loss=1.5106 lr=1.98e-04
+2026-07-17 08:33:47,937 [INFO] trainer: epoch 41 step 100/135 loss=1.4790 lr=1.98e-04
+2026-07-17 08:34:00,759 [INFO] trainer: epoch 41 done train_loss=1.4884 dt=50.3s
+2026-07-17 08:34:20,188 [INFO] trainer: epoch 42 step 50/135 loss=1.4770 lr=1.98e-04
+2026-07-17 08:34:38,487 [INFO] trainer: epoch 42 step 100/135 loss=1.5250 lr=1.98e-04
+2026-07-17 08:34:51,318 [INFO] trainer: epoch 42 done train_loss=1.4969 dt=50.6s
+2026-07-17 08:35:10,528 [INFO] trainer: epoch 43 step 50/135 loss=1.4761 lr=1.98e-04
+2026-07-17 08:35:28,835 [INFO] trainer: epoch 43 step 100/135 loss=1.4378 lr=1.98e-04
+2026-07-17 08:35:41,624 [INFO] trainer: epoch 43 done train_loss=1.4580 dt=50.3s
+2026-07-17 08:36:00,828 [INFO] trainer: epoch 44 step 50/135 loss=1.4602 lr=1.98e-04
+2026-07-17 08:36:19,123 [INFO] trainer: epoch 44 step 100/135 loss=1.4520 lr=1.98e-04
+2026-07-17 08:36:31,936 [INFO] trainer: epoch 44 done train_loss=1.4785 dt=50.3s
+2026-07-17 08:36:51,047 [INFO] trainer: epoch 45 step 50/135 loss=1.4591 lr=1.98e-04
+2026-07-17 08:37:09,332 [INFO] trainer: epoch 45 step 100/135 loss=1.4191 lr=1.98e-04
+2026-07-17 08:37:22,143 [INFO] trainer: epoch 45 done train_loss=1.4530 dt=50.2s
+2026-07-17 08:37:41,448 [INFO] trainer: epoch 46 step 50/135 loss=1.4677 lr=1.97e-04
+2026-07-17 08:37:59,772 [INFO] trainer: epoch 46 step 100/135 loss=1.4171 lr=1.97e-04
+2026-07-17 08:38:12,583 [INFO] trainer: epoch 46 done train_loss=1.4339 dt=50.4s
+2026-07-17 08:38:31,846 [INFO] trainer: epoch 47 step 50/135 loss=1.4120 lr=1.97e-04
+2026-07-17 08:38:50,160 [INFO] trainer: epoch 47 step 100/135 loss=1.4267 lr=1.97e-04
+2026-07-17 08:39:02,960 [INFO] trainer: epoch 47 done train_loss=1.4215 dt=50.4s
+2026-07-17 08:39:22,140 [INFO] trainer: epoch 48 step 50/135 loss=1.3912 lr=1.97e-04
+2026-07-17 08:39:40,406 [INFO] trainer: epoch 48 step 100/135 loss=1.4153 lr=1.97e-04
+2026-07-17 08:39:53,204 [INFO] trainer: epoch 48 done train_loss=1.4089 dt=50.2s
+2026-07-17 08:40:12,331 [INFO] trainer: epoch 49 step 50/135 loss=1.4119 lr=1.97e-04
+2026-07-17 08:40:30,616 [INFO] trainer: epoch 49 step 100/135 loss=1.4031 lr=1.97e-04
+2026-07-17 08:40:43,396 [INFO] trainer: epoch 49 done train_loss=1.4183 dt=50.2s
+2026-07-17 08:41:02,568 [INFO] trainer: epoch 50 step 50/135 loss=1.4362 lr=1.97e-04
+2026-07-17 08:41:20,847 [INFO] trainer: epoch 50 step 100/135 loss=1.4199 lr=1.97e-04
+2026-07-17 08:41:33,624 [INFO] trainer: epoch 50 done train_loss=1.4324 dt=50.2s
+2026-07-17 08:42:56,114 [INFO] trainer: epoch 50 val_mean_dice=0.7397
+2026-07-17 08:43:15,889 [INFO] trainer: epoch 51 step 50/135 loss=1.4540 lr=1.97e-04
+2026-07-17 08:43:34,143 [INFO] trainer: epoch 51 step 100/135 loss=1.4390 lr=1.97e-04
+2026-07-17 08:43:46,915 [INFO] trainer: epoch 51 done train_loss=1.4310 dt=50.0s
+2026-07-17 08:44:06,200 [INFO] trainer: epoch 52 step 50/135 loss=1.3628 lr=1.97e-04
+2026-07-17 08:44:24,482 [INFO] trainer: epoch 52 step 100/135 loss=1.3946 lr=1.96e-04
+2026-07-17 08:44:37,261 [INFO] trainer: epoch 52 done train_loss=1.3840 dt=50.3s
+2026-07-17 08:44:56,305 [INFO] trainer: epoch 53 step 50/135 loss=1.4239 lr=1.96e-04
+2026-07-17 08:45:14,603 [INFO] trainer: epoch 53 step 100/135 loss=1.3488 lr=1.96e-04
+2026-07-17 08:45:27,401 [INFO] trainer: epoch 53 done train_loss=1.3926 dt=50.1s
+2026-07-17 08:45:46,532 [INFO] trainer: epoch 54 step 50/135 loss=1.4078 lr=1.96e-04
+2026-07-17 08:46:06,241 [INFO] trainer: epoch 54 step 100/135 loss=1.4371 lr=1.96e-04
+2026-07-17 08:46:19,086 [INFO] trainer: epoch 54 done train_loss=1.3997 dt=51.7s
+2026-07-17 08:46:38,751 [INFO] trainer: epoch 55 step 50/135 loss=1.3826 lr=1.96e-04
+2026-07-17 08:46:57,036 [INFO] trainer: epoch 55 step 100/135 loss=1.3541 lr=1.96e-04
+2026-07-17 08:47:09,842 [INFO] trainer: epoch 55 done train_loss=1.3663 dt=50.8s
+2026-07-17 08:47:29,017 [INFO] trainer: epoch 56 step 50/135 loss=1.3851 lr=1.96e-04
+2026-07-17 08:47:47,318 [INFO] trainer: epoch 56 step 100/135 loss=1.4354 lr=1.96e-04
+2026-07-17 08:48:00,125 [INFO] trainer: epoch 56 done train_loss=1.3849 dt=50.3s
+2026-07-17 08:48:19,219 [INFO] trainer: epoch 57 step 50/135 loss=1.4130 lr=1.96e-04
+2026-07-17 08:48:38,488 [INFO] trainer: epoch 57 step 100/135 loss=1.3587 lr=1.96e-04
+2026-07-17 08:48:51,438 [INFO] trainer: epoch 57 done train_loss=1.3880 dt=51.3s
+2026-07-17 08:49:10,621 [INFO] trainer: epoch 58 step 50/135 loss=1.3744 lr=1.95e-04
+2026-07-17 08:49:28,845 [INFO] trainer: epoch 58 step 100/135 loss=1.3551 lr=1.95e-04
+2026-07-17 08:49:41,617 [INFO] trainer: epoch 58 done train_loss=1.3566 dt=50.1s
+2026-07-17 08:50:00,607 [INFO] trainer: epoch 59 step 50/135 loss=1.3548 lr=1.95e-04
+2026-07-17 08:50:18,825 [INFO] trainer: epoch 59 step 100/135 loss=1.3651 lr=1.95e-04
+2026-07-17 08:50:31,587 [INFO] trainer: epoch 59 done train_loss=1.3669 dt=50.0s
+2026-07-17 08:50:50,674 [INFO] trainer: epoch 60 step 50/135 loss=1.3548 lr=1.95e-04
+2026-07-17 08:51:08,922 [INFO] trainer: epoch 60 step 100/135 loss=1.3767 lr=1.95e-04
+2026-07-17 08:51:21,682 [INFO] trainer: epoch 60 done train_loss=1.3604 dt=50.1s
+2026-07-17 08:51:41,217 [INFO] trainer: epoch 61 step 50/135 loss=1.3591 lr=1.95e-04
+2026-07-17 08:51:59,444 [INFO] trainer: epoch 61 step 100/135 loss=1.3800 lr=1.95e-04
+2026-07-17 08:52:12,221 [INFO] trainer: epoch 61 done train_loss=1.3701 dt=50.2s
+2026-07-17 08:52:31,226 [INFO] trainer: epoch 62 step 50/135 loss=1.3360 lr=1.95e-04
+2026-07-17 08:52:49,476 [INFO] trainer: epoch 62 step 100/135 loss=1.3520 lr=1.95e-04
+2026-07-17 08:53:02,250 [INFO] trainer: epoch 62 done train_loss=1.3403 dt=50.0s
+2026-07-17 08:53:21,437 [INFO] trainer: epoch 63 step 50/135 loss=1.3739 lr=1.94e-04
+2026-07-17 08:53:39,677 [INFO] trainer: epoch 63 step 100/135 loss=1.3254 lr=1.94e-04
+2026-07-17 08:53:52,440 [INFO] trainer: epoch 63 done train_loss=1.3300 dt=50.2s
+2026-07-17 08:54:11,473 [INFO] trainer: epoch 64 step 50/135 loss=1.3585 lr=1.94e-04
+2026-07-17 08:54:29,683 [INFO] trainer: epoch 64 step 100/135 loss=1.3964 lr=1.94e-04
+2026-07-17 08:54:42,431 [INFO] trainer: epoch 64 done train_loss=1.3605 dt=50.0s
+2026-07-17 08:55:01,547 [INFO] trainer: epoch 65 step 50/135 loss=1.3655 lr=1.94e-04
+2026-07-17 08:55:19,766 [INFO] trainer: epoch 65 step 100/135 loss=1.3588 lr=1.94e-04
+2026-07-17 08:55:32,511 [INFO] trainer: epoch 65 done train_loss=1.3513 dt=50.1s
+2026-07-17 08:55:51,752 [INFO] trainer: epoch 66 step 50/135 loss=1.3261 lr=1.94e-04
+2026-07-17 08:56:10,002 [INFO] trainer: epoch 66 step 100/135 loss=1.3145 lr=1.94e-04
+2026-07-17 08:56:22,779 [INFO] trainer: epoch 66 done train_loss=1.3180 dt=50.3s
+2026-07-17 08:56:41,866 [INFO] trainer: epoch 67 step 50/135 loss=1.3083 lr=1.94e-04
+2026-07-17 08:57:00,086 [INFO] trainer: epoch 67 step 100/135 loss=1.3288 lr=1.93e-04
+2026-07-17 08:57:12,848 [INFO] trainer: epoch 67 done train_loss=1.3257 dt=50.1s
+2026-07-17 08:57:31,833 [INFO] trainer: epoch 68 step 50/135 loss=1.3119 lr=1.93e-04
+2026-07-17 08:57:50,068 [INFO] trainer: epoch 68 step 100/135 loss=1.3141 lr=1.93e-04
+2026-07-17 08:58:02,846 [INFO] trainer: epoch 68 done train_loss=1.3039 dt=50.0s
+2026-07-17 08:58:21,950 [INFO] trainer: epoch 69 step 50/135 loss=1.3396 lr=1.93e-04
+2026-07-17 08:58:40,207 [INFO] trainer: epoch 69 step 100/135 loss=1.3487 lr=1.93e-04
+2026-07-17 08:58:52,993 [INFO] trainer: epoch 69 done train_loss=1.3373 dt=50.1s
+2026-07-17 08:59:12,266 [INFO] trainer: epoch 70 step 50/135 loss=1.3573 lr=1.93e-04
+2026-07-17 08:59:30,519 [INFO] trainer: epoch 70 step 100/135 loss=1.3676 lr=1.93e-04
+2026-07-17 08:59:43,298 [INFO] trainer: epoch 70 done train_loss=1.3405 dt=50.3s
+2026-07-17 09:00:02,716 [INFO] trainer: epoch 71 step 50/135 loss=1.3332 lr=1.93e-04
+2026-07-17 09:00:20,958 [INFO] trainer: epoch 71 step 100/135 loss=1.3594 lr=1.93e-04
+2026-07-17 09:00:33,717 [INFO] trainer: epoch 71 done train_loss=1.3274 dt=50.1s
+2026-07-17 09:00:52,843 [INFO] trainer: epoch 72 step 50/135 loss=1.3422 lr=1.92e-04
+2026-07-17 09:01:11,067 [INFO] trainer: epoch 72 step 100/135 loss=1.3508 lr=1.92e-04
+2026-07-17 09:01:23,848 [INFO] trainer: epoch 72 done train_loss=1.3395 dt=50.1s
+2026-07-17 09:01:42,862 [INFO] trainer: epoch 73 step 50/135 loss=1.3336 lr=1.92e-04
+2026-07-17 09:02:01,145 [INFO] trainer: epoch 73 step 100/135 loss=1.2403 lr=1.92e-04
+2026-07-17 09:02:13,931 [INFO] trainer: epoch 73 done train_loss=1.2810 dt=50.1s
+2026-07-17 09:02:32,999 [INFO] trainer: epoch 74 step 50/135 loss=1.3338 lr=1.92e-04
+2026-07-17 09:02:51,231 [INFO] trainer: epoch 74 step 100/135 loss=1.3699 lr=1.92e-04
+2026-07-17 09:03:03,992 [INFO] trainer: epoch 74 done train_loss=1.3401 dt=50.1s
+2026-07-17 09:03:23,168 [INFO] trainer: epoch 75 step 50/135 loss=1.3086 lr=1.92e-04
+2026-07-17 09:03:41,417 [INFO] trainer: epoch 75 step 100/135 loss=1.2897 lr=1.92e-04
+2026-07-17 09:03:54,192 [INFO] trainer: epoch 75 done train_loss=1.2917 dt=50.2s
+2026-07-17 09:05:19,367 [INFO] trainer: epoch 75 val_mean_dice=0.7736
+2026-07-17 09:05:39,011 [INFO] trainer: epoch 76 step 50/135 loss=1.2538 lr=1.91e-04
+2026-07-17 09:05:57,249 [INFO] trainer: epoch 76 step 100/135 loss=1.2629 lr=1.91e-04
+2026-07-17 09:06:10,008 [INFO] trainer: epoch 76 done train_loss=1.2588 dt=50.2s
+2026-07-17 09:06:28,964 [INFO] trainer: epoch 77 step 50/135 loss=1.3112 lr=1.91e-04
+2026-07-17 09:06:47,213 [INFO] trainer: epoch 77 step 100/135 loss=1.3225 lr=1.91e-04
+2026-07-17 09:06:59,983 [INFO] trainer: epoch 77 done train_loss=1.3050 dt=50.0s
+2026-07-17 09:07:19,133 [INFO] trainer: epoch 78 step 50/135 loss=1.3029 lr=1.91e-04
+2026-07-17 09:07:37,388 [INFO] trainer: epoch 78 step 100/135 loss=1.3121 lr=1.91e-04
+2026-07-17 09:07:50,168 [INFO] trainer: epoch 78 done train_loss=1.3039 dt=50.2s
+2026-07-17 09:08:09,194 [INFO] trainer: epoch 79 step 50/135 loss=1.2593 lr=1.91e-04
+2026-07-17 09:08:27,415 [INFO] trainer: epoch 79 step 100/135 loss=1.3310 lr=1.90e-04
+2026-07-17 09:08:40,179 [INFO] trainer: epoch 79 done train_loss=1.2951 dt=50.0s
+2026-07-17 09:08:59,294 [INFO] trainer: epoch 80 step 50/135 loss=1.2876 lr=1.90e-04
+2026-07-17 09:09:17,571 [INFO] trainer: epoch 80 step 100/135 loss=1.3221 lr=1.90e-04
+2026-07-17 09:09:30,370 [INFO] trainer: epoch 80 done train_loss=1.2940 dt=50.2s
+2026-07-17 09:09:49,765 [INFO] trainer: epoch 81 step 50/135 loss=1.2871 lr=1.90e-04
+2026-07-17 09:10:07,997 [INFO] trainer: epoch 81 step 100/135 loss=1.2464 lr=1.90e-04
+2026-07-17 09:10:20,775 [INFO] trainer: epoch 81 done train_loss=1.2649 dt=50.0s
+2026-07-17 09:10:39,729 [INFO] trainer: epoch 82 step 50/135 loss=1.2984 lr=1.90e-04
+2026-07-17 09:10:57,981 [INFO] trainer: epoch 82 step 100/135 loss=1.2989 lr=1.90e-04
+2026-07-17 09:11:10,737 [INFO] trainer: epoch 82 done train_loss=1.3059 dt=50.0s
+2026-07-17 09:11:29,902 [INFO] trainer: epoch 83 step 50/135 loss=1.2740 lr=1.89e-04
+2026-07-17 09:11:48,172 [INFO] trainer: epoch 83 step 100/135 loss=1.2782 lr=1.89e-04
+2026-07-17 09:12:00,930 [INFO] trainer: epoch 83 done train_loss=1.2805 dt=50.2s
+2026-07-17 09:12:20,002 [INFO] trainer: epoch 84 step 50/135 loss=1.3193 lr=1.89e-04
+2026-07-17 09:12:38,274 [INFO] trainer: epoch 84 step 100/135 loss=1.2567 lr=1.89e-04
+2026-07-17 09:12:51,038 [INFO] trainer: epoch 84 done train_loss=1.2850 dt=50.1s
+2026-07-17 09:13:10,144 [INFO] trainer: epoch 85 step 50/135 loss=1.2545 lr=1.89e-04
+2026-07-17 09:13:28,370 [INFO] trainer: epoch 85 step 100/135 loss=1.3170 lr=1.89e-04
+2026-07-17 09:13:41,120 [INFO] trainer: epoch 85 done train_loss=1.2657 dt=50.1s
+2026-07-17 09:14:00,152 [INFO] trainer: epoch 86 step 50/135 loss=1.2714 lr=1.89e-04
+2026-07-17 09:14:18,403 [INFO] trainer: epoch 86 step 100/135 loss=1.2912 lr=1.88e-04
+2026-07-17 09:14:31,188 [INFO] trainer: epoch 86 done train_loss=1.2778 dt=50.1s
+2026-07-17 09:14:50,262 [INFO] trainer: epoch 87 step 50/135 loss=1.3116 lr=1.88e-04
+2026-07-17 09:15:08,501 [INFO] trainer: epoch 87 step 100/135 loss=1.2406 lr=1.88e-04
+2026-07-17 09:15:21,262 [INFO] trainer: epoch 87 done train_loss=1.2626 dt=50.1s
+2026-07-17 09:15:40,487 [INFO] trainer: epoch 88 step 50/135 loss=1.2439 lr=1.88e-04
+2026-07-17 09:15:58,743 [INFO] trainer: epoch 88 step 100/135 loss=1.2698 lr=1.88e-04
+2026-07-17 09:16:11,514 [INFO] trainer: epoch 88 done train_loss=1.2591 dt=50.3s
+2026-07-17 09:16:30,729 [INFO] trainer: epoch 89 step 50/135 loss=1.2570 lr=1.88e-04
+2026-07-17 09:16:48,996 [INFO] trainer: epoch 89 step 100/135 loss=1.2730 lr=1.88e-04
+2026-07-17 09:17:01,777 [INFO] trainer: epoch 89 done train_loss=1.2675 dt=50.3s
+2026-07-17 09:17:20,862 [INFO] trainer: epoch 90 step 50/135 loss=1.2909 lr=1.87e-04
+2026-07-17 09:17:39,136 [INFO] trainer: epoch 90 step 100/135 loss=1.2731 lr=1.87e-04
+2026-07-17 09:17:51,918 [INFO] trainer: epoch 90 done train_loss=1.2642 dt=50.1s
+2026-07-17 09:18:11,251 [INFO] trainer: epoch 91 step 50/135 loss=1.2523 lr=1.87e-04
+2026-07-17 09:18:29,536 [INFO] trainer: epoch 91 step 100/135 loss=1.2804 lr=1.87e-04
+2026-07-17 09:18:42,316 [INFO] trainer: epoch 91 done train_loss=1.2731 dt=50.0s
+2026-07-17 09:19:01,329 [INFO] trainer: epoch 92 step 50/135 loss=1.2289 lr=1.87e-04
+2026-07-17 09:19:19,600 [INFO] trainer: epoch 92 step 100/135 loss=1.2748 lr=1.87e-04
+2026-07-17 09:19:32,401 [INFO] trainer: epoch 92 done train_loss=1.2547 dt=50.1s
+2026-07-17 09:19:51,465 [INFO] trainer: epoch 93 step 50/135 loss=1.2555 lr=1.86e-04
+2026-07-17 09:20:09,742 [INFO] trainer: epoch 93 step 100/135 loss=1.2020 lr=1.86e-04
+2026-07-17 09:20:22,525 [INFO] trainer: epoch 93 done train_loss=1.2255 dt=50.1s
+2026-07-17 09:20:41,732 [INFO] trainer: epoch 94 step 50/135 loss=1.2915 lr=1.86e-04
+2026-07-17 09:21:00,010 [INFO] trainer: epoch 94 step 100/135 loss=1.2165 lr=1.86e-04
+2026-07-17 09:21:12,789 [INFO] trainer: epoch 94 done train_loss=1.2442 dt=50.3s
+2026-07-17 09:21:31,745 [INFO] trainer: epoch 95 step 50/135 loss=1.2473 lr=1.86e-04
+2026-07-17 09:21:50,043 [INFO] trainer: epoch 95 step 100/135 loss=1.2349 lr=1.86e-04
+2026-07-17 09:22:02,838 [INFO] trainer: epoch 95 done train_loss=1.2373 dt=50.0s
+2026-07-17 09:22:21,865 [INFO] trainer: epoch 96 step 50/135 loss=1.2139 lr=1.85e-04
+2026-07-17 09:22:40,150 [INFO] trainer: epoch 96 step 100/135 loss=1.2948 lr=1.85e-04
+2026-07-17 09:22:52,936 [INFO] trainer: epoch 96 done train_loss=1.2515 dt=50.1s
+2026-07-17 09:23:11,913 [INFO] trainer: epoch 97 step 50/135 loss=1.2444 lr=1.85e-04
+2026-07-17 09:23:30,200 [INFO] trainer: epoch 97 step 100/135 loss=1.2264 lr=1.85e-04
+2026-07-17 09:23:42,995 [INFO] trainer: epoch 97 done train_loss=1.2429 dt=50.1s
+2026-07-17 09:24:02,111 [INFO] trainer: epoch 98 step 50/135 loss=1.2663 lr=1.85e-04
+2026-07-17 09:24:20,410 [INFO] trainer: epoch 98 step 100/135 loss=1.2380 lr=1.85e-04
+2026-07-17 09:24:33,214 [INFO] trainer: epoch 98 done train_loss=1.2511 dt=50.2s
+2026-07-17 09:24:52,229 [INFO] trainer: epoch 99 step 50/135 loss=1.2700 lr=1.84e-04
+2026-07-17 09:25:10,534 [INFO] trainer: epoch 99 step 100/135 loss=1.2102 lr=1.84e-04
+2026-07-17 09:25:23,338 [INFO] trainer: epoch 99 done train_loss=1.2388 dt=50.1s
+2026-07-17 09:25:42,333 [INFO] trainer: epoch 100 step 50/135 loss=1.2401 lr=1.84e-04
+2026-07-17 09:26:00,652 [INFO] trainer: epoch 100 step 100/135 loss=1.2815 lr=1.84e-04
+2026-07-17 09:26:13,439 [INFO] trainer: epoch 100 done train_loss=1.2424 dt=50.1s
+2026-07-17 09:27:35,705 [INFO] trainer: epoch 100 val_mean_dice=0.7795
+2026-07-17 09:27:55,401 [INFO] trainer: epoch 101 step 50/135 loss=1.2532 lr=1.84e-04
+2026-07-17 09:28:13,658 [INFO] trainer: epoch 101 step 100/135 loss=1.2439 lr=1.84e-04
+2026-07-17 09:28:26,435 [INFO] trainer: epoch 101 done train_loss=1.2417 dt=50.0s
+2026-07-17 09:28:45,428 [INFO] trainer: epoch 102 step 50/135 loss=1.1689 lr=1.83e-04
+2026-07-17 09:29:03,710 [INFO] trainer: epoch 102 step 100/135 loss=1.2800 lr=1.83e-04
+2026-07-17 09:29:16,498 [INFO] trainer: epoch 102 done train_loss=1.2159 dt=50.1s
+2026-07-17 09:29:35,433 [INFO] trainer: epoch 103 step 50/135 loss=1.2378 lr=1.83e-04
+2026-07-17 09:29:55,907 [INFO] trainer: epoch 103 step 100/135 loss=1.2186 lr=1.83e-04
+2026-07-17 09:30:08,775 [INFO] trainer: epoch 103 done train_loss=1.2246 dt=52.3s
+2026-07-17 09:30:29,402 [INFO] trainer: epoch 104 step 50/135 loss=1.2150 lr=1.83e-04
+2026-07-17 09:30:49,256 [INFO] trainer: epoch 104 step 100/135 loss=1.2027 lr=1.83e-04
+2026-07-17 09:31:02,051 [INFO] trainer: epoch 104 done train_loss=1.2292 dt=53.3s
+2026-07-17 09:31:21,904 [INFO] trainer: epoch 105 step 50/135 loss=1.2139 lr=1.82e-04
+2026-07-17 09:31:40,402 [INFO] trainer: epoch 105 step 100/135 loss=1.2587 lr=1.82e-04
+2026-07-17 09:31:53,362 [INFO] trainer: epoch 105 done train_loss=1.2470 dt=51.3s
+2026-07-17 09:32:12,770 [INFO] trainer: epoch 106 step 50/135 loss=1.1833 lr=1.82e-04
+2026-07-17 09:32:33,468 [INFO] trainer: epoch 106 step 100/135 loss=1.2559 lr=1.82e-04
+2026-07-17 09:32:46,987 [INFO] trainer: epoch 106 done train_loss=1.2089 dt=53.6s
+2026-07-17 09:33:06,387 [INFO] trainer: epoch 107 step 50/135 loss=1.2405 lr=1.82e-04
+2026-07-17 09:33:26,414 [INFO] trainer: epoch 107 step 100/135 loss=1.2088 lr=1.81e-04
+2026-07-17 09:33:40,979 [INFO] trainer: epoch 107 done train_loss=1.2024 dt=54.0s
+2026-07-17 09:34:17,876 [INFO] trainer: epoch 108 step 50/135 loss=1.2412 lr=1.81e-04
+2026-07-17 09:35:07,279 [INFO] trainer: epoch 108 step 100/135 loss=1.2043 lr=1.81e-04
+2026-07-17 09:35:40,757 [INFO] trainer: epoch 108 done train_loss=1.2224 dt=119.8s
+2026-07-17 09:36:34,844 [INFO] trainer: epoch 109 step 50/135 loss=1.1697 lr=1.81e-04
+2026-07-17 09:37:24,936 [INFO] trainer: epoch 109 step 100/135 loss=1.2132 lr=1.81e-04
+2026-07-17 09:38:06,729 [INFO] trainer: epoch 109 done train_loss=1.1903 dt=146.0s
+2026-07-17 09:39:16,911 [INFO] trainer: epoch 110 step 50/135 loss=1.2593 lr=1.80e-04
+2026-07-17 09:40:03,211 [INFO] trainer: epoch 110 step 100/135 loss=1.2150 lr=1.80e-04
+2026-07-17 09:40:31,994 [INFO] trainer: epoch 110 done train_loss=1.2298 dt=145.3s
+2026-07-17 09:40:55,264 [INFO] trainer: epoch 111 step 50/135 loss=1.1814 lr=1.80e-04
+2026-07-17 09:41:13,536 [INFO] trainer: epoch 111 step 100/135 loss=1.1631 lr=1.80e-04
+2026-07-17 09:41:26,323 [INFO] trainer: epoch 111 done train_loss=1.1944 dt=52.8s
+2026-07-17 09:41:45,352 [INFO] trainer: epoch 112 step 50/135 loss=1.1781 lr=1.80e-04
+2026-07-17 09:42:03,626 [INFO] trainer: epoch 112 step 100/135 loss=1.2491 lr=1.80e-04
+2026-07-17 09:42:16,407 [INFO] trainer: epoch 112 done train_loss=1.2059 dt=50.1s
+2026-07-17 09:42:35,463 [INFO] trainer: epoch 113 step 50/135 loss=1.2169 lr=1.79e-04
+2026-07-17 09:42:53,730 [INFO] trainer: epoch 113 step 100/135 loss=1.2416 lr=1.79e-04
+2026-07-17 09:43:06,513 [INFO] trainer: epoch 113 done train_loss=1.2151 dt=50.1s
+2026-07-17 09:43:35,890 [INFO] trainer: epoch 114 step 50/135 loss=1.2746 lr=1.79e-04
+2026-07-17 09:44:25,591 [INFO] trainer: epoch 114 step 100/135 loss=1.1914 lr=1.79e-04
+2026-07-17 09:45:01,645 [INFO] trainer: epoch 114 done train_loss=1.2155 dt=115.1s
+2026-07-17 09:46:04,233 [INFO] trainer: epoch 115 step 50/135 loss=1.2105 lr=1.79e-04
+2026-07-17 09:46:46,659 [INFO] trainer: epoch 115 step 100/135 loss=1.1785 lr=1.78e-04
+2026-07-17 09:46:59,470 [INFO] trainer: epoch 115 done train_loss=1.2217 dt=117.8s
+2026-07-17 09:47:19,191 [INFO] trainer: epoch 116 step 50/135 loss=1.2273 lr=1.78e-04
+2026-07-17 09:47:37,453 [INFO] trainer: epoch 116 step 100/135 loss=1.2236 lr=1.78e-04
+2026-07-17 09:47:50,220 [INFO] trainer: epoch 116 done train_loss=1.2194 dt=50.7s
+2026-07-17 09:48:09,295 [INFO] trainer: epoch 117 step 50/135 loss=1.2080 lr=1.78e-04
+2026-07-17 09:48:27,560 [INFO] trainer: epoch 117 step 100/135 loss=1.1755 lr=1.78e-04
+2026-07-17 09:48:40,491 [INFO] trainer: epoch 117 done train_loss=1.1977 dt=50.3s
+2026-07-17 09:48:59,555 [INFO] trainer: epoch 118 step 50/135 loss=1.1895 lr=1.77e-04
+2026-07-17 09:49:17,845 [INFO] trainer: epoch 118 step 100/135 loss=1.1688 lr=1.77e-04
+2026-07-17 09:49:33,546 [INFO] trainer: epoch 118 done train_loss=1.1745 dt=53.1s
+2026-07-17 09:50:28,168 [INFO] trainer: epoch 119 step 50/135 loss=1.2128 lr=1.77e-04
+2026-07-17 09:50:46,433 [INFO] trainer: epoch 119 step 100/135 loss=1.2276 lr=1.77e-04
+2026-07-17 09:50:59,222 [INFO] trainer: epoch 119 done train_loss=1.2206 dt=85.7s
+2026-07-17 09:51:18,409 [INFO] trainer: epoch 120 step 50/135 loss=1.1494 lr=1.77e-04
+2026-07-17 09:51:36,629 [INFO] trainer: epoch 120 step 100/135 loss=1.1683 lr=1.76e-04
+2026-07-17 09:51:49,379 [INFO] trainer: epoch 120 done train_loss=1.1729 dt=50.2s
+2026-07-17 09:52:08,673 [INFO] trainer: epoch 121 step 50/135 loss=1.1910 lr=1.76e-04
+2026-07-17 09:52:51,977 [INFO] trainer: epoch 121 step 100/135 loss=1.2119 lr=1.76e-04
+2026-07-17 09:53:23,011 [INFO] trainer: epoch 121 done train_loss=1.1955 dt=93.3s
+2026-07-17 09:54:19,611 [INFO] trainer: epoch 122 step 50/135 loss=1.2038 lr=1.76e-04
+2026-07-17 09:55:06,646 [INFO] trainer: epoch 122 step 100/135 loss=1.1756 lr=1.76e-04
+2026-07-17 09:55:37,683 [INFO] trainer: epoch 122 done train_loss=1.1930 dt=134.7s
+2026-07-17 09:56:06,957 [INFO] trainer: epoch 123 step 50/135 loss=1.1879 lr=1.75e-04
+2026-07-17 09:56:25,247 [INFO] trainer: epoch 123 step 100/135 loss=1.2226 lr=1.75e-04
+2026-07-17 09:56:38,020 [INFO] trainer: epoch 123 done train_loss=1.1988 dt=60.3s
+2026-07-17 09:56:57,056 [INFO] trainer: epoch 124 step 50/135 loss=1.1861 lr=1.75e-04
+2026-07-17 09:57:15,325 [INFO] trainer: epoch 124 step 100/135 loss=1.1862 lr=1.75e-04
+2026-07-17 09:57:28,100 [INFO] trainer: epoch 124 done train_loss=1.1891 dt=50.1s
+2026-07-17 09:57:47,010 [INFO] trainer: epoch 125 step 50/135 loss=1.2056 lr=1.74e-04
+2026-07-17 09:58:05,233 [INFO] trainer: epoch 125 step 100/135 loss=1.1254 lr=1.74e-04
+2026-07-17 09:58:30,833 [INFO] trainer: epoch 125 done train_loss=1.1945 dt=62.7s
+2026-07-17 10:00:51,958 [INFO] trainer: epoch 125 val_mean_dice=0.7929
+2026-07-17 10:02:17,097 [INFO] trainer: epoch 126 step 50/135 loss=1.1962 lr=1.74e-04
+2026-07-17 10:03:11,796 [INFO] trainer: epoch 126 step 100/135 loss=1.1781 lr=1.74e-04
+2026-07-17 10:03:49,625 [INFO] trainer: epoch 126 done train_loss=1.1852 dt=176.7s
+2026-07-17 10:04:46,415 [INFO] trainer: epoch 127 step 50/135 loss=1.2245 lr=1.74e-04
+2026-07-17 10:05:34,370 [INFO] trainer: epoch 127 step 100/135 loss=1.1991 lr=1.73e-04
+2026-07-17 10:06:02,863 [INFO] trainer: epoch 127 done train_loss=1.2088 dt=133.2s
+2026-07-17 10:06:52,570 [INFO] trainer: epoch 128 step 50/135 loss=1.1498 lr=1.73e-04
+2026-07-17 10:07:38,432 [INFO] trainer: epoch 128 step 100/135 loss=1.2061 lr=1.73e-04
+2026-07-17 10:08:06,292 [INFO] trainer: epoch 128 done train_loss=1.1948 dt=123.4s
+2026-07-17 10:08:54,861 [INFO] trainer: epoch 129 step 50/135 loss=1.2162 lr=1.73e-04
+2026-07-17 10:09:38,685 [INFO] trainer: epoch 129 step 100/135 loss=1.1682 lr=1.73e-04
+2026-07-17 10:10:03,688 [INFO] trainer: epoch 129 done train_loss=1.1783 dt=117.4s
+2026-07-17 10:10:42,274 [INFO] trainer: epoch 130 step 50/135 loss=1.1586 lr=1.72e-04
+2026-07-17 10:11:00,563 [INFO] trainer: epoch 130 step 100/135 loss=1.2173 lr=1.72e-04
+2026-07-17 10:11:13,362 [INFO] trainer: epoch 130 done train_loss=1.1961 dt=69.7s
+2026-07-17 10:11:32,873 [INFO] trainer: epoch 131 step 50/135 loss=1.1688 lr=1.72e-04
+2026-07-17 10:11:51,164 [INFO] trainer: epoch 131 step 100/135 loss=1.1919 lr=1.72e-04
+2026-07-17 10:12:03,951 [INFO] trainer: epoch 131 done train_loss=1.1760 dt=50.3s
+2026-07-17 10:12:23,052 [INFO] trainer: epoch 132 step 50/135 loss=1.2607 lr=1.71e-04
+2026-07-17 10:12:41,340 [INFO] trainer: epoch 132 step 100/135 loss=1.1721 lr=1.71e-04
+2026-07-17 10:12:54,129 [INFO] trainer: epoch 132 done train_loss=1.2119 dt=50.2s
+2026-07-17 10:13:13,228 [INFO] trainer: epoch 133 step 50/135 loss=1.1914 lr=1.71e-04
+2026-07-17 10:13:33,853 [INFO] trainer: epoch 133 step 100/135 loss=1.1833 lr=1.71e-04
+2026-07-17 10:13:46,649 [INFO] trainer: epoch 133 done train_loss=1.1846 dt=52.5s
+2026-07-17 10:14:07,507 [INFO] trainer: epoch 134 step 50/135 loss=1.1890 lr=1.70e-04
+2026-07-17 10:14:27,876 [INFO] trainer: epoch 134 step 100/135 loss=1.1413 lr=1.70e-04
+2026-07-17 10:14:40,671 [INFO] trainer: epoch 134 done train_loss=1.1727 dt=54.0s
+2026-07-17 10:15:00,033 [INFO] trainer: epoch 135 step 50/135 loss=1.1637 lr=1.70e-04
+2026-07-17 10:15:18,297 [INFO] trainer: epoch 135 step 100/135 loss=1.2035 lr=1.70e-04
+2026-07-17 10:15:31,075 [INFO] trainer: epoch 135 done train_loss=1.1744 dt=50.4s
+2026-07-17 10:15:50,043 [INFO] trainer: epoch 136 step 50/135 loss=1.1504 lr=1.70e-04
+2026-07-17 10:16:08,305 [INFO] trainer: epoch 136 step 100/135 loss=1.1952 lr=1.69e-04
+2026-07-17 10:16:21,077 [INFO] trainer: epoch 136 done train_loss=1.1704 dt=50.0s
+2026-07-17 10:16:40,156 [INFO] trainer: epoch 137 step 50/135 loss=1.1435 lr=1.69e-04
+2026-07-17 10:16:58,413 [INFO] trainer: epoch 137 step 100/135 loss=1.1608 lr=1.69e-04
+2026-07-17 10:17:14,673 [INFO] trainer: epoch 137 done train_loss=1.1663 dt=53.6s
+2026-07-17 10:17:34,153 [INFO] trainer: epoch 138 step 50/135 loss=1.1376 lr=1.69e-04
+2026-07-17 10:17:52,441 [INFO] trainer: epoch 138 step 100/135 loss=1.1929 lr=1.68e-04
+2026-07-17 10:18:05,223 [INFO] trainer: epoch 138 done train_loss=1.1741 dt=50.5s
+2026-07-17 10:18:24,335 [INFO] trainer: epoch 139 step 50/135 loss=1.1732 lr=1.68e-04
+2026-07-17 10:18:42,631 [INFO] trainer: epoch 139 step 100/135 loss=1.1363 lr=1.68e-04
+2026-07-17 10:18:55,422 [INFO] trainer: epoch 139 done train_loss=1.1617 dt=50.2s
+2026-07-17 10:19:14,626 [INFO] trainer: epoch 140 step 50/135 loss=1.1681 lr=1.68e-04
+2026-07-17 10:19:32,942 [INFO] trainer: epoch 140 step 100/135 loss=1.1342 lr=1.68e-04
+2026-07-17 10:19:45,735 [INFO] trainer: epoch 140 done train_loss=1.1639 dt=50.3s
+2026-07-17 10:20:36,663 [INFO] trainer: epoch 141 step 50/135 loss=1.1890 lr=1.67e-04
+2026-07-17 10:21:23,984 [INFO] trainer: epoch 141 step 100/135 loss=1.1818 lr=1.67e-04
+2026-07-17 10:21:52,273 [INFO] trainer: epoch 141 done train_loss=1.1781 dt=126.0s
+2026-07-17 10:22:40,115 [INFO] trainer: epoch 142 step 50/135 loss=1.1513 lr=1.67e-04
+2026-07-17 10:23:25,537 [INFO] trainer: epoch 142 step 100/135 loss=1.1920 lr=1.67e-04
+2026-07-17 10:23:56,210 [INFO] trainer: epoch 142 done train_loss=1.1646 dt=123.9s
+2026-07-17 10:24:41,823 [INFO] trainer: epoch 143 step 50/135 loss=1.1986 lr=1.66e-04
+2026-07-17 10:25:27,433 [INFO] trainer: epoch 143 step 100/135 loss=1.1910 lr=1.66e-04
+2026-07-17 10:25:55,729 [INFO] trainer: epoch 143 done train_loss=1.1859 dt=119.5s
+2026-07-17 10:26:45,108 [INFO] trainer: epoch 144 step 50/135 loss=1.1783 lr=1.66e-04
+2026-07-17 10:27:30,358 [INFO] trainer: epoch 144 step 100/135 loss=1.1702 lr=1.66e-04
+2026-07-17 10:27:59,370 [INFO] trainer: epoch 144 done train_loss=1.1863 dt=123.6s
+2026-07-17 10:28:49,443 [INFO] trainer: epoch 145 step 50/135 loss=1.1655 lr=1.65e-04
+2026-07-17 10:29:35,158 [INFO] trainer: epoch 145 step 100/135 loss=1.1759 lr=1.65e-04
+2026-07-17 10:30:14,856 [INFO] trainer: epoch 145 done train_loss=1.1840 dt=135.5s
+2026-07-17 10:31:06,644 [INFO] trainer: epoch 146 step 50/135 loss=1.1783 lr=1.65e-04
+2026-07-17 10:32:01,374 [INFO] trainer: epoch 146 step 100/135 loss=1.2127 lr=1.65e-04
+2026-07-17 10:32:38,583 [INFO] trainer: epoch 146 done train_loss=1.1904 dt=143.7s
+2026-07-17 10:33:59,346 [INFO] trainer: epoch 147 step 50/135 loss=1.1834 lr=1.64e-04
+2026-07-17 10:35:08,801 [INFO] trainer: epoch 147 step 100/135 loss=1.1331 lr=1.64e-04
+2026-07-17 10:35:57,224 [INFO] trainer: epoch 147 done train_loss=1.1617 dt=198.6s
+2026-07-17 10:37:03,420 [INFO] trainer: epoch 148 step 50/135 loss=1.1503 lr=1.64e-04
+2026-07-17 10:38:18,632 [INFO] trainer: epoch 148 step 100/135 loss=1.1762 lr=1.64e-04
+2026-07-17 10:39:21,944 [INFO] trainer: epoch 148 done train_loss=1.1464 dt=204.7s
+2026-07-17 10:40:48,004 [INFO] trainer: epoch 149 step 50/135 loss=1.2300 lr=1.63e-04
+2026-07-17 10:41:35,477 [INFO] trainer: epoch 149 step 100/135 loss=1.1100 lr=1.63e-04
+2026-07-17 10:42:05,675 [INFO] trainer: epoch 149 done train_loss=1.1752 dt=163.7s
+2026-07-17 10:43:00,104 [INFO] trainer: epoch 150 step 50/135 loss=1.1295 lr=1.63e-04
+2026-07-17 10:44:03,675 [INFO] trainer: epoch 150 step 100/135 loss=1.1964 lr=1.63e-04
+2026-07-17 10:44:39,877 [INFO] trainer: epoch 150 done train_loss=1.1580 dt=154.2s
+2026-07-17 10:48:33,372 [INFO] trainer: epoch 150 val_mean_dice=0.7999
+2026-07-17 10:50:05,367 [INFO] trainer: epoch 151 step 50/135 loss=1.1399 lr=1.62e-04
+2026-07-17 10:50:23,792 [INFO] trainer: epoch 151 step 100/135 loss=1.1484 lr=1.62e-04
+2026-07-17 10:50:36,613 [INFO] trainer: epoch 151 done train_loss=1.1385 dt=119.8s
+2026-07-17 10:50:55,869 [INFO] trainer: epoch 152 step 50/135 loss=1.1650 lr=1.62e-04
+2026-07-17 10:51:14,154 [INFO] trainer: epoch 152 step 100/135 loss=1.1219 lr=1.62e-04
+2026-07-17 10:51:26,950 [INFO] trainer: epoch 152 done train_loss=1.1485 dt=50.3s
+2026-07-17 10:51:46,007 [INFO] trainer: epoch 153 step 50/135 loss=1.1477 lr=1.61e-04
+2026-07-17 10:52:04,313 [INFO] trainer: epoch 153 step 100/135 loss=1.1364 lr=1.61e-04
+2026-07-17 10:52:17,096 [INFO] trainer: epoch 153 done train_loss=1.1499 dt=50.1s
+2026-07-17 10:52:36,173 [INFO] trainer: epoch 154 step 50/135 loss=1.1235 lr=1.61e-04
+2026-07-17 10:52:54,481 [INFO] trainer: epoch 154 step 100/135 loss=1.1513 lr=1.61e-04
+2026-07-17 10:53:07,268 [INFO] trainer: epoch 154 done train_loss=1.1319 dt=50.2s
+2026-07-17 10:53:26,297 [INFO] trainer: epoch 155 step 50/135 loss=1.1227 lr=1.60e-04
+2026-07-17 10:53:44,612 [INFO] trainer: epoch 155 step 100/135 loss=1.0990 lr=1.60e-04
+2026-07-17 10:54:12,485 [INFO] trainer: epoch 155 done train_loss=1.1353 dt=65.2s
+2026-07-17 10:54:35,051 [INFO] trainer: epoch 156 step 50/135 loss=1.1541 lr=1.60e-04
+2026-07-17 10:54:53,355 [INFO] trainer: epoch 156 step 100/135 loss=1.1497 lr=1.60e-04
+2026-07-17 10:55:06,138 [INFO] trainer: epoch 156 done train_loss=1.1481 dt=53.6s
+2026-07-17 10:55:25,228 [INFO] trainer: epoch 157 step 50/135 loss=1.1701 lr=1.59e-04
+2026-07-17 10:56:09,840 [INFO] trainer: epoch 157 step 100/135 loss=1.1394 lr=1.59e-04
+2026-07-17 10:56:50,409 [INFO] trainer: epoch 157 done train_loss=1.1568 dt=104.3s
+2026-07-17 10:57:10,339 [INFO] trainer: epoch 158 step 50/135 loss=1.1065 lr=1.59e-04
+2026-07-17 10:57:28,633 [INFO] trainer: epoch 158 step 100/135 loss=1.1459 lr=1.59e-04
+2026-07-17 10:57:41,429 [INFO] trainer: epoch 158 done train_loss=1.1307 dt=51.0s
+2026-07-17 10:58:00,661 [INFO] trainer: epoch 159 step 50/135 loss=1.1863 lr=1.58e-04
+2026-07-17 10:58:18,960 [INFO] trainer: epoch 159 step 100/135 loss=1.1195 lr=1.58e-04
+2026-07-17 10:58:31,752 [INFO] trainer: epoch 159 done train_loss=1.1508 dt=50.3s
+2026-07-17 10:58:50,885 [INFO] trainer: epoch 160 step 50/135 loss=1.1449 lr=1.58e-04
+2026-07-17 10:59:09,180 [INFO] trainer: epoch 160 step 100/135 loss=1.1860 lr=1.58e-04
+2026-07-17 10:59:21,973 [INFO] trainer: epoch 160 done train_loss=1.1604 dt=50.2s
+2026-07-17 10:59:41,328 [INFO] trainer: epoch 161 step 50/135 loss=1.2150 lr=1.57e-04
+2026-07-17 10:59:59,629 [INFO] trainer: epoch 161 step 100/135 loss=1.1337 lr=1.57e-04
+2026-07-17 11:00:12,408 [INFO] trainer: epoch 161 done train_loss=1.1510 dt=50.1s
+2026-07-17 11:00:31,541 [INFO] trainer: epoch 162 step 50/135 loss=1.1274 lr=1.57e-04
+2026-07-17 11:00:49,869 [INFO] trainer: epoch 162 step 100/135 loss=1.1087 lr=1.57e-04
+2026-07-17 11:01:02,670 [INFO] trainer: epoch 162 done train_loss=1.1489 dt=50.3s
+2026-07-17 11:01:27,440 [INFO] trainer: epoch 163 step 50/135 loss=1.1839 lr=1.56e-04
+2026-07-17 11:02:11,706 [INFO] trainer: epoch 163 step 100/135 loss=1.1205 lr=1.56e-04
+2026-07-17 11:02:46,892 [INFO] trainer: epoch 163 done train_loss=1.1546 dt=104.2s
+2026-07-17 11:03:59,623 [INFO] trainer: epoch 164 step 50/135 loss=1.2140 lr=1.56e-04
+2026-07-17 11:04:55,464 [INFO] trainer: epoch 164 step 100/135 loss=1.1220 lr=1.55e-04
+2026-07-17 11:05:08,272 [INFO] trainer: epoch 164 done train_loss=1.1507 dt=141.4s
+2026-07-17 11:05:27,822 [INFO] trainer: epoch 165 step 50/135 loss=1.1397 lr=1.55e-04
+2026-07-17 11:05:46,118 [INFO] trainer: epoch 165 step 100/135 loss=1.1275 lr=1.55e-04
+2026-07-17 11:05:58,920 [INFO] trainer: epoch 165 done train_loss=1.1347 dt=50.6s
+2026-07-17 11:06:18,150 [INFO] trainer: epoch 166 step 50/135 loss=1.1201 lr=1.55e-04
+2026-07-17 11:06:36,431 [INFO] trainer: epoch 166 step 100/135 loss=1.1186 lr=1.54e-04
+2026-07-17 11:06:49,220 [INFO] trainer: epoch 166 done train_loss=1.1333 dt=50.3s
+2026-07-17 11:07:08,296 [INFO] trainer: epoch 167 step 50/135 loss=1.1349 lr=1.54e-04
+2026-07-17 11:07:26,588 [INFO] trainer: epoch 167 step 100/135 loss=1.1247 lr=1.54e-04
+2026-07-17 11:07:39,373 [INFO] trainer: epoch 167 done train_loss=1.1344 dt=50.2s
+2026-07-17 11:08:01,422 [INFO] trainer: epoch 168 step 50/135 loss=1.1230 lr=1.54e-04
+2026-07-17 11:08:19,721 [INFO] trainer: epoch 168 step 100/135 loss=1.1203 lr=1.53e-04
+2026-07-17 11:08:32,524 [INFO] trainer: epoch 168 done train_loss=1.1416 dt=53.2s
+2026-07-17 11:08:51,797 [INFO] trainer: epoch 169 step 50/135 loss=1.1303 lr=1.53e-04
+2026-07-17 11:09:10,100 [INFO] trainer: epoch 169 step 100/135 loss=1.1538 lr=1.53e-04
+2026-07-17 11:09:22,893 [INFO] trainer: epoch 169 done train_loss=1.1285 dt=50.4s
+2026-07-17 11:09:42,109 [INFO] trainer: epoch 170 step 50/135 loss=1.1467 lr=1.52e-04
+2026-07-17 11:10:00,404 [INFO] trainer: epoch 170 step 100/135 loss=1.0885 lr=1.52e-04
+2026-07-17 11:10:13,187 [INFO] trainer: epoch 170 done train_loss=1.1363 dt=50.3s
+2026-07-17 11:10:32,655 [INFO] trainer: epoch 171 step 50/135 loss=1.1133 lr=1.52e-04
+2026-07-17 11:11:18,060 [INFO] trainer: epoch 171 step 100/135 loss=1.1351 lr=1.52e-04
+2026-07-17 11:12:10,760 [INFO] trainer: epoch 171 done train_loss=1.1410 dt=117.2s
+2026-07-17 11:13:28,765 [INFO] trainer: epoch 172 step 50/135 loss=1.1375 lr=1.51e-04
+2026-07-17 11:14:46,648 [INFO] trainer: epoch 172 step 100/135 loss=1.1704 lr=1.51e-04
+2026-07-17 11:15:41,077 [INFO] trainer: epoch 172 done train_loss=1.1553 dt=210.3s
+2026-07-17 11:17:03,535 [INFO] trainer: epoch 173 step 50/135 loss=1.1574 lr=1.51e-04
+2026-07-17 11:18:10,947 [INFO] trainer: epoch 173 step 100/135 loss=1.1487 lr=1.51e-04
+2026-07-17 11:18:49,551 [INFO] trainer: epoch 173 done train_loss=1.1501 dt=188.5s
+2026-07-17 11:20:19,438 [INFO] trainer: epoch 174 step 50/135 loss=1.1276 lr=1.50e-04
+2026-07-17 11:21:43,271 [INFO] trainer: epoch 174 step 100/135 loss=1.0768 lr=1.50e-04
+2026-07-17 11:23:09,994 [INFO] trainer: epoch 174 done train_loss=1.1054 dt=260.4s
+2026-07-17 11:24:55,618 [INFO] trainer: epoch 175 step 50/135 loss=1.1409 lr=1.50e-04
+2026-07-17 11:26:16,261 [INFO] trainer: epoch 175 step 100/135 loss=1.1325 lr=1.49e-04
+2026-07-17 11:27:13,564 [INFO] trainer: epoch 175 done train_loss=1.1237 dt=243.5s
+2026-07-17 11:31:28,680 [INFO] trainer: epoch 175 val_mean_dice=0.7974
+2026-07-17 11:32:32,160 [INFO] trainer: epoch 176 step 50/135 loss=1.1221 lr=1.49e-04
+2026-07-17 11:33:43,456 [INFO] trainer: epoch 176 step 100/135 loss=1.1388 lr=1.49e-04
+2026-07-17 11:34:48,959 [INFO] trainer: epoch 176 done train_loss=1.1411 dt=200.1s
+2026-07-17 11:38:45,872 [INFO] trainer: epoch 177 step 50/135 loss=1.0948 lr=1.49e-04
+2026-07-17 11:40:55,373 [INFO] trainer: epoch 177 step 100/135 loss=1.1896 lr=1.48e-04
+2026-07-17 11:41:52,408 [INFO] trainer: epoch 177 done train_loss=1.1347 dt=423.3s
+2026-07-17 11:43:13,976 [INFO] trainer: epoch 178 step 50/135 loss=1.1215 lr=1.48e-04
+2026-07-17 11:43:54,079 [INFO] trainer: epoch 178 step 100/135 loss=1.0977 lr=1.48e-04
+2026-07-17 11:44:06,902 [INFO] trainer: epoch 178 done train_loss=1.1174 dt=134.5s
+2026-07-17 11:44:26,180 [INFO] trainer: epoch 179 step 50/135 loss=1.1363 lr=1.47e-04
+2026-07-17 11:44:44,460 [INFO] trainer: epoch 179 step 100/135 loss=1.1143 lr=1.47e-04
+2026-07-17 11:44:57,249 [INFO] trainer: epoch 179 done train_loss=1.1279 dt=50.3s
+2026-07-17 11:45:16,391 [INFO] trainer: epoch 180 step 50/135 loss=1.1076 lr=1.47e-04
+2026-07-17 11:45:34,675 [INFO] trainer: epoch 180 step 100/135 loss=1.0926 lr=1.47e-04
+2026-07-17 11:45:47,462 [INFO] trainer: epoch 180 done train_loss=1.1005 dt=50.2s
+2026-07-17 11:46:06,737 [INFO] trainer: epoch 181 step 50/135 loss=1.1467 lr=1.46e-04
+2026-07-17 11:46:24,989 [INFO] trainer: epoch 181 step 100/135 loss=1.1071 lr=1.46e-04
+2026-07-17 11:46:37,770 [INFO] trainer: epoch 181 done train_loss=1.1163 dt=50.0s
+2026-07-17 11:46:56,852 [INFO] trainer: epoch 182 step 50/135 loss=1.1572 lr=1.46e-04
+2026-07-17 11:47:15,108 [INFO] trainer: epoch 182 step 100/135 loss=1.1646 lr=1.46e-04
+2026-07-17 11:47:36,967 [INFO] trainer: epoch 182 done train_loss=1.1364 dt=59.2s
+2026-07-17 11:47:56,539 [INFO] trainer: epoch 183 step 50/135 loss=1.1105 lr=1.45e-04
+2026-07-17 11:48:14,779 [INFO] trainer: epoch 183 step 100/135 loss=1.1145 lr=1.45e-04
+2026-07-17 11:48:27,541 [INFO] trainer: epoch 183 done train_loss=1.1055 dt=50.6s
+2026-07-17 11:48:46,419 [INFO] trainer: epoch 184 step 50/135 loss=1.1267 lr=1.45e-04
+2026-07-17 11:49:04,698 [INFO] trainer: epoch 184 step 100/135 loss=1.1235 lr=1.44e-04
+2026-07-17 11:49:17,478 [INFO] trainer: epoch 184 done train_loss=1.1117 dt=49.9s
+2026-07-17 11:49:36,614 [INFO] trainer: epoch 185 step 50/135 loss=1.0941 lr=1.44e-04
+2026-07-17 11:49:54,911 [INFO] trainer: epoch 185 step 100/135 loss=1.1060 lr=1.44e-04
+2026-07-17 11:50:07,693 [INFO] trainer: epoch 185 done train_loss=1.1006 dt=50.2s
+2026-07-17 11:50:26,736 [INFO] trainer: epoch 186 step 50/135 loss=1.1214 lr=1.43e-04
+2026-07-17 11:50:45,001 [INFO] trainer: epoch 186 step 100/135 loss=1.0705 lr=1.43e-04
+2026-07-17 11:50:58,269 [INFO] trainer: epoch 186 done train_loss=1.1236 dt=50.6s
+2026-07-17 11:51:23,884 [INFO] trainer: epoch 187 step 50/135 loss=1.0578 lr=1.43e-04
+2026-07-17 11:51:43,298 [INFO] trainer: epoch 187 step 100/135 loss=1.1053 lr=1.43e-04
+2026-07-17 11:51:56,183 [INFO] trainer: epoch 187 done train_loss=1.0836 dt=57.9s
+2026-07-17 11:52:15,350 [INFO] trainer: epoch 188 step 50/135 loss=1.0557 lr=1.42e-04
+2026-07-17 11:52:33,627 [INFO] trainer: epoch 188 step 100/135 loss=1.0562 lr=1.42e-04
+2026-07-17 11:52:46,410 [INFO] trainer: epoch 188 done train_loss=1.0535 dt=50.2s
+2026-07-17 11:53:07,460 [INFO] trainer: epoch 189 step 50/135 loss=1.1220 lr=1.42e-04
+2026-07-17 11:53:25,867 [INFO] trainer: epoch 189 step 100/135 loss=1.1305 lr=1.42e-04
+2026-07-17 11:53:38,681 [INFO] trainer: epoch 189 done train_loss=1.1078 dt=52.3s
+2026-07-17 11:53:57,769 [INFO] trainer: epoch 190 step 50/135 loss=1.0686 lr=1.41e-04
+2026-07-17 11:54:16,012 [INFO] trainer: epoch 190 step 100/135 loss=1.0761 lr=1.41e-04
+2026-07-17 11:54:28,780 [INFO] trainer: epoch 190 done train_loss=1.0729 dt=50.1s
+2026-07-17 11:54:51,006 [INFO] trainer: epoch 191 step 50/135 loss=1.0836 lr=1.41e-04
+2026-07-17 11:55:17,767 [INFO] trainer: epoch 191 step 100/135 loss=1.0712 lr=1.40e-04
+2026-07-17 11:55:43,440 [INFO] trainer: epoch 191 done train_loss=1.0785 dt=74.3s
+2026-07-17 11:56:03,261 [INFO] trainer: epoch 192 step 50/135 loss=1.0789 lr=1.40e-04
+2026-07-17 11:56:21,532 [INFO] trainer: epoch 192 step 100/135 loss=1.0713 lr=1.40e-04
+2026-07-17 11:56:34,385 [INFO] trainer: epoch 192 done train_loss=1.0725 dt=50.9s
+2026-07-17 11:56:53,499 [INFO] trainer: epoch 193 step 50/135 loss=1.0596 lr=1.39e-04
+2026-07-17 11:57:11,810 [INFO] trainer: epoch 193 step 100/135 loss=1.1104 lr=1.39e-04
+2026-07-17 11:57:24,964 [INFO] trainer: epoch 193 done train_loss=1.0874 dt=50.6s
+2026-07-17 11:58:21,224 [INFO] trainer: epoch 194 step 50/135 loss=1.0875 lr=1.39e-04
+2026-07-17 11:58:39,933 [INFO] trainer: epoch 194 step 100/135 loss=1.1104 lr=1.39e-04
+2026-07-17 11:58:52,755 [INFO] trainer: epoch 194 done train_loss=1.1046 dt=87.8s
+2026-07-17 11:59:44,699 [INFO] trainer: epoch 195 step 50/135 loss=1.0819 lr=1.38e-04
+2026-07-17 12:00:05,919 [INFO] trainer: epoch 195 step 100/135 loss=1.0510 lr=1.38e-04
+2026-07-17 12:00:18,736 [INFO] trainer: epoch 195 done train_loss=1.0723 dt=86.0s
+2026-07-17 12:00:38,981 [INFO] trainer: epoch 196 step 50/135 loss=1.1417 lr=1.38e-04
+2026-07-17 12:00:57,257 [INFO] trainer: epoch 196 step 100/135 loss=1.0320 lr=1.37e-04
+2026-07-17 12:01:10,034 [INFO] trainer: epoch 196 done train_loss=1.0838 dt=51.3s
+2026-07-17 12:01:29,163 [INFO] trainer: epoch 197 step 50/135 loss=1.0649 lr=1.37e-04
+2026-07-17 12:01:50,656 [INFO] trainer: epoch 197 step 100/135 loss=1.0562 lr=1.37e-04
+2026-07-17 12:02:03,487 [INFO] trainer: epoch 197 done train_loss=1.0705 dt=53.5s
+2026-07-17 12:02:24,330 [INFO] trainer: epoch 198 step 50/135 loss=1.0293 lr=1.36e-04
+2026-07-17 12:02:42,562 [INFO] trainer: epoch 198 step 100/135 loss=1.0794 lr=1.36e-04
+2026-07-17 12:02:55,329 [INFO] trainer: epoch 198 done train_loss=1.0738 dt=51.8s
+2026-07-17 12:03:14,378 [INFO] trainer: epoch 199 step 50/135 loss=1.0631 lr=1.36e-04
+2026-07-17 12:04:01,696 [INFO] trainer: epoch 199 step 100/135 loss=1.0276 lr=1.36e-04
+2026-07-17 12:04:36,856 [INFO] trainer: epoch 199 done train_loss=1.0532 dt=101.5s
+2026-07-17 12:04:56,363 [INFO] trainer: epoch 200 step 50/135 loss=1.0538 lr=1.35e-04
+2026-07-17 12:05:14,630 [INFO] trainer: epoch 200 step 100/135 loss=1.1090 lr=1.35e-04
+2026-07-17 12:05:27,398 [INFO] trainer: epoch 200 done train_loss=1.0809 dt=50.5s
+2026-07-17 12:07:05,147 [INFO] trainer: epoch 200 val_mean_dice=0.8003
+2026-07-17 12:08:16,323 [INFO] trainer: epoch 201 step 50/135 loss=1.0479 lr=1.35e-04
+2026-07-17 12:09:17,844 [INFO] trainer: epoch 201 step 100/135 loss=1.0556 lr=1.34e-04
+2026-07-17 12:09:54,750 [INFO] trainer: epoch 201 done train_loss=1.0459 dt=167.7s
+2026-07-17 12:10:55,150 [INFO] trainer: epoch 202 step 50/135 loss=1.0801 lr=1.34e-04
+2026-07-17 12:11:43,840 [INFO] trainer: epoch 202 step 100/135 loss=1.0605 lr=1.34e-04
+2026-07-17 12:12:18,886 [INFO] trainer: epoch 202 done train_loss=1.0630 dt=144.1s
+2026-07-17 12:13:16,826 [INFO] trainer: epoch 203 step 50/135 loss=1.1054 lr=1.33e-04
+2026-07-17 12:14:27,319 [INFO] trainer: epoch 203 step 100/135 loss=1.0485 lr=1.33e-04
+2026-07-17 12:15:04,040 [INFO] trainer: epoch 203 done train_loss=1.0814 dt=165.2s
+2026-07-17 12:15:30,562 [INFO] trainer: epoch 204 step 50/135 loss=1.0758 lr=1.33e-04
+2026-07-17 12:15:48,937 [INFO] trainer: epoch 204 step 100/135 loss=1.0515 lr=1.33e-04
+2026-07-17 12:16:01,728 [INFO] trainer: epoch 204 done train_loss=1.0496 dt=57.7s
+2026-07-17 12:16:20,910 [INFO] trainer: epoch 205 step 50/135 loss=1.0428 lr=1.32e-04
+2026-07-17 12:16:39,116 [INFO] trainer: epoch 205 step 100/135 loss=1.0355 lr=1.32e-04
+2026-07-17 12:17:10,176 [INFO] trainer: epoch 205 done train_loss=1.0453 dt=68.4s
+2026-07-17 12:18:07,473 [INFO] trainer: epoch 206 step 50/135 loss=1.0918 lr=1.32e-04
+2026-07-17 12:19:07,020 [INFO] trainer: epoch 206 step 100/135 loss=1.0532 lr=1.31e-04
+2026-07-17 12:19:46,444 [INFO] trainer: epoch 206 done train_loss=1.0782 dt=156.2s
+2026-07-17 12:20:50,028 [INFO] trainer: epoch 207 step 50/135 loss=1.0800 lr=1.31e-04
+2026-07-17 12:21:42,879 [INFO] trainer: epoch 207 step 100/135 loss=1.0142 lr=1.31e-04
+2026-07-17 12:22:15,449 [INFO] trainer: epoch 207 done train_loss=1.0502 dt=149.0s
+2026-07-17 12:23:10,898 [INFO] trainer: epoch 208 step 50/135 loss=1.0186 lr=1.30e-04
+2026-07-17 12:24:12,889 [INFO] trainer: epoch 208 step 100/135 loss=1.0176 lr=1.30e-04
+2026-07-17 12:24:51,697 [INFO] trainer: epoch 208 done train_loss=1.0292 dt=156.2s
+2026-07-17 12:25:53,511 [INFO] trainer: epoch 209 step 50/135 loss=1.0730 lr=1.30e-04
+2026-07-17 12:26:15,743 [INFO] trainer: epoch 209 step 100/135 loss=1.0638 lr=1.30e-04
+2026-07-17 12:26:28,557 [INFO] trainer: epoch 209 done train_loss=1.0555 dt=96.9s
+2026-07-17 12:26:47,826 [INFO] trainer: epoch 210 step 50/135 loss=1.0375 lr=1.29e-04
+2026-07-17 12:27:06,091 [INFO] trainer: epoch 210 step 100/135 loss=1.0483 lr=1.29e-04
+2026-07-17 12:27:18,881 [INFO] trainer: epoch 210 done train_loss=1.0455 dt=50.3s
+2026-07-17 12:27:38,390 [INFO] trainer: epoch 211 step 50/135 loss=1.0499 lr=1.29e-04
+2026-07-17 12:27:56,672 [INFO] trainer: epoch 211 step 100/135 loss=1.0400 lr=1.28e-04
+2026-07-17 12:28:09,461 [INFO] trainer: epoch 211 done train_loss=1.0387 dt=50.2s
+2026-07-17 12:28:40,724 [INFO] trainer: epoch 212 step 50/135 loss=1.0107 lr=1.28e-04
+2026-07-17 12:28:58,986 [INFO] trainer: epoch 212 step 100/135 loss=1.0347 lr=1.28e-04
+2026-07-17 12:29:11,767 [INFO] trainer: epoch 212 done train_loss=1.0231 dt=62.3s
+2026-07-17 12:29:30,891 [INFO] trainer: epoch 213 step 50/135 loss=1.0756 lr=1.27e-04
+2026-07-17 12:29:49,126 [INFO] trainer: epoch 213 step 100/135 loss=0.9939 lr=1.27e-04
+2026-07-17 12:30:11,261 [INFO] trainer: epoch 213 done train_loss=1.0294 dt=59.5s
+2026-07-17 12:31:21,655 [INFO] trainer: epoch 214 step 50/135 loss=1.0208 lr=1.27e-04
+2026-07-17 12:31:53,861 [INFO] trainer: epoch 214 step 100/135 loss=1.0517 lr=1.27e-04
+2026-07-17 12:32:06,634 [INFO] trainer: epoch 214 done train_loss=1.0274 dt=115.4s
+2026-07-17 12:32:25,919 [INFO] trainer: epoch 215 step 50/135 loss=1.0341 lr=1.26e-04
+2026-07-17 12:32:44,163 [INFO] trainer: epoch 215 step 100/135 loss=1.0259 lr=1.26e-04
+2026-07-17 12:32:56,925 [INFO] trainer: epoch 215 done train_loss=1.0531 dt=50.3s
+2026-07-17 12:33:15,880 [INFO] trainer: epoch 216 step 50/135 loss=1.1163 lr=1.26e-04
+2026-07-17 12:33:34,786 [INFO] trainer: epoch 216 step 100/135 loss=1.0521 lr=1.25e-04
+2026-07-17 12:34:01,218 [INFO] trainer: epoch 216 done train_loss=1.0813 dt=64.3s
+2026-07-17 12:34:20,590 [INFO] trainer: epoch 217 step 50/135 loss=1.0520 lr=1.25e-04
+2026-07-17 12:34:38,823 [INFO] trainer: epoch 217 step 100/135 loss=1.0632 lr=1.25e-04
+2026-07-17 12:34:51,592 [INFO] trainer: epoch 217 done train_loss=1.0431 dt=50.4s
+2026-07-17 12:35:10,734 [INFO] trainer: epoch 218 step 50/135 loss=1.0829 lr=1.24e-04
+2026-07-17 12:35:28,976 [INFO] trainer: epoch 218 step 100/135 loss=1.0213 lr=1.24e-04
+2026-07-17 12:35:41,747 [INFO] trainer: epoch 218 done train_loss=1.0580 dt=50.2s
+2026-07-17 12:36:00,792 [INFO] trainer: epoch 219 step 50/135 loss=1.0180 lr=1.24e-04
+2026-07-17 12:36:19,033 [INFO] trainer: epoch 219 step 100/135 loss=1.0484 lr=1.23e-04
+2026-07-17 12:36:31,801 [INFO] trainer: epoch 219 done train_loss=1.0290 dt=50.1s
+2026-07-17 12:36:50,759 [INFO] trainer: epoch 220 step 50/135 loss=1.0525 lr=1.23e-04
+2026-07-17 12:37:09,016 [INFO] trainer: epoch 220 step 100/135 loss=1.0339 lr=1.23e-04
+2026-07-17 12:37:21,795 [INFO] trainer: epoch 220 done train_loss=1.0460 dt=50.0s
+2026-07-17 12:38:01,832 [INFO] trainer: epoch 221 step 50/135 loss=1.0227 lr=1.22e-04
+2026-07-17 12:38:39,478 [INFO] trainer: epoch 221 step 100/135 loss=1.0590 lr=1.22e-04
+2026-07-17 12:38:52,291 [INFO] trainer: epoch 221 done train_loss=1.0425 dt=90.2s
+2026-07-17 12:39:11,607 [INFO] trainer: epoch 222 step 50/135 loss=1.0604 lr=1.22e-04
+2026-07-17 12:39:31,239 [INFO] trainer: epoch 222 step 100/135 loss=1.0631 lr=1.22e-04
+2026-07-17 12:39:44,003 [INFO] trainer: epoch 222 done train_loss=1.0531 dt=51.7s
+2026-07-17 12:40:03,070 [INFO] trainer: epoch 223 step 50/135 loss=1.0461 lr=1.21e-04
+2026-07-17 12:40:21,306 [INFO] trainer: epoch 223 step 100/135 loss=1.0340 lr=1.21e-04
+2026-07-17 12:40:34,060 [INFO] trainer: epoch 223 done train_loss=1.0437 dt=50.1s
+2026-07-17 12:40:53,222 [INFO] trainer: epoch 224 step 50/135 loss=0.9903 lr=1.21e-04
+2026-07-17 12:41:11,447 [INFO] trainer: epoch 224 step 100/135 loss=1.0783 lr=1.20e-04
+2026-07-17 12:41:24,202 [INFO] trainer: epoch 224 done train_loss=1.0315 dt=50.1s
+2026-07-17 12:41:43,376 [INFO] trainer: epoch 225 step 50/135 loss=1.0223 lr=1.20e-04
+2026-07-17 12:42:07,220 [INFO] trainer: epoch 225 step 100/135 loss=1.0662 lr=1.20e-04
+2026-07-17 12:42:20,058 [INFO] trainer: epoch 225 done train_loss=1.0384 dt=55.9s
+2026-07-17 12:43:46,312 [INFO] trainer: epoch 225 val_mean_dice=0.8053
+2026-07-17 12:44:06,048 [INFO] trainer: epoch 226 step 50/135 loss=1.0438 lr=1.19e-04
+2026-07-17 12:44:24,288 [INFO] trainer: epoch 226 step 100/135 loss=1.0705 lr=1.19e-04
+2026-07-17 12:44:38,280 [INFO] trainer: epoch 226 done train_loss=1.0522 dt=51.4s
+2026-07-17 12:45:03,661 [INFO] trainer: epoch 227 step 50/135 loss=1.0204 lr=1.19e-04
+2026-07-17 12:45:22,837 [INFO] trainer: epoch 227 step 100/135 loss=1.0482 lr=1.18e-04
+2026-07-17 12:45:35,614 [INFO] trainer: epoch 227 done train_loss=1.0398 dt=57.3s
+2026-07-17 12:45:54,561 [INFO] trainer: epoch 228 step 50/135 loss=1.0659 lr=1.18e-04
+2026-07-17 12:46:12,836 [INFO] trainer: epoch 228 step 100/135 loss=1.0751 lr=1.18e-04
+2026-07-17 12:46:25,610 [INFO] trainer: epoch 228 done train_loss=1.0415 dt=50.0s
+2026-07-17 12:46:44,608 [INFO] trainer: epoch 229 step 50/135 loss=1.0464 lr=1.17e-04
+2026-07-17 12:47:02,900 [INFO] trainer: epoch 229 step 100/135 loss=1.0057 lr=1.17e-04
+2026-07-17 12:47:15,679 [INFO] trainer: epoch 229 done train_loss=1.0280 dt=50.1s
+2026-07-17 12:47:34,902 [INFO] trainer: epoch 230 step 50/135 loss=1.0478 lr=1.17e-04
+2026-07-17 12:47:53,150 [INFO] trainer: epoch 230 step 100/135 loss=1.0788 lr=1.17e-04
+2026-07-17 12:48:05,928 [INFO] trainer: epoch 230 done train_loss=1.0579 dt=50.2s
+2026-07-17 12:48:25,245 [INFO] trainer: epoch 231 step 50/135 loss=1.0397 lr=1.16e-04
+2026-07-17 12:48:43,505 [INFO] trainer: epoch 231 step 100/135 loss=1.0202 lr=1.16e-04
+2026-07-17 12:48:56,276 [INFO] trainer: epoch 231 done train_loss=1.0303 dt=50.0s
+2026-07-17 12:49:15,429 [INFO] trainer: epoch 232 step 50/135 loss=1.0660 lr=1.16e-04
+2026-07-17 12:49:33,693 [INFO] trainer: epoch 232 step 100/135 loss=1.0541 lr=1.15e-04
+2026-07-17 12:49:46,467 [INFO] trainer: epoch 232 done train_loss=1.0496 dt=50.2s
+2026-07-17 12:50:05,408 [INFO] trainer: epoch 233 step 50/135 loss=1.0044 lr=1.15e-04
+2026-07-17 12:50:23,689 [INFO] trainer: epoch 233 step 100/135 loss=1.0825 lr=1.15e-04
+2026-07-17 12:50:36,474 [INFO] trainer: epoch 233 done train_loss=1.0453 dt=50.0s
+2026-07-17 12:50:55,497 [INFO] trainer: epoch 234 step 50/135 loss=1.0202 lr=1.14e-04
+2026-07-17 12:51:13,754 [INFO] trainer: epoch 234 step 100/135 loss=1.0313 lr=1.14e-04
+2026-07-17 12:51:26,537 [INFO] trainer: epoch 234 done train_loss=1.0158 dt=50.1s
+2026-07-17 12:51:45,446 [INFO] trainer: epoch 235 step 50/135 loss=1.0268 lr=1.14e-04
+2026-07-17 12:52:03,714 [INFO] trainer: epoch 235 step 100/135 loss=1.0319 lr=1.13e-04
+2026-07-17 12:52:16,498 [INFO] trainer: epoch 235 done train_loss=1.0327 dt=50.0s
+2026-07-17 12:52:41,852 [INFO] trainer: epoch 236 step 50/135 loss=1.0001 lr=1.13e-04
+2026-07-17 12:53:00,118 [INFO] trainer: epoch 236 step 100/135 loss=1.0084 lr=1.13e-04
+2026-07-17 12:53:12,909 [INFO] trainer: epoch 236 done train_loss=1.0058 dt=56.4s
+2026-07-17 12:53:32,062 [INFO] trainer: epoch 237 step 50/135 loss=1.0389 lr=1.12e-04
+2026-07-17 12:53:50,356 [INFO] trainer: epoch 237 step 100/135 loss=0.9947 lr=1.12e-04
+2026-07-17 12:54:03,122 [INFO] trainer: epoch 237 done train_loss=1.0125 dt=50.2s
+2026-07-17 12:54:22,145 [INFO] trainer: epoch 238 step 50/135 loss=1.0486 lr=1.12e-04
+2026-07-17 12:54:42,434 [INFO] trainer: epoch 238 step 100/135 loss=0.9732 lr=1.11e-04
+2026-07-17 12:55:03,133 [INFO] trainer: epoch 238 done train_loss=1.0238 dt=60.0s
+2026-07-17 12:55:22,365 [INFO] trainer: epoch 239 step 50/135 loss=1.0538 lr=1.11e-04
+2026-07-17 12:55:40,608 [INFO] trainer: epoch 239 step 100/135 loss=1.0615 lr=1.11e-04
+2026-07-17 12:55:53,535 [INFO] trainer: epoch 239 done train_loss=1.0404 dt=50.4s
+2026-07-17 12:56:12,562 [INFO] trainer: epoch 240 step 50/135 loss=1.0565 lr=1.10e-04
+2026-07-17 12:56:30,812 [INFO] trainer: epoch 240 step 100/135 loss=1.0426 lr=1.10e-04
+2026-07-17 12:56:43,558 [INFO] trainer: epoch 240 done train_loss=1.0505 dt=50.0s
+2026-07-17 12:57:03,397 [INFO] trainer: epoch 241 step 50/135 loss=1.0406 lr=1.10e-04
+2026-07-17 12:58:01,465 [INFO] trainer: epoch 241 step 100/135 loss=1.0234 lr=1.10e-04
+2026-07-17 12:58:39,433 [INFO] trainer: epoch 241 done train_loss=1.0364 dt=115.5s
+2026-07-17 12:58:59,378 [INFO] trainer: epoch 242 step 50/135 loss=1.0023 lr=1.09e-04
+2026-07-17 12:59:17,641 [INFO] trainer: epoch 242 step 100/135 loss=1.0388 lr=1.09e-04
+2026-07-17 12:59:30,414 [INFO] trainer: epoch 242 done train_loss=1.0231 dt=51.0s
+2026-07-17 12:59:49,412 [INFO] trainer: epoch 243 step 50/135 loss=0.9941 lr=1.09e-04
+2026-07-17 13:00:07,694 [INFO] trainer: epoch 243 step 100/135 loss=0.9813 lr=1.08e-04
+2026-07-17 13:00:20,488 [INFO] trainer: epoch 243 done train_loss=0.9876 dt=50.1s
+2026-07-17 13:00:39,447 [INFO] trainer: epoch 244 step 50/135 loss=1.0133 lr=1.08e-04
+2026-07-17 13:00:57,676 [INFO] trainer: epoch 244 step 100/135 loss=1.0630 lr=1.08e-04
+2026-07-17 13:01:10,438 [INFO] trainer: epoch 244 done train_loss=1.0298 dt=49.9s
+2026-07-17 13:01:29,615 [INFO] trainer: epoch 245 step 50/135 loss=1.0269 lr=1.07e-04
+2026-07-17 13:01:47,842 [INFO] trainer: epoch 245 step 100/135 loss=1.0652 lr=1.07e-04
+2026-07-17 13:02:00,600 [INFO] trainer: epoch 245 done train_loss=1.0288 dt=50.2s
+2026-07-17 13:02:45,984 [INFO] trainer: epoch 246 step 50/135 loss=1.0691 lr=1.07e-04
+2026-07-17 13:03:57,692 [INFO] trainer: epoch 246 step 100/135 loss=0.9958 lr=1.06e-04
+2026-07-17 13:04:17,739 [INFO] trainer: epoch 246 done train_loss=1.0297 dt=137.1s
+2026-07-17 13:04:37,298 [INFO] trainer: epoch 247 step 50/135 loss=0.9992 lr=1.06e-04
+2026-07-17 13:04:55,551 [INFO] trainer: epoch 247 step 100/135 loss=1.0218 lr=1.06e-04
+2026-07-17 13:05:08,651 [INFO] trainer: epoch 247 done train_loss=1.0376 dt=50.9s
+2026-07-17 13:05:27,851 [INFO] trainer: epoch 248 step 50/135 loss=1.0247 lr=1.05e-04
+2026-07-17 13:05:46,089 [INFO] trainer: epoch 248 step 100/135 loss=1.0134 lr=1.05e-04
+2026-07-17 13:05:58,842 [INFO] trainer: epoch 248 done train_loss=1.0121 dt=50.2s
+2026-07-17 13:06:17,841 [INFO] trainer: epoch 249 step 50/135 loss=1.0212 lr=1.05e-04
+2026-07-17 13:06:36,131 [INFO] trainer: epoch 249 step 100/135 loss=1.0164 lr=1.04e-04
+2026-07-17 13:06:48,916 [INFO] trainer: epoch 249 done train_loss=1.0197 dt=50.1s
+2026-07-17 13:07:08,200 [INFO] trainer: epoch 250 step 50/135 loss=1.0688 lr=1.04e-04
+2026-07-17 13:07:26,442 [INFO] trainer: epoch 250 step 100/135 loss=1.0080 lr=1.04e-04
+2026-07-17 13:07:39,204 [INFO] trainer: epoch 250 done train_loss=1.0397 dt=50.3s
+2026-07-17 13:10:56,975 [INFO] trainer: epoch 250 val_mean_dice=0.8103
+2026-07-17 13:11:35,114 [INFO] trainer: epoch 251 step 50/135 loss=1.0022 lr=1.03e-04
+2026-07-17 13:11:53,362 [INFO] trainer: epoch 251 step 100/135 loss=1.0157 lr=1.03e-04
+2026-07-17 13:12:06,152 [INFO] trainer: epoch 251 done train_loss=1.0149 dt=58.3s
+2026-07-17 13:12:25,396 [INFO] trainer: epoch 252 step 50/135 loss=1.0222 lr=1.03e-04
+2026-07-17 13:12:43,717 [INFO] trainer: epoch 252 step 100/135 loss=1.0162 lr=1.03e-04
+2026-07-17 13:12:56,477 [INFO] trainer: epoch 252 done train_loss=1.0128 dt=50.3s
+2026-07-17 13:13:15,391 [INFO] trainer: epoch 253 step 50/135 loss=1.0295 lr=1.02e-04
+2026-07-17 13:13:33,649 [INFO] trainer: epoch 253 step 100/135 loss=1.0059 lr=1.02e-04
+2026-07-17 13:13:46,413 [INFO] trainer: epoch 253 done train_loss=1.0231 dt=49.9s
+2026-07-17 13:14:16,611 [INFO] trainer: epoch 254 step 50/135 loss=1.0136 lr=1.02e-04
+2026-07-17 13:15:08,501 [INFO] trainer: epoch 254 step 100/135 loss=1.0258 lr=1.01e-04
+2026-07-17 13:15:45,482 [INFO] trainer: epoch 254 done train_loss=1.0331 dt=119.1s
+2026-07-17 13:16:05,017 [INFO] trainer: epoch 255 step 50/135 loss=0.9761 lr=1.01e-04
+2026-07-17 13:16:23,285 [INFO] trainer: epoch 255 step 100/135 loss=1.0241 lr=1.01e-04
+2026-07-17 13:16:36,094 [INFO] trainer: epoch 255 done train_loss=0.9891 dt=50.6s
+2026-07-17 13:16:55,258 [INFO] trainer: epoch 256 step 50/135 loss=1.0327 lr=1.00e-04
+2026-07-17 13:17:13,550 [INFO] trainer: epoch 256 step 100/135 loss=1.0122 lr=1.00e-04
+2026-07-17 13:17:26,348 [INFO] trainer: epoch 256 done train_loss=1.0204 dt=50.3s
+2026-07-17 13:17:45,524 [INFO] trainer: epoch 257 step 50/135 loss=1.0519 lr=9.96e-05
+2026-07-17 13:18:03,770 [INFO] trainer: epoch 257 step 100/135 loss=1.0872 lr=9.94e-05
+2026-07-17 13:18:16,552 [INFO] trainer: epoch 257 done train_loss=1.0494 dt=50.2s
+2026-07-17 13:18:35,622 [INFO] trainer: epoch 258 step 50/135 loss=1.0076 lr=9.90e-05
+2026-07-17 13:18:53,909 [INFO] trainer: epoch 258 step 100/135 loss=1.0079 lr=9.88e-05
+2026-07-17 13:19:06,700 [INFO] trainer: epoch 258 done train_loss=1.0088 dt=50.1s
+2026-07-17 13:19:29,958 [INFO] trainer: epoch 259 step 50/135 loss=0.9982 lr=9.84e-05
+2026-07-17 13:19:48,230 [INFO] trainer: epoch 259 step 100/135 loss=1.0475 lr=9.81e-05
+2026-07-17 13:20:01,003 [INFO] trainer: epoch 259 done train_loss=1.0233 dt=54.3s
+2026-07-17 13:20:20,407 [INFO] trainer: epoch 260 step 50/135 loss=1.0601 lr=9.77e-05
+2026-07-17 13:20:38,663 [INFO] trainer: epoch 260 step 100/135 loss=1.0125 lr=9.75e-05
+2026-07-17 13:20:51,422 [INFO] trainer: epoch 260 done train_loss=1.0148 dt=50.4s
+2026-07-17 13:21:10,806 [INFO] trainer: epoch 261 step 50/135 loss=1.0469 lr=9.71e-05
+2026-07-17 13:21:29,058 [INFO] trainer: epoch 261 step 100/135 loss=1.0769 lr=9.68e-05
+2026-07-17 13:21:41,851 [INFO] trainer: epoch 261 done train_loss=1.0529 dt=50.1s
+2026-07-17 13:22:01,248 [INFO] trainer: epoch 262 step 50/135 loss=0.9907 lr=9.64e-05
+2026-07-17 13:22:19,501 [INFO] trainer: epoch 262 step 100/135 loss=0.9880 lr=9.62e-05
+2026-07-17 13:22:32,275 [INFO] trainer: epoch 262 done train_loss=0.9926 dt=50.4s
+2026-07-17 13:22:51,352 [INFO] trainer: epoch 263 step 50/135 loss=1.0242 lr=9.58e-05
+2026-07-17 13:23:09,608 [INFO] trainer: epoch 263 step 100/135 loss=1.0060 lr=9.56e-05
+2026-07-17 13:23:22,380 [INFO] trainer: epoch 263 done train_loss=1.0085 dt=50.1s
+2026-07-17 13:23:41,638 [INFO] trainer: epoch 264 step 50/135 loss=1.0498 lr=9.52e-05
+2026-07-17 13:23:59,900 [INFO] trainer: epoch 264 step 100/135 loss=1.0434 lr=9.49e-05
+2026-07-17 13:24:12,670 [INFO] trainer: epoch 264 done train_loss=1.0291 dt=50.3s
+2026-07-17 13:24:32,017 [INFO] trainer: epoch 265 step 50/135 loss=1.0602 lr=9.45e-05
+2026-07-17 13:24:50,476 [INFO] trainer: epoch 265 step 100/135 loss=1.0117 lr=9.43e-05
+2026-07-17 13:25:03,243 [INFO] trainer: epoch 265 done train_loss=1.0279 dt=50.6s
+2026-07-17 13:25:22,295 [INFO] trainer: epoch 266 step 50/135 loss=1.0260 lr=9.39e-05
+2026-07-17 13:25:40,564 [INFO] trainer: epoch 266 step 100/135 loss=1.0075 lr=9.37e-05
+2026-07-17 13:25:54,031 [INFO] trainer: epoch 266 done train_loss=1.0076 dt=50.8s
+2026-07-17 13:26:13,252 [INFO] trainer: epoch 267 step 50/135 loss=1.0533 lr=9.33e-05
+2026-07-17 13:26:31,520 [INFO] trainer: epoch 267 step 100/135 loss=1.0213 lr=9.30e-05
+2026-07-17 13:26:44,308 [INFO] trainer: epoch 267 done train_loss=1.0174 dt=50.3s
+2026-07-17 13:27:03,769 [INFO] trainer: epoch 268 step 50/135 loss=1.0439 lr=9.26e-05
+2026-07-17 13:27:22,032 [INFO] trainer: epoch 268 step 100/135 loss=1.0424 lr=9.24e-05
+2026-07-17 13:27:34,794 [INFO] trainer: epoch 268 done train_loss=1.0389 dt=50.5s
+2026-07-17 13:27:53,844 [INFO] trainer: epoch 269 step 50/135 loss=1.0358 lr=9.20e-05
+2026-07-17 13:28:12,124 [INFO] trainer: epoch 269 step 100/135 loss=1.0534 lr=9.17e-05
+2026-07-17 13:28:24,924 [INFO] trainer: epoch 269 done train_loss=1.0422 dt=50.1s
+2026-07-17 13:28:44,222 [INFO] trainer: epoch 270 step 50/135 loss=1.0247 lr=9.13e-05
+2026-07-17 13:29:02,528 [INFO] trainer: epoch 270 step 100/135 loss=0.9803 lr=9.11e-05
+2026-07-17 13:29:15,317 [INFO] trainer: epoch 270 done train_loss=1.0100 dt=50.4s
+2026-07-17 13:29:34,969 [INFO] trainer: epoch 271 step 50/135 loss=1.0078 lr=9.07e-05
+2026-07-17 13:29:54,059 [INFO] trainer: epoch 271 step 100/135 loss=1.0345 lr=9.05e-05
+2026-07-17 13:30:06,845 [INFO] trainer: epoch 271 done train_loss=1.0336 dt=51.2s
+2026-07-17 13:30:25,947 [INFO] trainer: epoch 272 step 50/135 loss=1.0168 lr=9.01e-05
+2026-07-17 13:30:44,268 [INFO] trainer: epoch 272 step 100/135 loss=0.9822 lr=8.98e-05
+2026-07-17 13:30:57,088 [INFO] trainer: epoch 272 done train_loss=1.0177 dt=50.2s
+2026-07-17 13:31:16,351 [INFO] trainer: epoch 273 step 50/135 loss=1.0076 lr=8.94e-05
+2026-07-17 13:31:34,639 [INFO] trainer: epoch 273 step 100/135 loss=1.0169 lr=8.92e-05
+2026-07-17 13:31:47,421 [INFO] trainer: epoch 273 done train_loss=1.0092 dt=50.3s
+2026-07-17 13:32:06,577 [INFO] trainer: epoch 274 step 50/135 loss=0.9612 lr=8.88e-05
+2026-07-17 13:32:24,882 [INFO] trainer: epoch 274 step 100/135 loss=0.9801 lr=8.86e-05
+2026-07-17 13:32:37,699 [INFO] trainer: epoch 274 done train_loss=0.9876 dt=50.3s
+2026-07-17 13:32:56,962 [INFO] trainer: epoch 275 step 50/135 loss=1.0196 lr=8.82e-05
+2026-07-17 13:33:15,253 [INFO] trainer: epoch 275 step 100/135 loss=1.0277 lr=8.79e-05
+2026-07-17 13:33:28,044 [INFO] trainer: epoch 275 done train_loss=1.0169 dt=50.3s
+2026-07-17 13:35:06,930 [INFO] trainer: epoch 275 val_mean_dice=0.8137
+2026-07-17 13:35:26,555 [INFO] trainer: epoch 276 step 50/135 loss=1.0160 lr=8.75e-05
+2026-07-17 13:35:44,844 [INFO] trainer: epoch 276 step 100/135 loss=1.0162 lr=8.73e-05
+2026-07-17 13:35:57,637 [INFO] trainer: epoch 276 done train_loss=1.0107 dt=50.3s
+2026-07-17 13:36:16,857 [INFO] trainer: epoch 277 step 50/135 loss=1.0125 lr=8.69e-05
+2026-07-17 13:36:35,165 [INFO] trainer: epoch 277 step 100/135 loss=0.9924 lr=8.67e-05
+2026-07-17 13:36:47,966 [INFO] trainer: epoch 277 done train_loss=0.9902 dt=50.3s
+2026-07-17 13:37:07,348 [INFO] trainer: epoch 278 step 50/135 loss=1.0059 lr=8.63e-05
+2026-07-17 13:37:25,690 [INFO] trainer: epoch 278 step 100/135 loss=0.9947 lr=8.60e-05
+2026-07-17 13:37:38,504 [INFO] trainer: epoch 278 done train_loss=1.0082 dt=50.5s
+2026-07-17 13:37:57,852 [INFO] trainer: epoch 279 step 50/135 loss=0.9764 lr=8.56e-05
+2026-07-17 13:38:16,162 [INFO] trainer: epoch 279 step 100/135 loss=1.0096 lr=8.54e-05
+2026-07-17 13:38:28,983 [INFO] trainer: epoch 279 done train_loss=1.0077 dt=50.5s
+2026-07-17 13:38:48,211 [INFO] trainer: epoch 280 step 50/135 loss=1.0202 lr=8.50e-05
+2026-07-17 13:39:06,557 [INFO] trainer: epoch 280 step 100/135 loss=1.0052 lr=8.48e-05
+2026-07-17 13:39:19,383 [INFO] trainer: epoch 280 done train_loss=1.0249 dt=50.4s
+2026-07-17 13:39:38,940 [INFO] trainer: epoch 281 step 50/135 loss=0.9908 lr=8.44e-05
+2026-07-17 13:39:57,267 [INFO] trainer: epoch 281 step 100/135 loss=0.9559 lr=8.42e-05
+2026-07-17 13:40:10,087 [INFO] trainer: epoch 281 done train_loss=0.9775 dt=50.3s
+2026-07-17 13:40:29,385 [INFO] trainer: epoch 282 step 50/135 loss=0.9793 lr=8.38e-05
+2026-07-17 13:40:47,705 [INFO] trainer: epoch 282 step 100/135 loss=1.0031 lr=8.35e-05
+2026-07-17 13:41:00,508 [INFO] trainer: epoch 282 done train_loss=0.9864 dt=50.4s
+2026-07-17 13:41:19,699 [INFO] trainer: epoch 283 step 50/135 loss=0.9813 lr=8.31e-05
+2026-07-17 13:41:38,021 [INFO] trainer: epoch 283 step 100/135 loss=1.0024 lr=8.29e-05
+2026-07-17 13:41:50,834 [INFO] trainer: epoch 283 done train_loss=1.0171 dt=50.3s
+2026-07-17 13:42:10,063 [INFO] trainer: epoch 284 step 50/135 loss=0.9966 lr=8.25e-05
+2026-07-17 13:42:28,394 [INFO] trainer: epoch 284 step 100/135 loss=0.9690 lr=8.23e-05
+2026-07-17 13:42:41,226 [INFO] trainer: epoch 284 done train_loss=0.9871 dt=50.4s
+2026-07-17 13:43:00,575 [INFO] trainer: epoch 285 step 50/135 loss=1.0019 lr=8.19e-05
+2026-07-17 13:43:18,880 [INFO] trainer: epoch 285 step 100/135 loss=0.9784 lr=8.16e-05
+2026-07-17 13:43:31,684 [INFO] trainer: epoch 285 done train_loss=0.9857 dt=50.5s
+2026-07-17 13:43:51,168 [INFO] trainer: epoch 286 step 50/135 loss=0.9613 lr=8.12e-05
+2026-07-17 13:44:09,497 [INFO] trainer: epoch 286 step 100/135 loss=1.0032 lr=8.10e-05
+2026-07-17 13:44:22,306 [INFO] trainer: epoch 286 done train_loss=0.9835 dt=50.6s
+2026-07-17 13:44:41,621 [INFO] trainer: epoch 287 step 50/135 loss=1.0215 lr=8.06e-05
+2026-07-17 13:44:59,961 [INFO] trainer: epoch 287 step 100/135 loss=0.9974 lr=8.04e-05
+2026-07-17 13:45:12,806 [INFO] trainer: epoch 287 done train_loss=1.0187 dt=50.5s
+2026-07-17 13:45:32,126 [INFO] trainer: epoch 288 step 50/135 loss=0.9909 lr=8.00e-05
+2026-07-17 13:45:50,463 [INFO] trainer: epoch 288 step 100/135 loss=1.0276 lr=7.98e-05
+2026-07-17 13:46:03,278 [INFO] trainer: epoch 288 done train_loss=1.0026 dt=50.5s
+2026-07-17 13:46:22,552 [INFO] trainer: epoch 289 step 50/135 loss=0.9671 lr=7.94e-05
+2026-07-17 13:46:40,862 [INFO] trainer: epoch 289 step 100/135 loss=1.0008 lr=7.91e-05
+2026-07-17 13:46:53,662 [INFO] trainer: epoch 289 done train_loss=0.9983 dt=50.4s
+2026-07-17 13:47:12,884 [INFO] trainer: epoch 290 step 50/135 loss=1.0001 lr=7.88e-05
+2026-07-17 13:47:31,198 [INFO] trainer: epoch 290 step 100/135 loss=1.0046 lr=7.85e-05
+2026-07-17 13:47:44,010 [INFO] trainer: epoch 290 done train_loss=1.0076 dt=50.3s
+2026-07-17 13:48:03,696 [INFO] trainer: epoch 291 step 50/135 loss=0.9827 lr=7.81e-05
+2026-07-17 13:48:22,034 [INFO] trainer: epoch 291 step 100/135 loss=0.9764 lr=7.79e-05
+2026-07-17 13:48:34,859 [INFO] trainer: epoch 291 done train_loss=0.9828 dt=50.5s
+2026-07-17 13:48:54,014 [INFO] trainer: epoch 292 step 50/135 loss=0.9991 lr=7.75e-05
+2026-07-17 13:49:12,346 [INFO] trainer: epoch 292 step 100/135 loss=1.0026 lr=7.73e-05
+2026-07-17 13:49:25,160 [INFO] trainer: epoch 292 done train_loss=0.9856 dt=50.3s
+2026-07-17 13:49:44,490 [INFO] trainer: epoch 293 step 50/135 loss=1.0043 lr=7.69e-05
+2026-07-17 13:50:02,796 [INFO] trainer: epoch 293 step 100/135 loss=0.9739 lr=7.67e-05
+2026-07-17 13:50:15,614 [INFO] trainer: epoch 293 done train_loss=1.0014 dt=50.5s
+2026-07-17 13:50:34,711 [INFO] trainer: epoch 294 step 50/135 loss=0.9956 lr=7.63e-05
+2026-07-17 13:50:53,031 [INFO] trainer: epoch 294 step 100/135 loss=1.0098 lr=7.60e-05
+2026-07-17 13:51:05,855 [INFO] trainer: epoch 294 done train_loss=1.0019 dt=50.2s
+2026-07-17 13:51:25,130 [INFO] trainer: epoch 295 step 50/135 loss=0.9771 lr=7.57e-05
+2026-07-17 13:51:43,438 [INFO] trainer: epoch 295 step 100/135 loss=0.9922 lr=7.54e-05
+2026-07-17 13:51:56,255 [INFO] trainer: epoch 295 done train_loss=0.9989 dt=50.4s
+2026-07-17 13:52:15,571 [INFO] trainer: epoch 296 step 50/135 loss=0.9932 lr=7.50e-05
+2026-07-17 13:52:33,896 [INFO] trainer: epoch 296 step 100/135 loss=0.9991 lr=7.48e-05
+2026-07-17 13:52:46,712 [INFO] trainer: epoch 296 done train_loss=0.9976 dt=50.5s
+2026-07-17 13:53:06,052 [INFO] trainer: epoch 297 step 50/135 loss=1.0238 lr=7.44e-05
+2026-07-17 13:53:24,366 [INFO] trainer: epoch 297 step 100/135 loss=1.0012 lr=7.42e-05
+2026-07-17 13:53:37,179 [INFO] trainer: epoch 297 done train_loss=1.0067 dt=50.5s
+2026-07-17 13:53:56,383 [INFO] trainer: epoch 298 step 50/135 loss=0.9724 lr=7.38e-05
+2026-07-17 13:54:14,699 [INFO] trainer: epoch 298 step 100/135 loss=1.0013 lr=7.36e-05
+2026-07-17 13:54:27,512 [INFO] trainer: epoch 298 done train_loss=0.9998 dt=50.3s
+2026-07-17 13:54:46,888 [INFO] trainer: epoch 299 step 50/135 loss=0.9445 lr=7.32e-05
+2026-07-17 13:55:05,202 [INFO] trainer: epoch 299 step 100/135 loss=0.9981 lr=7.30e-05
+2026-07-17 13:55:18,005 [INFO] trainer: epoch 299 done train_loss=0.9833 dt=50.5s
+2026-07-17 13:55:37,474 [INFO] trainer: epoch 300 step 50/135 loss=1.0230 lr=7.26e-05
+2026-07-17 13:55:55,802 [INFO] trainer: epoch 300 step 100/135 loss=1.0244 lr=7.24e-05
+2026-07-17 13:56:08,618 [INFO] trainer: epoch 300 done train_loss=1.0048 dt=50.6s
+2026-07-17 13:57:30,869 [INFO] trainer: epoch 300 val_mean_dice=0.8165
+2026-07-17 13:57:51,104 [INFO] trainer: epoch 301 step 50/135 loss=0.9497 lr=7.20e-05
+2026-07-17 13:58:09,437 [INFO] trainer: epoch 301 step 100/135 loss=1.0010 lr=7.17e-05
+2026-07-17 13:58:22,267 [INFO] trainer: epoch 301 done train_loss=0.9722 dt=50.6s
+2026-07-17 13:58:41,490 [INFO] trainer: epoch 302 step 50/135 loss=0.9547 lr=7.14e-05
+2026-07-17 13:58:59,837 [INFO] trainer: epoch 302 step 100/135 loss=0.9962 lr=7.11e-05
+2026-07-17 13:59:12,687 [INFO] trainer: epoch 302 done train_loss=0.9959 dt=50.4s
+2026-07-17 13:59:32,268 [INFO] trainer: epoch 303 step 50/135 loss=1.0252 lr=7.07e-05
+2026-07-17 13:59:50,615 [INFO] trainer: epoch 303 step 100/135 loss=1.0020 lr=7.05e-05
+2026-07-17 14:00:03,456 [INFO] trainer: epoch 303 done train_loss=1.0104 dt=50.8s
+2026-07-17 14:00:22,495 [INFO] trainer: epoch 304 step 50/135 loss=0.9939 lr=7.01e-05
+2026-07-17 14:00:40,811 [INFO] trainer: epoch 304 step 100/135 loss=1.0285 lr=6.99e-05
+2026-07-17 14:00:53,608 [INFO] trainer: epoch 304 done train_loss=0.9993 dt=50.2s
+2026-07-17 14:01:13,049 [INFO] trainer: epoch 305 step 50/135 loss=0.9787 lr=6.95e-05
+2026-07-17 14:01:31,389 [INFO] trainer: epoch 305 step 100/135 loss=0.9875 lr=6.93e-05
+2026-07-17 14:01:44,184 [INFO] trainer: epoch 305 done train_loss=0.9769 dt=50.6s
+2026-07-17 14:02:03,174 [INFO] trainer: epoch 306 step 50/135 loss=0.9728 lr=6.89e-05
+2026-07-17 14:02:21,479 [INFO] trainer: epoch 306 step 100/135 loss=0.9955 lr=6.87e-05
+2026-07-17 14:02:34,280 [INFO] trainer: epoch 306 done train_loss=0.9853 dt=50.1s
+2026-07-17 14:02:53,533 [INFO] trainer: epoch 307 step 50/135 loss=0.9610 lr=6.83e-05
+2026-07-17 14:03:11,859 [INFO] trainer: epoch 307 step 100/135 loss=1.0271 lr=6.81e-05
+2026-07-17 14:03:24,663 [INFO] trainer: epoch 307 done train_loss=0.9998 dt=50.4s
+2026-07-17 14:03:43,705 [INFO] trainer: epoch 308 step 50/135 loss=0.9722 lr=6.77e-05
+2026-07-17 14:04:02,025 [INFO] trainer: epoch 308 step 100/135 loss=0.9812 lr=6.75e-05
+2026-07-17 14:04:14,838 [INFO] trainer: epoch 308 done train_loss=0.9763 dt=50.2s
+2026-07-17 14:04:34,058 [INFO] trainer: epoch 309 step 50/135 loss=0.9565 lr=6.71e-05
+2026-07-17 14:04:52,378 [INFO] trainer: epoch 309 step 100/135 loss=0.9906 lr=6.69e-05
+2026-07-17 14:05:05,203 [INFO] trainer: epoch 309 done train_loss=0.9785 dt=50.4s
+2026-07-17 14:05:24,308 [INFO] trainer: epoch 310 step 50/135 loss=0.9381 lr=6.65e-05
+2026-07-17 14:05:42,605 [INFO] trainer: epoch 310 step 100/135 loss=1.0307 lr=6.63e-05
+2026-07-17 14:05:55,429 [INFO] trainer: epoch 310 done train_loss=0.9842 dt=50.2s
+2026-07-17 14:06:15,068 [INFO] trainer: epoch 311 step 50/135 loss=1.0090 lr=6.59e-05
+2026-07-17 14:06:33,363 [INFO] trainer: epoch 311 step 100/135 loss=1.0010 lr=6.57e-05
+2026-07-17 14:06:46,163 [INFO] trainer: epoch 311 done train_loss=1.0015 dt=50.3s
+2026-07-17 14:07:05,519 [INFO] trainer: epoch 312 step 50/135 loss=1.0088 lr=6.53e-05
+2026-07-17 14:07:23,819 [INFO] trainer: epoch 312 step 100/135 loss=0.9920 lr=6.51e-05
+2026-07-17 14:07:36,620 [INFO] trainer: epoch 312 done train_loss=0.9847 dt=50.5s
+2026-07-17 14:07:55,894 [INFO] trainer: epoch 313 step 50/135 loss=0.9502 lr=6.47e-05
+2026-07-17 14:08:14,199 [INFO] trainer: epoch 313 step 100/135 loss=0.9870 lr=6.45e-05
+2026-07-17 14:08:26,995 [INFO] trainer: epoch 313 done train_loss=0.9693 dt=50.4s
+2026-07-17 14:08:46,419 [INFO] trainer: epoch 314 step 50/135 loss=1.0452 lr=6.41e-05
+2026-07-17 14:09:04,739 [INFO] trainer: epoch 314 step 100/135 loss=1.0016 lr=6.39e-05
+2026-07-17 14:09:17,568 [INFO] trainer: epoch 314 done train_loss=0.9942 dt=50.6s
+2026-07-17 14:09:36,805 [INFO] trainer: epoch 315 step 50/135 loss=1.0049 lr=6.35e-05
+2026-07-17 14:09:55,157 [INFO] trainer: epoch 315 step 100/135 loss=0.9530 lr=6.33e-05
+2026-07-17 14:10:07,977 [INFO] trainer: epoch 315 done train_loss=0.9633 dt=50.4s
+2026-07-17 14:10:27,132 [INFO] trainer: epoch 316 step 50/135 loss=1.0160 lr=6.29e-05
+2026-07-17 14:10:45,473 [INFO] trainer: epoch 316 step 100/135 loss=1.0053 lr=6.27e-05
+2026-07-17 14:10:58,317 [INFO] trainer: epoch 316 done train_loss=1.0018 dt=50.3s
+2026-07-17 14:11:17,525 [INFO] trainer: epoch 317 step 50/135 loss=0.9764 lr=6.24e-05
+2026-07-17 14:11:35,868 [INFO] trainer: epoch 317 step 100/135 loss=1.0057 lr=6.21e-05
+2026-07-17 14:11:48,709 [INFO] trainer: epoch 317 done train_loss=0.9886 dt=50.4s
+2026-07-17 14:12:07,733 [INFO] trainer: epoch 318 step 50/135 loss=1.0047 lr=6.18e-05
+2026-07-17 14:12:26,080 [INFO] trainer: epoch 318 step 100/135 loss=1.0071 lr=6.15e-05
+2026-07-17 14:12:38,893 [INFO] trainer: epoch 318 done train_loss=0.9950 dt=50.2s
+2026-07-17 14:12:57,922 [INFO] trainer: epoch 319 step 50/135 loss=1.0191 lr=6.12e-05
+2026-07-17 14:13:16,240 [INFO] trainer: epoch 319 step 100/135 loss=0.9981 lr=6.10e-05
+2026-07-17 14:13:29,047 [INFO] trainer: epoch 319 done train_loss=1.0030 dt=50.2s
+2026-07-17 14:13:48,206 [INFO] trainer: epoch 320 step 50/135 loss=1.0320 lr=6.06e-05
+2026-07-17 14:14:06,537 [INFO] trainer: epoch 320 step 100/135 loss=0.9965 lr=6.04e-05
+2026-07-17 14:14:19,343 [INFO] trainer: epoch 320 done train_loss=1.0097 dt=50.3s
+2026-07-17 14:14:39,213 [INFO] trainer: epoch 321 step 50/135 loss=0.9821 lr=6.00e-05
+2026-07-17 14:14:57,556 [INFO] trainer: epoch 321 step 100/135 loss=0.9815 lr=5.98e-05
+2026-07-17 14:15:10,365 [INFO] trainer: epoch 321 done train_loss=0.9697 dt=50.4s
+2026-07-17 14:15:29,661 [INFO] trainer: epoch 322 step 50/135 loss=0.9844 lr=5.94e-05
+2026-07-17 14:15:48,014 [INFO] trainer: epoch 322 step 100/135 loss=0.9973 lr=5.92e-05
+2026-07-17 14:16:00,840 [INFO] trainer: epoch 322 done train_loss=0.9911 dt=50.5s
+2026-07-17 14:16:20,074 [INFO] trainer: epoch 323 step 50/135 loss=1.0254 lr=5.88e-05
+2026-07-17 14:16:38,419 [INFO] trainer: epoch 323 step 100/135 loss=0.9659 lr=5.86e-05
+2026-07-17 14:16:51,248 [INFO] trainer: epoch 323 done train_loss=0.9918 dt=50.4s
+2026-07-17 14:17:10,368 [INFO] trainer: epoch 324 step 50/135 loss=0.9457 lr=5.83e-05
+2026-07-17 14:17:28,711 [INFO] trainer: epoch 324 step 100/135 loss=0.9773 lr=5.81e-05
+2026-07-17 14:17:41,537 [INFO] trainer: epoch 324 done train_loss=0.9797 dt=50.3s
+2026-07-17 14:18:00,567 [INFO] trainer: epoch 325 step 50/135 loss=1.0138 lr=5.77e-05
+2026-07-17 14:18:18,876 [INFO] trainer: epoch 325 step 100/135 loss=0.9907 lr=5.75e-05
+2026-07-17 14:18:31,690 [INFO] trainer: epoch 325 done train_loss=0.9969 dt=50.2s
+2026-07-17 14:19:54,129 [INFO] trainer: epoch 325 val_mean_dice=0.8196
+2026-07-17 14:20:13,949 [INFO] trainer: epoch 326 step 50/135 loss=0.9474 lr=5.71e-05
+2026-07-17 14:20:32,291 [INFO] trainer: epoch 326 step 100/135 loss=1.0188 lr=5.69e-05
+2026-07-17 14:20:45,100 [INFO] trainer: epoch 326 done train_loss=0.9915 dt=50.5s
+2026-07-17 14:21:04,443 [INFO] trainer: epoch 327 step 50/135 loss=0.9944 lr=5.65e-05
+2026-07-17 14:21:22,734 [INFO] trainer: epoch 327 step 100/135 loss=0.9988 lr=5.63e-05
+2026-07-17 14:21:35,546 [INFO] trainer: epoch 327 done train_loss=0.9808 dt=50.4s
+2026-07-17 14:21:54,834 [INFO] trainer: epoch 328 step 50/135 loss=0.9934 lr=5.60e-05
+2026-07-17 14:22:13,173 [INFO] trainer: epoch 328 step 100/135 loss=0.9434 lr=5.58e-05
+2026-07-17 14:22:26,008 [INFO] trainer: epoch 328 done train_loss=0.9715 dt=50.5s
+2026-07-17 14:22:45,358 [INFO] trainer: epoch 329 step 50/135 loss=0.9793 lr=5.54e-05
+2026-07-17 14:23:03,691 [INFO] trainer: epoch 329 step 100/135 loss=1.0159 lr=5.52e-05
+2026-07-17 14:23:16,535 [INFO] trainer: epoch 329 done train_loss=0.9962 dt=50.5s
+2026-07-17 14:23:35,633 [INFO] trainer: epoch 330 step 50/135 loss=0.9946 lr=5.48e-05
+2026-07-17 14:23:53,947 [INFO] trainer: epoch 330 step 100/135 loss=1.0387 lr=5.46e-05
+2026-07-17 14:24:06,752 [INFO] trainer: epoch 330 done train_loss=1.0087 dt=50.2s
+2026-07-17 14:24:26,537 [INFO] trainer: epoch 331 step 50/135 loss=0.9624 lr=5.43e-05
+2026-07-17 14:24:44,974 [INFO] trainer: epoch 331 step 100/135 loss=0.9700 lr=5.41e-05
+2026-07-17 14:24:57,846 [INFO] trainer: epoch 331 done train_loss=0.9602 dt=50.7s
+2026-07-17 14:25:16,892 [INFO] trainer: epoch 332 step 50/135 loss=0.9857 lr=5.37e-05
+2026-07-17 14:25:35,182 [INFO] trainer: epoch 332 step 100/135 loss=0.9787 lr=5.35e-05
+2026-07-17 14:25:47,983 [INFO] trainer: epoch 332 done train_loss=0.9877 dt=50.1s
+2026-07-17 14:26:07,145 [INFO] trainer: epoch 333 step 50/135 loss=1.0496 lr=5.31e-05
+2026-07-17 14:26:25,442 [INFO] trainer: epoch 333 step 100/135 loss=0.9867 lr=5.29e-05
+2026-07-17 14:26:38,271 [INFO] trainer: epoch 333 done train_loss=1.0062 dt=50.3s
+2026-07-17 14:26:57,429 [INFO] trainer: epoch 334 step 50/135 loss=0.9411 lr=5.26e-05
+2026-07-17 14:27:15,729 [INFO] trainer: epoch 334 step 100/135 loss=1.0282 lr=5.24e-05
+2026-07-17 14:27:28,527 [INFO] trainer: epoch 334 done train_loss=0.9826 dt=50.3s
+2026-07-17 14:27:47,749 [INFO] trainer: epoch 335 step 50/135 loss=0.9425 lr=5.20e-05
+2026-07-17 14:28:06,093 [INFO] trainer: epoch 335 step 100/135 loss=0.9701 lr=5.18e-05
+2026-07-17 14:28:18,929 [INFO] trainer: epoch 335 done train_loss=0.9646 dt=50.4s
+2026-07-17 14:28:38,029 [INFO] trainer: epoch 336 step 50/135 loss=0.9942 lr=5.15e-05
+2026-07-17 14:28:56,344 [INFO] trainer: epoch 336 step 100/135 loss=1.0154 lr=5.13e-05
+2026-07-17 14:29:09,173 [INFO] trainer: epoch 336 done train_loss=1.0102 dt=50.2s
+2026-07-17 14:29:28,242 [INFO] trainer: epoch 337 step 50/135 loss=0.9771 lr=5.09e-05
+2026-07-17 14:29:46,540 [INFO] trainer: epoch 337 step 100/135 loss=1.0110 lr=5.07e-05
+2026-07-17 14:29:59,333 [INFO] trainer: epoch 337 done train_loss=0.9890 dt=50.2s
+2026-07-17 14:30:18,798 [INFO] trainer: epoch 338 step 50/135 loss=0.9994 lr=5.04e-05
+2026-07-17 14:30:37,099 [INFO] trainer: epoch 338 step 100/135 loss=1.0428 lr=5.02e-05
+2026-07-17 14:30:49,890 [INFO] trainer: epoch 338 done train_loss=1.0124 dt=50.6s
+2026-07-17 14:31:09,229 [INFO] trainer: epoch 339 step 50/135 loss=0.9959 lr=4.98e-05
+2026-07-17 14:31:27,541 [INFO] trainer: epoch 339 step 100/135 loss=0.9454 lr=4.96e-05
+2026-07-17 14:31:40,338 [INFO] trainer: epoch 339 done train_loss=0.9883 dt=50.4s
+2026-07-17 14:31:59,441 [INFO] trainer: epoch 340 step 50/135 loss=0.9594 lr=4.93e-05
+2026-07-17 14:32:17,757 [INFO] trainer: epoch 340 step 100/135 loss=1.0331 lr=4.91e-05
+2026-07-17 14:32:30,559 [INFO] trainer: epoch 340 done train_loss=0.9969 dt=50.2s
+2026-07-17 14:32:50,317 [INFO] trainer: epoch 341 step 50/135 loss=0.9579 lr=4.87e-05
+2026-07-17 14:33:08,627 [INFO] trainer: epoch 341 step 100/135 loss=1.0238 lr=4.85e-05
+2026-07-17 14:33:21,423 [INFO] trainer: epoch 341 done train_loss=0.9919 dt=50.5s
+2026-07-17 14:33:40,851 [INFO] trainer: epoch 342 step 50/135 loss=0.9967 lr=4.82e-05
+2026-07-17 14:33:59,149 [INFO] trainer: epoch 342 step 100/135 loss=0.9562 lr=4.80e-05
+2026-07-17 14:34:11,954 [INFO] trainer: epoch 342 done train_loss=0.9813 dt=50.5s
+2026-07-17 14:34:31,027 [INFO] trainer: epoch 343 step 50/135 loss=0.9838 lr=4.76e-05
+2026-07-17 14:34:49,345 [INFO] trainer: epoch 343 step 100/135 loss=1.0086 lr=4.74e-05
+2026-07-17 14:35:02,146 [INFO] trainer: epoch 343 done train_loss=0.9848 dt=50.2s
+2026-07-17 14:35:21,403 [INFO] trainer: epoch 344 step 50/135 loss=0.9576 lr=4.71e-05
+2026-07-17 14:35:39,707 [INFO] trainer: epoch 344 step 100/135 loss=0.9715 lr=4.69e-05
+2026-07-17 14:35:52,502 [INFO] trainer: epoch 344 done train_loss=0.9730 dt=50.4s
+2026-07-17 14:36:11,848 [INFO] trainer: epoch 345 step 50/135 loss=1.0042 lr=4.66e-05
+2026-07-17 14:36:30,203 [INFO] trainer: epoch 345 step 100/135 loss=0.9872 lr=4.64e-05
+2026-07-17 14:36:42,997 [INFO] trainer: epoch 345 done train_loss=0.9883 dt=50.5s
+2026-07-17 14:37:02,186 [INFO] trainer: epoch 346 step 50/135 loss=1.0020 lr=4.60e-05
+2026-07-17 14:37:20,487 [INFO] trainer: epoch 346 step 100/135 loss=0.9893 lr=4.58e-05
+2026-07-17 14:37:33,287 [INFO] trainer: epoch 346 done train_loss=0.9893 dt=50.3s
+2026-07-17 14:37:52,539 [INFO] trainer: epoch 347 step 50/135 loss=0.9717 lr=4.55e-05
+2026-07-17 14:38:10,843 [INFO] trainer: epoch 347 step 100/135 loss=0.9463 lr=4.53e-05
+2026-07-17 14:38:23,646 [INFO] trainer: epoch 347 done train_loss=0.9738 dt=50.4s
+2026-07-17 14:38:42,880 [INFO] trainer: epoch 348 step 50/135 loss=0.9900 lr=4.50e-05
+2026-07-17 14:39:01,176 [INFO] trainer: epoch 348 step 100/135 loss=0.9386 lr=4.48e-05
+2026-07-17 14:39:13,968 [INFO] trainer: epoch 348 done train_loss=0.9644 dt=50.3s
+2026-07-17 14:39:33,159 [INFO] trainer: epoch 349 step 50/135 loss=0.9336 lr=4.44e-05
+2026-07-17 14:39:51,461 [INFO] trainer: epoch 349 step 100/135 loss=0.9989 lr=4.42e-05
+2026-07-17 14:40:04,260 [INFO] trainer: epoch 349 done train_loss=0.9697 dt=50.3s
+2026-07-17 14:40:23,466 [INFO] trainer: epoch 350 step 50/135 loss=0.9467 lr=4.39e-05
+2026-07-17 14:40:41,776 [INFO] trainer: epoch 350 step 100/135 loss=0.9917 lr=4.37e-05
+2026-07-17 14:40:54,566 [INFO] trainer: epoch 350 done train_loss=0.9730 dt=50.3s
+2026-07-17 14:42:22,413 [INFO] trainer: epoch 350 val_mean_dice=0.8197
+2026-07-17 14:42:42,391 [INFO] trainer: epoch 351 step 50/135 loss=0.9999 lr=4.34e-05
+2026-07-17 14:43:00,688 [INFO] trainer: epoch 351 step 100/135 loss=0.9540 lr=4.32e-05
+2026-07-17 14:43:13,479 [INFO] trainer: epoch 351 done train_loss=0.9727 dt=50.4s
+2026-07-17 14:43:33,273 [INFO] trainer: epoch 352 step 50/135 loss=0.9765 lr=4.29e-05
+2026-07-17 14:43:51,575 [INFO] trainer: epoch 352 step 100/135 loss=0.9426 lr=4.27e-05
+2026-07-17 14:44:04,357 [INFO] trainer: epoch 352 done train_loss=0.9592 dt=50.9s
+2026-07-17 14:44:23,835 [INFO] trainer: epoch 353 step 50/135 loss=0.9819 lr=4.23e-05
+2026-07-17 14:44:42,125 [INFO] trainer: epoch 353 step 100/135 loss=0.9878 lr=4.22e-05
+2026-07-17 14:44:54,913 [INFO] trainer: epoch 353 done train_loss=0.9870 dt=50.6s
+2026-07-17 14:45:14,252 [INFO] trainer: epoch 354 step 50/135 loss=0.9840 lr=4.18e-05
+2026-07-17 14:45:32,555 [INFO] trainer: epoch 354 step 100/135 loss=0.9711 lr=4.16e-05
+2026-07-17 14:45:45,331 [INFO] trainer: epoch 354 done train_loss=0.9716 dt=50.4s
+2026-07-17 14:46:04,639 [INFO] trainer: epoch 355 step 50/135 loss=0.9686 lr=4.13e-05
+2026-07-17 14:46:22,927 [INFO] trainer: epoch 355 step 100/135 loss=0.9812 lr=4.11e-05
+2026-07-17 14:46:35,723 [INFO] trainer: epoch 355 done train_loss=0.9734 dt=50.4s
+2026-07-17 14:46:54,799 [INFO] trainer: epoch 356 step 50/135 loss=0.9503 lr=4.08e-05
+2026-07-17 14:47:13,100 [INFO] trainer: epoch 356 step 100/135 loss=0.9929 lr=4.06e-05
+2026-07-17 14:47:25,900 [INFO] trainer: epoch 356 done train_loss=0.9662 dt=50.2s
+2026-07-17 14:47:45,084 [INFO] trainer: epoch 357 step 50/135 loss=0.9593 lr=4.03e-05
+2026-07-17 14:48:03,387 [INFO] trainer: epoch 357 step 100/135 loss=0.9570 lr=4.01e-05
+2026-07-17 14:48:16,190 [INFO] trainer: epoch 357 done train_loss=0.9732 dt=50.3s
+2026-07-17 14:48:35,578 [INFO] trainer: epoch 358 step 50/135 loss=0.9904 lr=3.98e-05
+2026-07-17 14:48:53,860 [INFO] trainer: epoch 358 step 100/135 loss=0.9717 lr=3.96e-05
+2026-07-17 14:49:06,639 [INFO] trainer: epoch 358 done train_loss=0.9690 dt=50.4s
+2026-07-17 14:49:25,813 [INFO] trainer: epoch 359 step 50/135 loss=1.0171 lr=3.93e-05
+2026-07-17 14:49:44,104 [INFO] trainer: epoch 359 step 100/135 loss=0.9703 lr=3.91e-05
+2026-07-17 14:49:56,885 [INFO] trainer: epoch 359 done train_loss=0.9875 dt=50.2s
+2026-07-17 14:50:16,171 [INFO] trainer: epoch 360 step 50/135 loss=0.9861 lr=3.88e-05
+2026-07-17 14:50:34,616 [INFO] trainer: epoch 360 step 100/135 loss=0.9498 lr=3.86e-05
+2026-07-17 14:50:47,398 [INFO] trainer: epoch 360 done train_loss=0.9842 dt=50.5s
+2026-07-17 14:51:06,908 [INFO] trainer: epoch 361 step 50/135 loss=0.9517 lr=3.83e-05
+2026-07-17 14:51:25,193 [INFO] trainer: epoch 361 step 100/135 loss=0.9946 lr=3.81e-05
+2026-07-17 14:51:37,981 [INFO] trainer: epoch 361 done train_loss=0.9765 dt=50.2s
+2026-07-17 14:51:57,209 [INFO] trainer: epoch 362 step 50/135 loss=0.9468 lr=3.78e-05
+2026-07-17 14:52:15,497 [INFO] trainer: epoch 362 step 100/135 loss=0.9702 lr=3.76e-05
+2026-07-17 14:52:28,287 [INFO] trainer: epoch 362 done train_loss=0.9671 dt=50.3s
+2026-07-17 14:52:47,667 [INFO] trainer: epoch 363 step 50/135 loss=0.9792 lr=3.73e-05
+2026-07-17 14:53:05,977 [INFO] trainer: epoch 363 step 100/135 loss=0.9679 lr=3.71e-05
+2026-07-17 14:53:18,773 [INFO] trainer: epoch 363 done train_loss=0.9622 dt=50.5s
+2026-07-17 14:53:38,106 [INFO] trainer: epoch 364 step 50/135 loss=0.9664 lr=3.68e-05
+2026-07-17 14:53:56,422 [INFO] trainer: epoch 364 step 100/135 loss=0.9558 lr=3.66e-05
+2026-07-17 14:54:09,216 [INFO] trainer: epoch 364 done train_loss=0.9470 dt=50.4s
+2026-07-17 14:54:28,316 [INFO] trainer: epoch 365 step 50/135 loss=1.0052 lr=3.63e-05
+2026-07-17 14:54:46,618 [INFO] trainer: epoch 365 step 100/135 loss=0.9763 lr=3.61e-05
+2026-07-17 14:54:59,411 [INFO] trainer: epoch 365 done train_loss=0.9813 dt=50.2s
+2026-07-17 14:55:18,542 [INFO] trainer: epoch 366 step 50/135 loss=0.9639 lr=3.58e-05
+2026-07-17 14:55:36,808 [INFO] trainer: epoch 366 step 100/135 loss=0.9459 lr=3.56e-05
+2026-07-17 14:55:49,592 [INFO] trainer: epoch 366 done train_loss=0.9702 dt=50.2s
+2026-07-17 14:56:08,830 [INFO] trainer: epoch 367 step 50/135 loss=0.9737 lr=3.53e-05
+2026-07-17 14:56:27,129 [INFO] trainer: epoch 367 step 100/135 loss=0.9829 lr=3.52e-05
+2026-07-17 14:56:39,935 [INFO] trainer: epoch 367 done train_loss=0.9781 dt=50.3s
+2026-07-17 14:56:59,097 [INFO] trainer: epoch 368 step 50/135 loss=0.9981 lr=3.49e-05
+2026-07-17 14:57:17,392 [INFO] trainer: epoch 368 step 100/135 loss=0.9848 lr=3.47e-05
+2026-07-17 14:57:30,186 [INFO] trainer: epoch 368 done train_loss=0.9747 dt=50.3s
+2026-07-17 14:57:49,216 [INFO] trainer: epoch 369 step 50/135 loss=0.9664 lr=3.44e-05
+2026-07-17 14:58:07,489 [INFO] trainer: epoch 369 step 100/135 loss=0.9915 lr=3.42e-05
+2026-07-17 14:58:20,285 [INFO] trainer: epoch 369 done train_loss=0.9766 dt=50.1s
+2026-07-17 14:58:39,472 [INFO] trainer: epoch 370 step 50/135 loss=0.9888 lr=3.39e-05
+2026-07-17 14:58:57,775 [INFO] trainer: epoch 370 step 100/135 loss=0.9703 lr=3.37e-05
+2026-07-17 14:59:10,579 [INFO] trainer: epoch 370 done train_loss=0.9737 dt=50.3s
+2026-07-17 14:59:29,922 [INFO] trainer: epoch 371 step 50/135 loss=0.9463 lr=3.34e-05
+2026-07-17 14:59:48,212 [INFO] trainer: epoch 371 step 100/135 loss=0.9928 lr=3.33e-05
+2026-07-17 15:00:01,004 [INFO] trainer: epoch 371 done train_loss=0.9635 dt=50.1s
+2026-07-17 15:00:20,018 [INFO] trainer: epoch 372 step 50/135 loss=0.9817 lr=3.30e-05
+2026-07-17 15:00:38,298 [INFO] trainer: epoch 372 step 100/135 loss=0.9224 lr=3.28e-05
+2026-07-17 15:00:51,098 [INFO] trainer: epoch 372 done train_loss=0.9625 dt=50.1s
+2026-07-17 15:01:10,218 [INFO] trainer: epoch 373 step 50/135 loss=0.9979 lr=3.25e-05
+2026-07-17 15:01:28,500 [INFO] trainer: epoch 373 step 100/135 loss=0.9893 lr=3.23e-05
+2026-07-17 15:01:41,288 [INFO] trainer: epoch 373 done train_loss=0.9691 dt=50.2s
+2026-07-17 15:02:00,429 [INFO] trainer: epoch 374 step 50/135 loss=0.9739 lr=3.20e-05
+2026-07-17 15:02:18,723 [INFO] trainer: epoch 374 step 100/135 loss=0.9873 lr=3.19e-05
+2026-07-17 15:02:31,508 [INFO] trainer: epoch 374 done train_loss=0.9695 dt=50.2s
+2026-07-17 15:02:50,556 [INFO] trainer: epoch 375 step 50/135 loss=0.9676 lr=3.16e-05
+2026-07-17 15:03:08,836 [INFO] trainer: epoch 375 step 100/135 loss=0.9876 lr=3.14e-05
+2026-07-17 15:03:21,627 [INFO] trainer: epoch 375 done train_loss=0.9641 dt=50.1s
+2026-07-17 15:04:44,933 [INFO] trainer: epoch 375 val_mean_dice=0.8210
+2026-07-17 15:05:04,407 [INFO] trainer: epoch 376 step 50/135 loss=0.9675 lr=3.11e-05
+2026-07-17 15:05:22,676 [INFO] trainer: epoch 376 step 100/135 loss=1.0055 lr=3.09e-05
+2026-07-17 15:05:35,447 [INFO] trainer: epoch 376 done train_loss=0.9790 dt=50.1s
+2026-07-17 15:05:54,620 [INFO] trainer: epoch 377 step 50/135 loss=0.9721 lr=3.07e-05
+2026-07-17 15:06:12,896 [INFO] trainer: epoch 377 step 100/135 loss=0.9698 lr=3.05e-05
+2026-07-17 15:06:25,696 [INFO] trainer: epoch 377 done train_loss=0.9772 dt=50.2s
+2026-07-17 15:06:44,667 [INFO] trainer: epoch 378 step 50/135 loss=0.9589 lr=3.02e-05
+2026-07-17 15:07:02,977 [INFO] trainer: epoch 378 step 100/135 loss=0.9451 lr=3.00e-05
+2026-07-17 15:07:15,787 [INFO] trainer: epoch 378 done train_loss=0.9654 dt=50.1s
+2026-07-17 15:07:34,864 [INFO] trainer: epoch 379 step 50/135 loss=0.9799 lr=2.98e-05
+2026-07-17 15:07:53,155 [INFO] trainer: epoch 379 step 100/135 loss=0.9910 lr=2.96e-05
+2026-07-17 15:08:05,971 [INFO] trainer: epoch 379 done train_loss=0.9928 dt=50.2s
+2026-07-17 15:08:24,995 [INFO] trainer: epoch 380 step 50/135 loss=0.9735 lr=2.93e-05
+2026-07-17 15:08:43,289 [INFO] trainer: epoch 380 step 100/135 loss=1.0030 lr=2.91e-05
+2026-07-17 15:08:56,076 [INFO] trainer: epoch 380 done train_loss=0.9769 dt=50.1s
+2026-07-17 15:09:15,881 [INFO] trainer: epoch 381 step 50/135 loss=0.9655 lr=2.89e-05
+2026-07-17 15:09:34,168 [INFO] trainer: epoch 381 step 100/135 loss=0.9923 lr=2.87e-05
+2026-07-17 15:09:46,969 [INFO] trainer: epoch 381 done train_loss=0.9735 dt=50.1s
+2026-07-17 15:10:06,017 [INFO] trainer: epoch 382 step 50/135 loss=0.9633 lr=2.84e-05
+2026-07-17 15:10:24,323 [INFO] trainer: epoch 382 step 100/135 loss=0.9721 lr=2.83e-05
+2026-07-17 15:10:37,115 [INFO] trainer: epoch 382 done train_loss=0.9683 dt=50.1s
+2026-07-17 15:10:56,257 [INFO] trainer: epoch 383 step 50/135 loss=1.0207 lr=2.80e-05
+2026-07-17 15:11:14,559 [INFO] trainer: epoch 383 step 100/135 loss=0.9030 lr=2.78e-05
+2026-07-17 15:11:27,365 [INFO] trainer: epoch 383 done train_loss=0.9623 dt=50.2s
+2026-07-17 15:11:46,502 [INFO] trainer: epoch 384 step 50/135 loss=0.9888 lr=2.75e-05
+2026-07-17 15:12:04,819 [INFO] trainer: epoch 384 step 100/135 loss=0.9750 lr=2.74e-05
+2026-07-17 15:12:17,626 [INFO] trainer: epoch 384 done train_loss=0.9751 dt=50.3s
+2026-07-17 15:12:36,615 [INFO] trainer: epoch 385 step 50/135 loss=0.9768 lr=2.71e-05
+2026-07-17 15:12:54,914 [INFO] trainer: epoch 385 step 100/135 loss=0.9590 lr=2.70e-05
+2026-07-17 15:13:07,715 [INFO] trainer: epoch 385 done train_loss=0.9769 dt=50.1s
+2026-07-17 15:13:26,804 [INFO] trainer: epoch 386 step 50/135 loss=0.9825 lr=2.67e-05
+2026-07-17 15:13:45,106 [INFO] trainer: epoch 386 step 100/135 loss=0.9760 lr=2.65e-05
+2026-07-17 15:13:57,902 [INFO] trainer: epoch 386 done train_loss=0.9634 dt=50.2s
+2026-07-17 15:14:16,886 [INFO] trainer: epoch 387 step 50/135 loss=0.9381 lr=2.63e-05
+2026-07-17 15:14:35,187 [INFO] trainer: epoch 387 step 100/135 loss=1.0139 lr=2.61e-05
+2026-07-17 15:14:47,981 [INFO] trainer: epoch 387 done train_loss=0.9816 dt=50.1s
+2026-07-17 15:15:07,080 [INFO] trainer: epoch 388 step 50/135 loss=0.9575 lr=2.58e-05
+2026-07-17 15:15:25,373 [INFO] trainer: epoch 388 step 100/135 loss=0.9615 lr=2.57e-05
+2026-07-17 15:15:38,170 [INFO] trainer: epoch 388 done train_loss=0.9568 dt=50.2s
+2026-07-17 15:15:57,353 [INFO] trainer: epoch 389 step 50/135 loss=0.9473 lr=2.54e-05
+2026-07-17 15:16:15,647 [INFO] trainer: epoch 389 step 100/135 loss=0.9537 lr=2.53e-05
+2026-07-17 15:16:28,443 [INFO] trainer: epoch 389 done train_loss=0.9620 dt=50.3s
+2026-07-17 15:16:47,544 [INFO] trainer: epoch 390 step 50/135 loss=0.9295 lr=2.50e-05
+2026-07-17 15:17:05,851 [INFO] trainer: epoch 390 step 100/135 loss=0.9470 lr=2.48e-05
+2026-07-17 15:17:18,651 [INFO] trainer: epoch 390 done train_loss=0.9427 dt=50.2s
+2026-07-17 15:17:38,176 [INFO] trainer: epoch 391 step 50/135 loss=0.9319 lr=2.46e-05
+2026-07-17 15:17:56,490 [INFO] trainer: epoch 391 step 100/135 loss=0.9914 lr=2.44e-05
+2026-07-17 15:18:09,301 [INFO] trainer: epoch 391 done train_loss=0.9760 dt=50.3s
+2026-07-17 15:18:28,481 [INFO] trainer: epoch 392 step 50/135 loss=0.9309 lr=2.42e-05
+2026-07-17 15:18:46,763 [INFO] trainer: epoch 392 step 100/135 loss=0.9869 lr=2.40e-05
+2026-07-17 15:18:59,548 [INFO] trainer: epoch 392 done train_loss=0.9659 dt=50.2s
+2026-07-17 15:19:18,678 [INFO] trainer: epoch 393 step 50/135 loss=1.0101 lr=2.38e-05
+2026-07-17 15:19:37,012 [INFO] trainer: epoch 393 step 100/135 loss=0.9625 lr=2.36e-05
+2026-07-17 15:19:49,826 [INFO] trainer: epoch 393 done train_loss=0.9689 dt=50.3s
+2026-07-17 15:20:09,233 [INFO] trainer: epoch 394 step 50/135 loss=0.9467 lr=2.34e-05
+2026-07-17 15:20:27,528 [INFO] trainer: epoch 394 step 100/135 loss=0.9708 lr=2.32e-05
+2026-07-17 15:20:40,325 [INFO] trainer: epoch 394 done train_loss=0.9629 dt=50.5s
+2026-07-17 15:20:59,328 [INFO] trainer: epoch 395 step 50/135 loss=0.9255 lr=2.30e-05
+2026-07-17 15:21:17,620 [INFO] trainer: epoch 395 step 100/135 loss=0.9482 lr=2.28e-05
+2026-07-17 15:21:30,408 [INFO] trainer: epoch 395 done train_loss=0.9459 dt=50.1s
+2026-07-17 15:21:49,481 [INFO] trainer: epoch 396 step 50/135 loss=0.9584 lr=2.26e-05
+2026-07-17 15:22:07,763 [INFO] trainer: epoch 396 step 100/135 loss=1.0281 lr=2.24e-05
+2026-07-17 15:22:20,561 [INFO] trainer: epoch 396 done train_loss=0.9823 dt=50.2s
+2026-07-17 15:22:39,725 [INFO] trainer: epoch 397 step 50/135 loss=0.9882 lr=2.22e-05
+2026-07-17 15:22:58,008 [INFO] trainer: epoch 397 step 100/135 loss=0.9948 lr=2.20e-05
+2026-07-17 15:23:10,804 [INFO] trainer: epoch 397 done train_loss=0.9907 dt=50.2s
+2026-07-17 15:23:29,833 [INFO] trainer: epoch 398 step 50/135 loss=0.9601 lr=2.18e-05
+2026-07-17 15:23:48,104 [INFO] trainer: epoch 398 step 100/135 loss=1.0066 lr=2.16e-05
+2026-07-17 15:24:00,894 [INFO] trainer: epoch 398 done train_loss=0.9774 dt=50.1s
+2026-07-17 15:24:20,083 [INFO] trainer: epoch 399 step 50/135 loss=0.9513 lr=2.14e-05
+2026-07-17 15:24:38,372 [INFO] trainer: epoch 399 step 100/135 loss=0.9819 lr=2.12e-05
+2026-07-17 15:24:51,163 [INFO] trainer: epoch 399 done train_loss=0.9719 dt=50.3s
+2026-07-17 15:25:10,428 [INFO] trainer: epoch 400 step 50/135 loss=0.9571 lr=2.10e-05
+2026-07-17 15:25:28,739 [INFO] trainer: epoch 400 step 100/135 loss=0.9746 lr=2.09e-05
+2026-07-17 15:25:41,536 [INFO] trainer: epoch 400 done train_loss=0.9604 dt=50.4s
+2026-07-17 15:27:03,852 [INFO] trainer: epoch 400 val_mean_dice=0.8209
+2026-07-17 15:27:23,300 [INFO] trainer: epoch 401 step 50/135 loss=0.9675 lr=2.06e-05
+2026-07-17 15:27:41,596 [INFO] trainer: epoch 401 step 100/135 loss=0.9520 lr=2.05e-05
+2026-07-17 15:27:54,381 [INFO] trainer: epoch 401 done train_loss=0.9824 dt=50.2s
+2026-07-17 15:28:13,599 [INFO] trainer: epoch 402 step 50/135 loss=0.9857 lr=2.02e-05
+2026-07-17 15:28:31,873 [INFO] trainer: epoch 402 step 100/135 loss=0.9678 lr=2.01e-05
+2026-07-17 15:28:44,641 [INFO] trainer: epoch 402 done train_loss=0.9761 dt=50.3s
+2026-07-17 15:29:03,945 [INFO] trainer: epoch 403 step 50/135 loss=0.9979 lr=1.99e-05
+2026-07-17 15:29:22,221 [INFO] trainer: epoch 403 step 100/135 loss=0.9610 lr=1.97e-05
+2026-07-17 15:29:34,989 [INFO] trainer: epoch 403 done train_loss=0.9785 dt=50.3s
+2026-07-17 15:29:54,186 [INFO] trainer: epoch 404 step 50/135 loss=0.9393 lr=1.95e-05
+2026-07-17 15:30:12,472 [INFO] trainer: epoch 404 step 100/135 loss=0.9719 lr=1.94e-05
+2026-07-17 15:30:25,262 [INFO] trainer: epoch 404 done train_loss=0.9432 dt=50.3s
+2026-07-17 15:30:44,556 [INFO] trainer: epoch 405 step 50/135 loss=0.9835 lr=1.91e-05
+2026-07-17 15:31:02,831 [INFO] trainer: epoch 405 step 100/135 loss=0.9538 lr=1.90e-05
+2026-07-17 15:31:15,619 [INFO] trainer: epoch 405 done train_loss=0.9866 dt=50.4s
+2026-07-17 15:31:34,753 [INFO] trainer: epoch 406 step 50/135 loss=0.9924 lr=1.88e-05
+2026-07-17 15:31:53,036 [INFO] trainer: epoch 406 step 100/135 loss=0.9740 lr=1.86e-05
+2026-07-17 15:32:05,931 [INFO] trainer: epoch 406 done train_loss=0.9760 dt=50.3s
+2026-07-17 15:32:25,249 [INFO] trainer: epoch 407 step 50/135 loss=0.9107 lr=1.84e-05
+2026-07-17 15:32:43,542 [INFO] trainer: epoch 407 step 100/135 loss=0.9937 lr=1.83e-05
+2026-07-17 15:32:56,334 [INFO] trainer: epoch 407 done train_loss=0.9525 dt=50.4s
+2026-07-17 15:33:15,848 [INFO] trainer: epoch 408 step 50/135 loss=0.9847 lr=1.80e-05
+2026-07-17 15:33:34,144 [INFO] trainer: epoch 408 step 100/135 loss=0.9745 lr=1.79e-05
+2026-07-17 15:33:46,925 [INFO] trainer: epoch 408 done train_loss=0.9822 dt=50.6s
+2026-07-17 15:34:06,294 [INFO] trainer: epoch 409 step 50/135 loss=0.9670 lr=1.77e-05
+2026-07-17 15:34:24,578 [INFO] trainer: epoch 409 step 100/135 loss=0.9862 lr=1.76e-05
+2026-07-17 15:34:37,366 [INFO] trainer: epoch 409 done train_loss=0.9794 dt=50.4s
+2026-07-17 15:34:56,632 [INFO] trainer: epoch 410 step 50/135 loss=0.9252 lr=1.73e-05
+2026-07-17 15:35:14,927 [INFO] trainer: epoch 410 step 100/135 loss=0.9487 lr=1.72e-05
+2026-07-17 15:35:27,713 [INFO] trainer: epoch 410 done train_loss=0.9615 dt=50.3s
+2026-07-17 15:35:47,231 [INFO] trainer: epoch 411 step 50/135 loss=0.9741 lr=1.70e-05
+2026-07-17 15:36:05,500 [INFO] trainer: epoch 411 step 100/135 loss=0.9380 lr=1.69e-05
+2026-07-17 15:36:18,269 [INFO] trainer: epoch 411 done train_loss=0.9557 dt=50.2s
+2026-07-17 15:36:37,652 [INFO] trainer: epoch 412 step 50/135 loss=0.9678 lr=1.66e-05
+2026-07-17 15:36:55,932 [INFO] trainer: epoch 412 step 100/135 loss=0.9428 lr=1.65e-05
+2026-07-17 15:37:08,717 [INFO] trainer: epoch 412 done train_loss=0.9665 dt=50.4s
+2026-07-17 15:37:27,872 [INFO] trainer: epoch 413 step 50/135 loss=0.9501 lr=1.63e-05
+2026-07-17 15:37:46,152 [INFO] trainer: epoch 413 step 100/135 loss=0.9343 lr=1.62e-05
+2026-07-17 15:37:58,934 [INFO] trainer: epoch 413 done train_loss=0.9346 dt=50.2s
+2026-07-17 15:38:18,130 [INFO] trainer: epoch 414 step 50/135 loss=0.9852 lr=1.60e-05
+2026-07-17 15:38:36,420 [INFO] trainer: epoch 414 step 100/135 loss=0.9881 lr=1.58e-05
+2026-07-17 15:38:49,199 [INFO] trainer: epoch 414 done train_loss=0.9768 dt=50.3s
+2026-07-17 15:39:08,423 [INFO] trainer: epoch 415 step 50/135 loss=0.9222 lr=1.56e-05
+2026-07-17 15:39:26,697 [INFO] trainer: epoch 415 step 100/135 loss=0.9709 lr=1.55e-05
+2026-07-17 15:39:39,486 [INFO] trainer: epoch 415 done train_loss=0.9542 dt=50.3s
+2026-07-17 15:39:58,795 [INFO] trainer: epoch 416 step 50/135 loss=0.9783 lr=1.53e-05
+2026-07-17 15:40:17,066 [INFO] trainer: epoch 416 step 100/135 loss=0.9634 lr=1.52e-05
+2026-07-17 15:40:29,848 [INFO] trainer: epoch 416 done train_loss=0.9652 dt=50.4s
+2026-07-17 15:40:48,995 [INFO] trainer: epoch 417 step 50/135 loss=0.9796 lr=1.50e-05
+2026-07-17 15:41:07,281 [INFO] trainer: epoch 417 step 100/135 loss=1.0265 lr=1.48e-05
+2026-07-17 15:41:20,068 [INFO] trainer: epoch 417 done train_loss=0.9853 dt=50.2s
+2026-07-17 15:41:39,431 [INFO] trainer: epoch 418 step 50/135 loss=0.9945 lr=1.46e-05
+2026-07-17 15:41:57,711 [INFO] trainer: epoch 418 step 100/135 loss=1.0104 lr=1.45e-05
+2026-07-17 15:42:10,496 [INFO] trainer: epoch 418 done train_loss=0.9713 dt=50.4s
+2026-07-17 15:42:29,577 [INFO] trainer: epoch 419 step 50/135 loss=0.9588 lr=1.43e-05
+2026-07-17 15:42:47,869 [INFO] trainer: epoch 419 step 100/135 loss=0.9727 lr=1.42e-05
+2026-07-17 15:43:00,665 [INFO] trainer: epoch 419 done train_loss=0.9550 dt=50.2s
+2026-07-17 15:43:19,903 [INFO] trainer: epoch 420 step 50/135 loss=1.0252 lr=1.40e-05
+2026-07-17 15:43:38,190 [INFO] trainer: epoch 420 step 100/135 loss=0.9415 lr=1.39e-05
+2026-07-17 15:43:50,975 [INFO] trainer: epoch 420 done train_loss=0.9672 dt=50.3s
+2026-07-17 15:44:10,669 [INFO] trainer: epoch 421 step 50/135 loss=0.9690 lr=1.37e-05
+2026-07-17 15:44:28,970 [INFO] trainer: epoch 421 step 100/135 loss=0.9687 lr=1.36e-05
+2026-07-17 15:44:41,769 [INFO] trainer: epoch 421 done train_loss=0.9475 dt=50.4s
+2026-07-17 15:45:00,933 [INFO] trainer: epoch 422 step 50/135 loss=0.9451 lr=1.34e-05
+2026-07-17 15:45:19,217 [INFO] trainer: epoch 422 step 100/135 loss=0.9487 lr=1.33e-05
+2026-07-17 15:45:32,011 [INFO] trainer: epoch 422 done train_loss=0.9407 dt=50.2s
+2026-07-17 15:45:51,332 [INFO] trainer: epoch 423 step 50/135 loss=0.9646 lr=1.31e-05
+2026-07-17 15:46:09,629 [INFO] trainer: epoch 423 step 100/135 loss=0.9566 lr=1.30e-05
+2026-07-17 15:46:22,422 [INFO] trainer: epoch 423 done train_loss=0.9527 dt=50.4s
+2026-07-17 15:46:41,676 [INFO] trainer: epoch 424 step 50/135 loss=0.9971 lr=1.28e-05
+2026-07-17 15:46:59,963 [INFO] trainer: epoch 424 step 100/135 loss=0.9666 lr=1.27e-05
+2026-07-17 15:47:12,744 [INFO] trainer: epoch 424 done train_loss=0.9664 dt=50.3s
+2026-07-17 15:47:32,023 [INFO] trainer: epoch 425 step 50/135 loss=0.9780 lr=1.25e-05
+2026-07-17 15:47:50,338 [INFO] trainer: epoch 425 step 100/135 loss=0.9817 lr=1.24e-05
+2026-07-17 15:48:03,125 [INFO] trainer: epoch 425 done train_loss=0.9686 dt=50.4s
+2026-07-17 15:49:25,459 [INFO] trainer: epoch 425 val_mean_dice=0.8202
+2026-07-17 15:49:44,794 [INFO] trainer: epoch 426 step 50/135 loss=0.9624 lr=1.22e-05
+2026-07-17 15:50:03,088 [INFO] trainer: epoch 426 step 100/135 loss=0.9522 lr=1.21e-05
+2026-07-17 15:50:15,874 [INFO] trainer: epoch 426 done train_loss=0.9686 dt=50.4s
+2026-07-17 15:50:35,101 [INFO] trainer: epoch 427 step 50/135 loss=0.9861 lr=1.19e-05
+2026-07-17 15:50:53,489 [INFO] trainer: epoch 427 step 100/135 loss=0.9716 lr=1.18e-05
+2026-07-17 15:51:06,282 [INFO] trainer: epoch 427 done train_loss=0.9818 dt=50.4s
+2026-07-17 15:51:25,358 [INFO] trainer: epoch 428 step 50/135 loss=0.9824 lr=1.16e-05
+2026-07-17 15:51:43,662 [INFO] trainer: epoch 428 step 100/135 loss=0.9611 lr=1.15e-05
+2026-07-17 15:51:56,470 [INFO] trainer: epoch 428 done train_loss=0.9651 dt=50.2s
+2026-07-17 15:52:15,676 [INFO] trainer: epoch 429 step 50/135 loss=0.9715 lr=1.13e-05
+2026-07-17 15:52:33,986 [INFO] trainer: epoch 429 step 100/135 loss=0.9681 lr=1.12e-05
+2026-07-17 15:52:46,780 [INFO] trainer: epoch 429 done train_loss=0.9721 dt=50.3s
+2026-07-17 15:53:05,802 [INFO] trainer: epoch 430 step 50/135 loss=0.9811 lr=1.10e-05
+2026-07-17 15:53:24,099 [INFO] trainer: epoch 430 step 100/135 loss=0.9414 lr=1.09e-05
+2026-07-17 15:53:36,898 [INFO] trainer: epoch 430 done train_loss=0.9694 dt=50.1s
+2026-07-17 15:53:56,443 [INFO] trainer: epoch 431 step 50/135 loss=0.9310 lr=1.08e-05
+2026-07-17 15:54:14,729 [INFO] trainer: epoch 431 step 100/135 loss=0.9684 lr=1.07e-05
+2026-07-17 15:54:27,528 [INFO] trainer: epoch 431 done train_loss=0.9436 dt=50.3s
+2026-07-17 15:54:46,522 [INFO] trainer: epoch 432 step 50/135 loss=0.9445 lr=1.05e-05
+2026-07-17 15:55:04,823 [INFO] trainer: epoch 432 step 100/135 loss=0.9535 lr=1.04e-05
+2026-07-17 15:55:17,617 [INFO] trainer: epoch 432 done train_loss=0.9527 dt=50.1s
+2026-07-17 15:55:36,626 [INFO] trainer: epoch 433 step 50/135 loss=0.9654 lr=1.02e-05
+2026-07-17 15:55:55,093 [INFO] trainer: epoch 433 step 100/135 loss=0.9768 lr=1.01e-05
+2026-07-17 15:56:07,897 [INFO] trainer: epoch 433 done train_loss=0.9638 dt=50.3s
+2026-07-17 15:56:26,841 [INFO] trainer: epoch 434 step 50/135 loss=0.9598 lr=9.94e-06
+2026-07-17 15:56:45,122 [INFO] trainer: epoch 434 step 100/135 loss=0.9412 lr=9.85e-06
+2026-07-17 15:56:57,931 [INFO] trainer: epoch 434 done train_loss=0.9619 dt=50.0s
+2026-07-17 15:57:16,903 [INFO] trainer: epoch 435 step 50/135 loss=0.9907 lr=9.68e-06

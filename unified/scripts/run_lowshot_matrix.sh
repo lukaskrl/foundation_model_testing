@@ -10,8 +10,11 @@
 #   FRAC=1.0               train_fraction column (e.g. 1.0, 0.25, 0.01)
 #   BACKBONE=ctfm|vista3d  backbone column
 #   ADAPTER=vit_adapter    adapter column (pyramid_mode, or `native` for CNNs)
-#   PROBE=True             probe_comparable column — True = the 220-config
-#                          headline matrix, False = the best-effort extra arms
+#   PROBE=True             probe_comparable column — True = the headline Arm N
+#                          matrix, False = the S / B / W arms
+#   ARM=N|S|B|W            arm column: N as-delivered, S matched-stem,
+#                          B best-effort, W matched-input (forced HU window)
+#   WINDOW=wshared|wnarrow window column — `native` is every non-W row
 #   GPU=0                  physical GPU (default 0)
 #
 # NOTE: BACKBONE matches the config stem, so BACKBONE=dino now hits BOTH
@@ -26,14 +29,19 @@
 #   GPU=1 PROBE=True COND='frz_pt|frz_sc' FRAC=1.0 BACKBONE='vista3d|voco|sam|dino3d_upsample|ctclip' bash scripts/run_lowshot_matrix.sh
 #   # The dino3d ViT-Adapter best-effort arm, on its own:
 #   GPU=1 ADAPTER=vit_adapter COND='ft_pt' bash scripts/run_lowshot_matrix.sh
+#   # Arm W, the minimal cell set that sizes the HU-window confound (both forced
+#   # windows x frozen+finetuned @ 100%). Pair each with its arm-N twin:
+#   GPU=1 ARM=W COND='frz_pt|ft_pt' FRAC=1.0 bash scripts/run_lowshot_matrix.sh
+#   # Just the information-restored direction:
+#   GPU=1 WINDOW=wshared COND='ft_pt' FRAC=1.0 bash scripts/run_lowshot_matrix.sh
 #
 # Per-fraction epoch caps (fixed-epoch low-shot protocol + early stop). Override
 # any with env, e.g. EP_100=500. Tiny fractions overfit fast; capping saves time
 # without changing the early-stop-selected checkpoint.
 : "${EP_001:=200}"; : "${EP_005:=300}"; : "${EP_010:=400}"; : "${EP_025:=500}"; : "${EP_100:=500}"
 
-REPO="/store/home/skrljl/projects/foundation_models/unified"
-PY="/store/home/skrljl/projects/foundation_models/env/bin/python"
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PY="${PY:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/env/bin/python}"
 cd "$REPO" || { echo "cannot cd to $REPO"; exit 1; }
 
 export CUDA_VISIBLE_DEVICES="${GPU:-0}"
@@ -44,7 +52,7 @@ export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:T
 MANIFEST="$REPO/configs/lowshot/MANIFEST.csv"
 [ -f "$MANIFEST" ] || { echo "no MANIFEST.csv — run: python -m scripts.gen_lowshot_configs"; exit 1; }
 COND="${COND:-.}"; FRAC="${FRAC:-.}"; BACKBONE="${BACKBONE:-.}"
-ADAPTER="${ADAPTER:-.}"; PROBE="${PROBE:-.}"
+ADAPTER="${ADAPTER:-.}"; PROBE="${PROBE:-.}"; ARM="${ARM:-.}"; WINDOW="${WINDOW:-.}"
 MAX_TRIES="${MAX_TRIES:-20}"; FAST_CRASH_SECS="${FAST_CRASH_SECS:-180}"; FAST_CRASH_CAP="${FAST_CRASH_CAP:-3}"
 
 MATRIX_DIR="${MATRIX_DIR:-$REPO/runs/lowshot}"; mkdir -p "$MATRIX_DIR"
@@ -53,14 +61,18 @@ qlog() { echo "[$(date +%F\ %T)] $*" | tee -a "$QLOG"; }
 
 epochs_for() { case "$1" in 0.01) echo "$EP_001";; 0.05) echo "$EP_005";; 0.1|0.10) echo "$EP_010";; 0.25) echo "$EP_025";; 1.0|1.00) echo "$EP_100";; *) echo 500;; esac; }
 
-# Select matching runs from the manifest (columns: run_name,config,backbone,
-# freeze_backbone,pretrained,train_fraction,condition,adapter,probe_comparable)
+# Select matching runs from the manifest. Columns are positional and APPEND-ONLY:
+#   $1 run_name  $2 config   $3 backbone  $4 freeze_backbone  $5 pretrained
+#   $6 train_fraction  $7 condition  $8 adapter  $9 probe_comparable
+#   $10 arm      $11 window
 # Emit: run_name|config|train_fraction
 mapfile -t ROWS < <(tail -n +2 "$MANIFEST" | awk -F, \
   -v c="$COND" -v fr="$FRAC" -v bb="$BACKBONE" -v ad="$ADAPTER" -v pr="$PROBE" \
-  '$7 ~ c && $6 ~ fr && $3 ~ bb && $8 ~ ad && $9 ~ pr {print $1"|"$2"|"$6}' )
+  -v ar="$ARM" -v wd="$WINDOW" \
+  '$7 ~ c && $6 ~ fr && $3 ~ bb && $8 ~ ad && $9 ~ pr && $10 ~ ar && $11 ~ wd \
+   {print $1"|"$2"|"$6}' )
 
-qlog "=== matrix launcher: gpu=$CUDA_VISIBLE_DEVICES COND=/$COND/ FRAC=/$FRAC/ BACKBONE=/$BACKBONE/ ADAPTER=/$ADAPTER/ PROBE=/$PROBE/ -> ${#ROWS[@]} runs ==="
+qlog "=== matrix launcher: gpu=$CUDA_VISIBLE_DEVICES COND=/$COND/ FRAC=/$FRAC/ BACKBONE=/$BACKBONE/ ADAPTER=/$ADAPTER/ PROBE=/$PROBE/ ARM=/$ARM/ WINDOW=/$WINDOW/ -> ${#ROWS[@]} runs ==="
 nvidia-smi --query-gpu=index,memory.used,memory.total --format=csv,noheader 2>&1 | tee -a "$QLOG"
 
 for row in "${ROWS[@]}"; do
@@ -68,6 +80,21 @@ for row in "${ROWS[@]}"; do
     OUT="$MATRIX_DIR/$run"
     if [ -f "$OUT/.done" ]; then qlog "SKIP $run (.done)"; continue; fi
     ep="$(epochs_for "$frac")"
+    # A container that loses its GPU handles keeps /dev/nvidia* and imports torch
+    # fine — scripts.train now refuses to run on CPU, but without this the queue
+    # would just fast-crash 3x per run and chew through the whole list marking
+    # everything ABORT. Wait for the GPU to come back instead (3 detachments in
+    # the week of 2026-08-26). GPU_WAIT_MAX=0 disables the wait.
+    : "${GPU_WAIT_SECS:=300}"; : "${GPU_WAIT_MAX:=288}"
+    waited=0
+    while [ "$GPU_WAIT_MAX" -gt 0 ] \
+          && ! "$PY" -c 'import torch,sys; sys.exit(0 if torch.cuda.is_available() else 1)' 2>/dev/null; do
+        [ "$waited" -eq 0 ] && qlog "    PAUSED before $run: no CUDA device visible (container detached?)"
+        waited=$((waited+1))
+        [ "$waited" -ge "$GPU_WAIT_MAX" ] && { qlog "    GIVING UP after $((waited*GPU_WAIT_SECS))s without a GPU"; break; }
+        sleep "$GPU_WAIT_SECS"
+    done
+    [ "$waited" -gt 0 ] && qlog "    resumed after ${waited} GPU check(s)"
     mkdir -p "$OUT"
     qlog ">>> RUN $run  cfg=$cfg  epochs=$ep"
     fast=0

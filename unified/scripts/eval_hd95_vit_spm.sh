@@ -9,7 +9,7 @@
 #
 # Usage: eval_hd95_vit_spm.sh [SPLIT] [GPU] [MIN_AVAIL_MB]
 set -u
-REPO="/store/home/skrljl/projects/foundation_models/unified"
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PY="$REPO/../env/bin/python"
 cd "$REPO" || exit 1
 SPLIT="${1:-val}"; GPU="${2:-1}"; MIN_AVAIL_MB="${3:-40000}"

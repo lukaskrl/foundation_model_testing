@@ -5,7 +5,7 @@ model:
   # The adapter resizes any input patch to 128³ for the ViT pass and
   # resamples the bottleneck back to cubic stride 16.
   batch_size: 2
-  weights: /store/home/skrljl/projects/foundation_models/weights/SAM-Med3D/sam_med3d_turbo.pth
+  weights: /home/lukas/projects/foundation_model_testing/weights/SAM-Med3D/sam_med3d_turbo.pth
   preprocessing:
     # SAM-Med3D clamps to [-1000, 1000] HU then z-scores over voxels > 0
     # (SAM-Med3D/utils/data_loader.py:62 + train.py:133

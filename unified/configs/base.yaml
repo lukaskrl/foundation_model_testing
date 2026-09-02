@@ -6,8 +6,8 @@
 # deliberate best-effort or protocol run (larger FOV, low-shot fraction, etc.).
 
 data:
-  dataset_root: /store/Datasets/TotalSegmentatorDataset
-  meta_csv: /store/Datasets/TotalSegmentatorDataset/meta.csv
+  dataset_root: /home/lukas/data/TotalSegmentatorDataset
+  meta_csv: /home/lukas/data/TotalSegmentatorDataset/meta.csv
   num_classes: 118                     # 117 organs + background
   # Low-shot data-fraction protocol (frozen/low-shot benchmark track). Fraction
   # of the TRAIN split to keep (val is never subset). Subsets are NESTED across
@@ -52,9 +52,12 @@ data:
   # subsequent epochs skip the raw NIfTI I/O and the resample entirely.
   # Orientation and HU windowing are intentionally NOT cached — they run on
   # the fly after the cache load, so one cache directory serves every model.
+  # Measured footprint at this fingerprint: ~28 MiB/subject (range 2-88 MiB,
+  # it scales with the post-CropForeground FOV), so ~32 GiB for the 1139
+  # train+val subjects. One cache serves every model.
   cache:
     enabled: true
-    dir: /volatile/Datasets/TotalSeg
+    dir: /home/lukas/data/cache/TotalSeg
   num_workers: 6                       # reduced from 16 to cut dataloader RSS on the shared, OOM-prone node
   # CropForegroundd margin (in voxels). CT-FM keeps a 10-voxel margin around
   # the foreground bbox; unified previously used 0 (tight crop). Margin > 0
@@ -164,6 +167,23 @@ head:
   deep_supervision: true
   ds_weights: [1.0, 0.5, 0.25, 0.125]
 
+# Checkpoint retention. Top-level (outside the locked train/data/eval blocks)
+# because disk policy is infrastructure, not a fair-comparison hyperparameter —
+# and it is deliberately NOT overridable per-run, so every run in a sweep leaves
+# the same footprint.
+#
+# In flight a run keeps `keep_epoch_ckpts` rolling epoch_*.pt (each carrying
+# optimizer/scheduler/scaler state) so the OOM-resume loop can pick up where it
+# left off. On a CLEAN finish those are deleted and best.pt is stripped to
+# weights + metadata, which is all scripts.evaluate / scripts.infer ever read.
+# A crashed or still-retrying run is never finalized, so resume stays intact.
+#
+# Footprint per run: ~params x 12 bytes while training (fine-tune, AdamW moments)
+# -> ~params x 4 bytes once finalized.
+checkpoint:
+  keep_epoch_ckpts: 1
+  finalize_on_finish: true
+
 # Experiment tracking. Top-level (outside the locked train/data/eval blocks)
 # because logging is infrastructure, not a fair-comparison hyperparameter.
 # Override `mode` per-run via the WANDB_MODE env var (online | offline | disabled).
@@ -171,6 +191,15 @@ wandb:
   project: unified-foundation-models
   entity: null          # null -> your default W&B entity
   mode: online
+  # Generation tag appended to the W&B run id and name. The id is derived from
+  # the output-dir name so --resume continues the same run, which also means a
+  # rerun under an old name silently APPENDS to that old run's history. Bump this
+  # whenever the framework changes in a way that makes old curves incomparable.
+  # Must be a static literal, never computed at runtime — a value that changes
+  # between launches would break --resume.
+  #   (empty) -> pre-2026-08 cluster runs, old framework
+  #   v2      -> 2026-08 rerun: unified 5-level contract, bs=3 x accum 2
+  run_tag: v2
 
 # Placeholder — every model config overrides this.
 model:

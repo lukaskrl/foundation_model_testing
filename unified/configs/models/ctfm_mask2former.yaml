@@ -9,7 +9,7 @@ model:
   name: ctfm
   amp: true
   batch_size: 4   # bs=6 OOMs (~52 GB reserved > 49 GB); bs=4 peaks ~30 GB, verified
-  weights: /store/home/skrljl/projects/foundation_models/weights/CT-FM/ct_fm_feature_extractor/model.safetensors
+  weights: /home/lukas/projects/foundation_model_testing/weights/CT-FM/ct_fm_feature_extractor/model.safetensors
   preprocessing:
     axcodes: SPL
     intensity:

@@ -8,7 +8,7 @@ background and safe to re-run.
 Default plan: 2000 distinct-patient train volumes (one reconstruction each, for
 diversity) + the full validation split (all 3039 reconstructions, as published).
 
-  python -m scripts.ctrate_cache --cache-root /store/Datasets/CTRATE \
+  python -m scripts.ctrate_cache --cache-root /home/lukas/data/CTRATE \
       --train-n 2000 --workers 6 --min-free-gb 100
 """
 from __future__ import annotations
@@ -69,7 +69,7 @@ def cache_split(split, n, cache_root, workers, min_free_gb, seed, one_per_patien
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--cache-root", default="/store/Datasets/CTRATE")
+    ap.add_argument("--cache-root", default="/home/lukas/data/CTRATE")
     ap.add_argument("--train-n", type=int, default=2000,
                     help="distinct-patient train volumes (0 = all)")
     ap.add_argument("--val-n", type=int, default=0,

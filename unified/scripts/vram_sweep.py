@@ -24,9 +24,12 @@ REPO = Path(__file__).resolve().parent.parent
 # effective per-step batch is 2x these.
 BATCH_SEQUENCE = [1, 2, 3, 4, 6, 8, 12, 16, 24, 32]
 
-# ct-clip's ViT expects a >=160 cube (image_size 480 / patch 20); the 96 patch
-# the rest use does not tile. Probe it at a size it can actually run.
-PATCH_OVERRIDE = {"ctclip": 160}
+# Probe-time patch-size overrides, for encoders that cannot run the shared 96
+# cube. Empty since the CT-CLIP adapter rewrite: its neck now tiles a 96 cube
+# natively (measured 25.2 GB reserved at bs=2), so the old {"ctclip": 160} entry
+# measured a patch size the benchmark never actually trains at and overstated
+# CT-CLIP's memory by ~2x. Add an entry only if a probe genuinely cannot run 96.
+PATCH_OVERRIDE = {}
 
 
 def run_probe(cfg_path, bs, gpu, patch=None, timeout=420):
@@ -52,6 +55,9 @@ def main():
     ap.add_argument("--hard-gb", type=float, default=46.0,
                     help="stop sweeping a model once reserved exceeds this")
     ap.add_argument("--gpu", type=int, default=0)
+    ap.add_argument("--out-dir", default="runs/vram_sweep",
+                    help="where to write results.jsonl / summary.json; give "
+                         "each concurrent instance its own so they don't clobber")
     ap.add_argument("--configs", nargs="*", default=None,
                     help="specific config basenames (no .yaml); default = all")
     args = ap.parse_args()
@@ -62,7 +68,9 @@ def main():
     else:
         cfgs = sorted(cfg_dir.glob("*.yaml"))
 
-    out_dir = REPO / "runs" / "vram_sweep"
+    out_dir = Path(args.out_dir)
+    if not out_dir.is_absolute():
+        out_dir = REPO / out_dir
     out_dir.mkdir(parents=True, exist_ok=True)
     results_path = out_dir / "results.jsonl"
     rf = results_path.open("w")

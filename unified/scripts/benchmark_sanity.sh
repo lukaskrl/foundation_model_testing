@@ -7,7 +7,7 @@ set -u
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
-PYTHON="/store/home/skrljl/projects/foundation_models/env/bin/python"
+PYTHON="${PYTHON:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/env/bin/python}"
 EPOCHS="${EPOCHS:-10}"
 GPU="${GPU:-1}"
 

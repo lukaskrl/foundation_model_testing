@@ -15,7 +15,7 @@ model:
   # via grad_accum matches the original dino3d full-finetune run.
   batch_size: 2
   grad_accum_steps: 2
-  weights: /store/home/skrljl/projects/foundation_models/weights/3DINO/3dino_vit_weights.pth
+  weights: /home/lukas/projects/foundation_model_testing/weights/3DINO/3dino_vit_weights.pth
   preprocessing:
     # 3DINO normalizes by PER-VOLUME PERCENTILES, not a fixed HU window
     # (3DINO/dinov2/data/transforms.py:64, called with min_int=-1.0 from

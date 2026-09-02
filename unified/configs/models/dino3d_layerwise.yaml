@@ -24,7 +24,7 @@ model:
   name: dino3d
   # observed 17.9 GB at bs=2 (AMP); bs=4 -> ~30 GB on a 48 GB GPU.
   batch_size: 4
-  weights: /store/home/skrljl/projects/foundation_models/weights/3DINO/3dino_vit_weights.pth
+  weights: /home/lukas/projects/foundation_model_testing/weights/3DINO/3dino_vit_weights.pth
   preprocessing:
     # 3DINO normalizes by PER-VOLUME PERCENTILES, not a fixed HU window
     # (3DINO/dinov2/data/transforms.py:64). A fixed window is a different

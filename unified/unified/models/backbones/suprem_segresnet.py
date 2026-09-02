@@ -29,6 +29,7 @@ import torch
 
 from ..registry import register_backbone
 from ..seg_model import BackboneInterface
+from ._loading import assert_encoder_loaded
 from ._neck import PyramidNeck
 
 
@@ -74,12 +75,10 @@ class SupremSegResNetBackbone(BackboneInterface):
         if weights:
             ckpt = torch.load(weights, map_location="cpu", weights_only=False)
             state = _extract_state(ckpt)
-            missing, unexpected = self.net.load_state_dict(state, strict=False)
-            if len([k for k in missing if k.startswith(("convInit.", "down_layers."))]) > 5:
-                raise RuntimeError(
-                    f"SuPreM SegResNet: too many missing encoder keys "
-                    f"({len(missing)} missing total) — checkpoint mismatch"
-                )
+            assert_encoder_loaded(
+                "suprem_segresnet", self.net,
+                self.net.load_state_dict(state, strict=False),
+            )
 
         native_ch = tuple(init_filters * (2 ** i) for i in range(len(blocks_down)))
         self.adapter = PyramidNeck(

@@ -6,7 +6,7 @@
 model:
   name: ctclip
   batch_size: 2
-  weights: /store/home/skrljl/projects/foundation_models/weights/CT-CLIP/models/CT-CLIP-Related/CT-CLIP_v2.pt
+  weights: /home/lukas/projects/foundation_model_testing/weights/CT-CLIP/models/CT-CLIP-Related/CT-CLIP_v2.pt
   preprocessing:
     # Must match ls_ctclip_ft_pt_f100.yaml (auto-generated from
     # configs/models/ctclip.yaml) or the A/B stops being single-variable.

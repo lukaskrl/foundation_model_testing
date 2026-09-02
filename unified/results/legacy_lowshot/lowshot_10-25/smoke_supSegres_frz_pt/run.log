@@ -1,0 +1,18 @@
+2026-07-16 00:45:54,653 [INFO] train: ========================================================================
+2026-07-16 00:45:54,654 [INFO] train: model=suprem_segresnet config=configs/lowshot/ls_supSegres_frz_pt_f010.yaml
+2026-07-16 00:45:54,654 [INFO] train: output=/scratch/lskrlj/runs/smoke_supSegres_frz_pt device=cuda (NVIDIA A100-SXM4-40GB)
+2026-07-16 00:45:54,654 [INFO] train: epochs=3 batch_size=2 grad_accum=2 eff_batch=4 lr=0.0002 amp=True
+2026-07-16 00:45:54,655 [INFO] train: ========================================================================
+2026-07-16 00:45:54,659 [INFO] train: splits: train=1082 val=57 classes=117
+2026-07-16 00:45:54,659 [INFO] train: low-shot: train_fraction=0.1000 seed=1234 -> 108/1082 train cases
+2026-07-16 00:46:15,571 [INFO] train: disk cache: /scratch/lskrlj/cache/TotalSeg/833d9d046402 (fingerprint=833d9d046402)
+2026-07-16 00:49:39,704 [INFO] train: model suprem_segresnet, trainable params: 9768152 / 14466216 total (freeze_backbone=True)
+2026-07-16 00:50:06,949 [WARNING] trainer: --resume set but no checkpoint found in /scratch/lskrlj/runs/smoke_supSegres_frz_pt; starting fresh
+2026-07-16 00:50:06,951 [INFO] trainer: start: epochs 1-3/3 device=cuda amp=bf16 train_batches=54 val_batches=57
+2026-07-16 00:50:58,270 [INFO] trainer: epoch 1 step 50/54 loss=11.0360 lr=1.85e-05
+2026-07-16 00:51:03,105 [INFO] trainer: epoch 1 done train_loss=11.0128 dt=56.2s
+2026-07-16 00:51:13,749 [INFO] trainer: epoch 2 step 50/54 loss=10.2912 lr=3.85e-05
+2026-07-16 00:51:14,540 [INFO] trainer: epoch 2 done train_loss=10.2556 dt=11.4s
+2026-07-16 00:51:25,110 [INFO] trainer: epoch 3 step 50/54 loss=9.2963 lr=5.85e-05
+2026-07-16 00:51:25,901 [INFO] trainer: epoch 3 done train_loss=9.2640 dt=11.4s
+2026-07-16 00:51:25,902 [INFO] trainer: total time 79.0 s, best dice -1.0000 (epochs 1-3 / 3)

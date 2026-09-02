@@ -6,7 +6,7 @@
 set -u
 
 REPO="/home/skrljl/projects/foundation_models/unified"
-PY="/store/home/skrljl/projects/foundation_models/env/bin/python"
+PY="${PY:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/env/bin/python}"
 MODELS=(voco_b voco_h vista3d dino3d biomedparse ctclip)
 SWEEP_LOG="$REPO/runs/sweep_e200.log"
 

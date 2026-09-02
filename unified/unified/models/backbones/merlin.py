@@ -95,8 +95,9 @@ import torch.nn.functional as F
 from ..registry import register_backbone
 from ..seg_model import BackboneInterface
 from ._neck import ChannelNeck, ConvStem
+from ...utils.paths import upstream
 
-MERLIN_REPO = Path("/store/home/skrljl/projects/foundation_models/Merlin")
+MERLIN_REPO = upstream("Merlin")
 
 # Key prefix the released full-model checkpoint uses for the image tower.
 TOWER_PREFIX = "encode_image.i3_resnet."

@@ -2,7 +2,7 @@
 # Adapter is a stub; needs BiomedParse's Focal backbone constructor wired up.
 model:
   name: biomedparse
-  weights: /store/home/skrljl/projects/foundation_models/weights/BiomedParse/biomedparse_v2.ckpt
+  weights: /home/lukas/projects/foundation_model_testing/weights/BiomedParse/biomedparse_v2.ckpt
   preprocessing:
     # BiomedParse windows CT per anatomical site, then rescales to [0, 255] and
     # applies an ImageNet-style mean/std

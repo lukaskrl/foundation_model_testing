@@ -19,9 +19,11 @@ import torch
 
 from ..registry import register_backbone
 from ..seg_model import BackboneInterface
+from ._loading import assert_encoder_loaded
 from ._neck import PyramidNeck
+from ...utils.paths import upstream
 
-VISTA_REPO = Path("/store/home/skrljl/projects/foundation_models/VISTA/vista3d")
+VISTA_REPO = upstream("VISTA", "vista3d")
 
 
 def _import_seg_res_encoder():
@@ -73,7 +75,10 @@ class VistaBackbone(BackboneInterface):
                         break
             if not encoder_state:
                 encoder_state = ckpt
-            self.encoder.load_state_dict(encoder_state, strict=False)
+            assert_encoder_loaded(
+                "vista3d", self.encoder,
+                self.encoder.load_state_dict(encoder_state, strict=False),
+            )
 
         native_ch = tuple(init_filters * (2 ** i) for i in range(len(blocks_down)))
         self.adapter = PyramidNeck(

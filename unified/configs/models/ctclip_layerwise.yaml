@@ -30,7 +30,7 @@
 model:
   name: ctclip
   batch_size: 3   # matched to ctclip.yaml; do NOT raise it for the A/B
-  weights: /store/home/skrljl/projects/foundation_models/weights/CT-CLIP/models/CT-CLIP-Related/CT-CLIP_v2.pt
+  weights: /home/lukas/projects/foundation_model_testing/weights/CT-CLIP/models/CT-CLIP-Related/CT-CLIP_v2.pt
   preprocessing:
     # SRA, not RAS — must stay identical to ctclip.yaml or this stops being a
     # single-variable A/B. CTViT's temporal axis is the axial slice axis and its

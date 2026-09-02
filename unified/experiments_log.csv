@@ -3,62 +3,62 @@ ls_biomedparse_ft_pt_f001,biomedparse,Focal2D,ft_pt,True,False,0.01,core-finetun
 ls_biomedparse_ft_pt_f005,biomedparse,Focal2D,ft_pt,True,False,0.05,core-finetune,300,2,42.72,configs/lowshot/ls_biomedparse_ft_pt_f005.yaml,,,,,,,,,,,
 ls_biomedparse_ft_pt_f010,biomedparse,Focal2D,ft_pt,True,False,0.1,core-finetune,400,2,42.72,configs/lowshot/ls_biomedparse_ft_pt_f010.yaml,,,,,,,,,,,
 ls_biomedparse_ft_pt_f025,biomedparse,Focal2D,ft_pt,True,False,0.25,core-finetune,500,2,42.72,configs/lowshot/ls_biomedparse_ft_pt_f025.yaml,,,,,,,,,,,
-ls_biomedparse_ft_pt_f100,biomedparse,Focal2D,ft_pt,True,False,1.0,core-finetune,500,2,42.72,configs/lowshot/ls_biomedparse_ft_pt_f100.yaml,done,,0.8628,,1.9358,,,,,runs/biomedparse_run/best.pt,backfilled from runs/biomedparse_run (eval on best.pt)
+ls_biomedparse_ft_pt_f100,biomedparse,Focal2D,ft_pt,True,False,1.0,core-finetune,500,2,42.72,configs/lowshot/ls_biomedparse_ft_pt_f100.yaml,,,,,,,,,,,superseded — executed on pre-arm framework 087f2da; values preserved in experiments_log.legacy_087f2da.csv
 ls_ctclip_ft_pt_f001,ctclip,CTViT,ft_pt,True,False,0.01,core-finetune,200,1,49.59,configs/lowshot/ls_ctclip_ft_pt_f001.yaml,,,,,,,,,,,
 ls_ctclip_ft_pt_f005,ctclip,CTViT,ft_pt,True,False,0.05,core-finetune,300,1,49.59,configs/lowshot/ls_ctclip_ft_pt_f005.yaml,,,,,,,,,,,
 ls_ctclip_ft_pt_f010,ctclip,CTViT,ft_pt,True,False,0.1,core-finetune,400,1,49.59,configs/lowshot/ls_ctclip_ft_pt_f010.yaml,,,,,,,,,,,
 ls_ctclip_ft_pt_f025,ctclip,CTViT,ft_pt,True,False,0.25,core-finetune,500,1,49.59,configs/lowshot/ls_ctclip_ft_pt_f025.yaml,,,,,,,,,,,
-ls_ctclip_ft_pt_f100,ctclip,CTViT,ft_pt,True,False,1.0,core-finetune,500,1,49.59,configs/lowshot/ls_ctclip_ft_pt_f100.yaml,done,,0.8534,,2.1502,,,,,runs/ctclip_run/best.pt,backfilled from runs/ctclip_run (eval on best.pt)
+ls_ctclip_ft_pt_f100,ctclip,CTViT,ft_pt,True,False,1.0,core-finetune,500,1,49.59,configs/lowshot/ls_ctclip_ft_pt_f100.yaml,,,,,,,,,,,superseded — executed on pre-arm framework 087f2da; values preserved in experiments_log.legacy_087f2da.csv
 ls_ctfm_ft_pt_f001,ctfm,SegResNet-f32,ft_pt,True,False,0.01,core-finetune,200,4,39.49,configs/lowshot/ls_ctfm_ft_pt_f001.yaml,,,,,,,,,,,
 ls_ctfm_ft_pt_f005,ctfm,SegResNet-f32,ft_pt,True,False,0.05,core-finetune,300,4,39.49,configs/lowshot/ls_ctfm_ft_pt_f005.yaml,,,,,,,,,,,
 ls_ctfm_ft_pt_f010,ctfm,SegResNet-f32,ft_pt,True,False,0.1,core-finetune,400,4,39.49,configs/lowshot/ls_ctfm_ft_pt_f010.yaml,,,,,,,,,,,
 ls_ctfm_ft_pt_f025,ctfm,SegResNet-f32,ft_pt,True,False,0.25,core-finetune,500,4,39.49,configs/lowshot/ls_ctfm_ft_pt_f025.yaml,,,,,,,,,,,
-ls_ctfm_ft_pt_f100,ctfm,SegResNet-f32,ft_pt,True,False,1.0,core-finetune,500,4,39.49,configs/lowshot/ls_ctfm_ft_pt_f100.yaml,done,,0.8655,,,,,,,runs/ctfm_unfrozen_eval/best.pt,backfilled from runs/ctfm_unfrozen_eval (eval on best.pt)
+ls_ctfm_ft_pt_f100,ctfm,SegResNet-f32,ft_pt,True,False,1.0,core-finetune,500,4,39.49,configs/lowshot/ls_ctfm_ft_pt_f100.yaml,,,,,,,,,,,superseded — executed on pre-arm framework 087f2da; values preserved in experiments_log.legacy_087f2da.csv
 ls_dino3d_ft_pt_f001,dino3d,ViT-L,ft_pt,True,False,0.01,core-finetune,200,4,40.35,configs/lowshot/ls_dino3d_ft_pt_f001.yaml,,,,,,,,,,,
 ls_dino3d_ft_pt_f005,dino3d,ViT-L,ft_pt,True,False,0.05,core-finetune,300,4,40.35,configs/lowshot/ls_dino3d_ft_pt_f005.yaml,,,,,,,,,,,
 ls_dino3d_ft_pt_f010,dino3d,ViT-L,ft_pt,True,False,0.1,core-finetune,400,4,40.35,configs/lowshot/ls_dino3d_ft_pt_f010.yaml,,,,,,,,,,,
 ls_dino3d_ft_pt_f025,dino3d,ViT-L,ft_pt,True,False,0.25,core-finetune,500,4,40.35,configs/lowshot/ls_dino3d_ft_pt_f025.yaml,,,,,,,,,,,
-ls_dino3d_ft_pt_f100,dino3d,ViT-L,ft_pt,True,False,1.0,core-finetune,500,4,40.35,configs/lowshot/ls_dino3d_ft_pt_f100.yaml,done,,0.8355,,3.8973,,,,,runs/dino3d_run/best.pt,backfilled from runs/dino3d_run (eval on best.pt)
+ls_dino3d_ft_pt_f100,dino3d,ViT-L,ft_pt,True,False,1.0,core-finetune,500,4,40.35,configs/lowshot/ls_dino3d_ft_pt_f100.yaml,,,,,,,,,,,superseded — executed on pre-arm framework 087f2da; values preserved in experiments_log.legacy_087f2da.csv
 ls_samMed3d_ft_pt_f001,sam_med3d,ViT-B,ft_pt,True,False,0.01,core-finetune,200,2,38.01,configs/lowshot/ls_samMed3d_ft_pt_f001.yaml,,,,,,,,,,,
 ls_samMed3d_ft_pt_f005,sam_med3d,ViT-B,ft_pt,True,False,0.05,core-finetune,300,2,38.01,configs/lowshot/ls_samMed3d_ft_pt_f005.yaml,,,,,,,,,,,
 ls_samMed3d_ft_pt_f010,sam_med3d,ViT-B,ft_pt,True,False,0.1,core-finetune,400,2,38.01,configs/lowshot/ls_samMed3d_ft_pt_f010.yaml,,,,,,,,,,,
 ls_samMed3d_ft_pt_f025,sam_med3d,ViT-B,ft_pt,True,False,0.25,core-finetune,500,2,38.01,configs/lowshot/ls_samMed3d_ft_pt_f025.yaml,,,,,,,,,,,
-ls_samMed3d_ft_pt_f100,sam_med3d,ViT-B,ft_pt,True,False,1.0,core-finetune,500,2,38.01,configs/lowshot/ls_samMed3d_ft_pt_f100.yaml,done,,0.8533,,2.0862,,,,,runs/sam_med3d_run/best.pt,backfilled from runs/sam_med3d_run (eval on best.pt)
+ls_samMed3d_ft_pt_f100,sam_med3d,ViT-B,ft_pt,True,False,1.0,core-finetune,500,2,38.01,configs/lowshot/ls_samMed3d_ft_pt_f100.yaml,,,,,,,,,,,superseded — executed on pre-arm framework 087f2da; values preserved in experiments_log.legacy_087f2da.csv
 ls_supSegres_ft_pt_f001,suprem_segresnet,SegResNet-small,ft_pt,True,False,0.01,core-finetune,200,4,37.2,configs/lowshot/ls_supSegres_ft_pt_f001.yaml,,,,,,,,,,,
 ls_supSegres_ft_pt_f005,suprem_segresnet,SegResNet-small,ft_pt,True,False,0.05,core-finetune,300,4,37.2,configs/lowshot/ls_supSegres_ft_pt_f005.yaml,,,,,,,,,,,
 ls_supSegres_ft_pt_f010,suprem_segresnet,SegResNet-small,ft_pt,True,False,0.1,core-finetune,400,4,37.2,configs/lowshot/ls_supSegres_ft_pt_f010.yaml,,,,,,,,,,,
 ls_supSegres_ft_pt_f025,suprem_segresnet,SegResNet-small,ft_pt,True,False,0.25,core-finetune,500,4,37.2,configs/lowshot/ls_supSegres_ft_pt_f025.yaml,,,,,,,,,,,
-ls_supSegres_ft_pt_f100,suprem_segresnet,SegResNet-small,ft_pt,True,False,1.0,core-finetune,500,4,37.2,configs/lowshot/ls_supSegres_ft_pt_f100.yaml,done,,0.8586,,2.0522,,,,,runs/suprem_segresnet_run/best.pt,backfilled from runs/suprem_segresnet_run (eval on best.pt)
+ls_supSegres_ft_pt_f100,suprem_segresnet,SegResNet-small,ft_pt,True,False,1.0,core-finetune,500,4,37.2,configs/lowshot/ls_supSegres_ft_pt_f100.yaml,,,,,,,,,,,superseded — executed on pre-arm framework 087f2da; values preserved in experiments_log.legacy_087f2da.csv
 ls_supSwin_ft_pt_f001,suprem_swinunetr,SwinUNETR-fs48,ft_pt,True,False,0.01,core-finetune,200,2,31.92,configs/lowshot/ls_supSwin_ft_pt_f001.yaml,,,,,,,,,,,
 ls_supSwin_ft_pt_f005,suprem_swinunetr,SwinUNETR-fs48,ft_pt,True,False,0.05,core-finetune,300,2,31.92,configs/lowshot/ls_supSwin_ft_pt_f005.yaml,,,,,,,,,,,
 ls_supSwin_ft_pt_f010,suprem_swinunetr,SwinUNETR-fs48,ft_pt,True,False,0.1,core-finetune,400,2,31.92,configs/lowshot/ls_supSwin_ft_pt_f010.yaml,,,,,,,,,,,
 ls_supSwin_ft_pt_f025,suprem_swinunetr,SwinUNETR-fs48,ft_pt,True,False,0.25,core-finetune,500,2,31.92,configs/lowshot/ls_supSwin_ft_pt_f025.yaml,,,,,,,,,,,
-ls_supSwin_ft_pt_f100,suprem_swinunetr,SwinUNETR-fs48,ft_pt,True,False,1.0,core-finetune,500,2,31.92,configs/lowshot/ls_supSwin_ft_pt_f100.yaml,done,,0.8444,,2.4291,,,,,runs/suprem_swinunetr_run/best.pt,backfilled from runs/suprem_swinunetr_run (eval on best.pt)
+ls_supSwin_ft_pt_f100,suprem_swinunetr,SwinUNETR-fs48,ft_pt,True,False,1.0,core-finetune,500,2,31.92,configs/lowshot/ls_supSwin_ft_pt_f100.yaml,,,,,,,,,,,superseded — executed on pre-arm framework 087f2da; values preserved in experiments_log.legacy_087f2da.csv
 ls_supUnet_ft_pt_f001,suprem_unet,UNet3D,ft_pt,True,False,0.01,core-finetune,200,4,39.76,configs/lowshot/ls_supUnet_ft_pt_f001.yaml,,,,,,,,,,,
 ls_supUnet_ft_pt_f005,suprem_unet,UNet3D,ft_pt,True,False,0.05,core-finetune,300,4,39.76,configs/lowshot/ls_supUnet_ft_pt_f005.yaml,,,,,,,,,,,
 ls_supUnet_ft_pt_f010,suprem_unet,UNet3D,ft_pt,True,False,0.1,core-finetune,400,4,39.76,configs/lowshot/ls_supUnet_ft_pt_f010.yaml,,,,,,,,,,,
 ls_supUnet_ft_pt_f025,suprem_unet,UNet3D,ft_pt,True,False,0.25,core-finetune,500,4,39.76,configs/lowshot/ls_supUnet_ft_pt_f025.yaml,,,,,,,,,,,
-ls_supUnet_ft_pt_f100,suprem_unet,UNet3D,ft_pt,True,False,1.0,core-finetune,500,4,39.76,configs/lowshot/ls_supUnet_ft_pt_f100.yaml,done,,0.8621,,2.8114,,,,,runs/suprem_unet_run/best.pt,backfilled from runs/suprem_unet_run (eval on best.pt)
+ls_supUnet_ft_pt_f100,suprem_unet,UNet3D,ft_pt,True,False,1.0,core-finetune,500,4,39.76,configs/lowshot/ls_supUnet_ft_pt_f100.yaml,,,,,,,,,,,superseded — executed on pre-arm framework 087f2da; values preserved in experiments_log.legacy_087f2da.csv
 ls_vista3d_ft_pt_f001,vista3d,SegResNet-f48,ft_pt,True,False,0.01,core-finetune,200,3,37.3,configs/lowshot/ls_vista3d_ft_pt_f001.yaml,,,,,,,,,,,
 ls_vista3d_ft_pt_f005,vista3d,SegResNet-f48,ft_pt,True,False,0.05,core-finetune,300,3,37.3,configs/lowshot/ls_vista3d_ft_pt_f005.yaml,,,,,,,,,,,
 ls_vista3d_ft_pt_f010,vista3d,SegResNet-f48,ft_pt,True,False,0.1,core-finetune,400,3,37.3,configs/lowshot/ls_vista3d_ft_pt_f010.yaml,,,,,,,,,,,
 ls_vista3d_ft_pt_f025,vista3d,SegResNet-f48,ft_pt,True,False,0.25,core-finetune,500,3,37.3,configs/lowshot/ls_vista3d_ft_pt_f025.yaml,,,,,,,,,,,
-ls_vista3d_ft_pt_f100,vista3d,SegResNet-f48,ft_pt,True,False,1.0,core-finetune,500,3,37.3,configs/lowshot/ls_vista3d_ft_pt_f100.yaml,done,,0.8737,,1.7798,,,,,runs/vista3d_run/best.pt,backfilled from runs/vista3d_run (eval on best.pt)
+ls_vista3d_ft_pt_f100,vista3d,SegResNet-f48,ft_pt,True,False,1.0,core-finetune,500,3,37.3,configs/lowshot/ls_vista3d_ft_pt_f100.yaml,,,,,,,,,,,superseded — executed on pre-arm framework 087f2da; values preserved in experiments_log.legacy_087f2da.csv
 ls_vocoB_ft_pt_f001,voco_b,SwinUNETR-fs48,ft_pt,True,False,0.01,core-finetune,200,2,32.26,configs/lowshot/ls_vocoB_ft_pt_f001.yaml,,,,,,,,,,,
 ls_vocoB_ft_pt_f005,voco_b,SwinUNETR-fs48,ft_pt,True,False,0.05,core-finetune,300,2,32.26,configs/lowshot/ls_vocoB_ft_pt_f005.yaml,,,,,,,,,,,
 ls_vocoB_ft_pt_f010,voco_b,SwinUNETR-fs48,ft_pt,True,False,0.1,core-finetune,400,2,32.26,configs/lowshot/ls_vocoB_ft_pt_f010.yaml,,,,,,,,,,,
 ls_vocoB_ft_pt_f025,voco_b,SwinUNETR-fs48,ft_pt,True,False,0.25,core-finetune,500,2,32.26,configs/lowshot/ls_vocoB_ft_pt_f025.yaml,,,,,,,,,,,
-ls_vocoB_ft_pt_f100,voco_b,SwinUNETR-fs48,ft_pt,True,False,1.0,core-finetune,500,2,32.26,configs/lowshot/ls_vocoB_ft_pt_f100.yaml,done,,0.8576,,1.9942,,,,,runs/voco_b_run/best.pt,backfilled from runs/voco_b_run (eval on best.pt)
+ls_vocoB_ft_pt_f100,voco_b,SwinUNETR-fs48,ft_pt,True,False,1.0,core-finetune,500,2,32.26,configs/lowshot/ls_vocoB_ft_pt_f100.yaml,,,,,,,,,,,superseded — executed on pre-arm framework 087f2da; values preserved in experiments_log.legacy_087f2da.csv
 ls_vocoH_ft_pt_f001,voco_h,SwinUNETR-huge,ft_pt,True,False,0.01,core-finetune,200,2,42.18,configs/lowshot/ls_vocoH_ft_pt_f001.yaml,,,,,,,,,,,
 ls_vocoH_ft_pt_f005,voco_h,SwinUNETR-huge,ft_pt,True,False,0.05,core-finetune,300,2,42.18,configs/lowshot/ls_vocoH_ft_pt_f005.yaml,,,,,,,,,,,
 ls_vocoH_ft_pt_f010,voco_h,SwinUNETR-huge,ft_pt,True,False,0.1,core-finetune,400,2,42.18,configs/lowshot/ls_vocoH_ft_pt_f010.yaml,,,,,,,,,,,
 ls_vocoH_ft_pt_f025,voco_h,SwinUNETR-huge,ft_pt,True,False,0.25,core-finetune,500,2,42.18,configs/lowshot/ls_vocoH_ft_pt_f025.yaml,,,,,,,,,,,
-ls_vocoH_ft_pt_f100,voco_h,SwinUNETR-huge,ft_pt,True,False,1.0,core-finetune,500,2,42.18,configs/lowshot/ls_vocoH_ft_pt_f100.yaml,done,,0.847,,2.4163,,,,,runs/voco_h_run/best.pt,backfilled from runs/voco_h_run (eval on best.pt)
+ls_vocoH_ft_pt_f100,voco_h,SwinUNETR-huge,ft_pt,True,False,1.0,core-finetune,500,2,42.18,configs/lowshot/ls_vocoH_ft_pt_f100.yaml,,,,,,,,,,,superseded — executed on pre-arm framework 087f2da; values preserved in experiments_log.legacy_087f2da.csv
 ls_biomedparse_frz_pt_f001,biomedparse,Focal2D,frz_pt,True,True,0.01,core-probe,200,,,configs/lowshot/ls_biomedparse_frz_pt_f001.yaml,,,,,,,,,,,
 ls_biomedparse_frz_pt_f005,biomedparse,Focal2D,frz_pt,True,True,0.05,core-probe,300,,,configs/lowshot/ls_biomedparse_frz_pt_f005.yaml,,,,,,,,,,,
 ls_biomedparse_frz_pt_f010,biomedparse,Focal2D,frz_pt,True,True,0.1,core-probe,400,,,configs/lowshot/ls_biomedparse_frz_pt_f010.yaml,,,,,,,,,,,
 ls_biomedparse_frz_pt_f025,biomedparse,Focal2D,frz_pt,True,True,0.25,core-probe,500,,,configs/lowshot/ls_biomedparse_frz_pt_f025.yaml,,,,,,,,,,,
-ls_biomedparse_frz_pt_f100,biomedparse,Focal2D,frz_pt,True,True,1.0,core-probe,500,,,configs/lowshot/ls_biomedparse_frz_pt_f100.yaml,running,25,0.7426,,,,,,,runs/frozen_stage0_20260714/ls_biomedparse_frz_pt_f100/best.pt,train-val best over 1 val pts from runs/frozen_stage0_20260714/ls_biomedparse_frz_pt_f100 (IN PROGRESS)
+ls_biomedparse_frz_pt_f100,biomedparse,Focal2D,frz_pt,True,True,1.0,core-probe,500,,,configs/lowshot/ls_biomedparse_frz_pt_f100.yaml,,,,,,,,,,,superseded — executed on pre-arm framework 087f2da; values preserved in experiments_log.legacy_087f2da.csv
 ls_ctclip_frz_pt_f001,ctclip,CTViT,frz_pt,True,True,0.01,core-probe,200,,,configs/lowshot/ls_ctclip_frz_pt_f001.yaml,,,,,,,,,,,
 ls_ctclip_frz_pt_f005,ctclip,CTViT,frz_pt,True,True,0.05,core-probe,300,,,configs/lowshot/ls_ctclip_frz_pt_f005.yaml,,,,,,,,,,,
 ls_ctclip_frz_pt_f010,ctclip,CTViT,frz_pt,True,True,0.1,core-probe,400,,,configs/lowshot/ls_ctclip_frz_pt_f010.yaml,,,,,,,,,,,
@@ -68,7 +68,7 @@ ls_ctfm_frz_pt_f001,ctfm,SegResNet-f32,frz_pt,True,True,0.01,core-probe,200,,,co
 ls_ctfm_frz_pt_f005,ctfm,SegResNet-f32,frz_pt,True,True,0.05,core-probe,300,,,configs/lowshot/ls_ctfm_frz_pt_f005.yaml,,,,,,,,,,,
 ls_ctfm_frz_pt_f010,ctfm,SegResNet-f32,frz_pt,True,True,0.1,core-probe,400,,,configs/lowshot/ls_ctfm_frz_pt_f010.yaml,,,,,,,,,,,
 ls_ctfm_frz_pt_f025,ctfm,SegResNet-f32,frz_pt,True,True,0.25,core-probe,500,,,configs/lowshot/ls_ctfm_frz_pt_f025.yaml,,,,,,,,,,,
-ls_ctfm_frz_pt_f100,ctfm,SegResNet-f32,frz_pt,True,True,1.0,core-probe,500,,,configs/lowshot/ls_ctfm_frz_pt_f100.yaml,done,450,0.8239,,,,,,,runs/frozen_stage0_20260714/ls_ctfm_frz_pt_f100/best.pt,train-val best over 20 val pts from runs/frozen_stage0_20260714/ls_ctfm_frz_pt_f100
+ls_ctfm_frz_pt_f100,ctfm,SegResNet-f32,frz_pt,True,True,1.0,core-probe,500,,,configs/lowshot/ls_ctfm_frz_pt_f100.yaml,,,,,,,,,,,superseded — executed on pre-arm framework 087f2da; values preserved in experiments_log.legacy_087f2da.csv
 ls_dino3d_frz_pt_f001,dino3d,ViT-L,frz_pt,True,True,0.01,core-probe,200,,,configs/lowshot/ls_dino3d_frz_pt_f001.yaml,,,,,,,,,,,
 ls_dino3d_frz_pt_f005,dino3d,ViT-L,frz_pt,True,True,0.05,core-probe,300,,,configs/lowshot/ls_dino3d_frz_pt_f005.yaml,,,,,,,,,,,
 ls_dino3d_frz_pt_f010,dino3d,ViT-L,frz_pt,True,True,0.1,core-probe,400,,,configs/lowshot/ls_dino3d_frz_pt_f010.yaml,,,,,,,,,,,
@@ -98,7 +98,7 @@ ls_vista3d_frz_pt_f001,vista3d,SegResNet-f48,frz_pt,True,True,0.01,core-probe,20
 ls_vista3d_frz_pt_f005,vista3d,SegResNet-f48,frz_pt,True,True,0.05,core-probe,300,,,configs/lowshot/ls_vista3d_frz_pt_f005.yaml,,,,,,,,,,,
 ls_vista3d_frz_pt_f010,vista3d,SegResNet-f48,frz_pt,True,True,0.1,core-probe,400,,,configs/lowshot/ls_vista3d_frz_pt_f010.yaml,,,,,,,,,,,
 ls_vista3d_frz_pt_f025,vista3d,SegResNet-f48,frz_pt,True,True,0.25,core-probe,500,,,configs/lowshot/ls_vista3d_frz_pt_f025.yaml,,,,,,,,,,,
-ls_vista3d_frz_pt_f100,vista3d,SegResNet-f48,frz_pt,True,True,1.0,core-probe,500,,,configs/lowshot/ls_vista3d_frz_pt_f100.yaml,done,300,0.8499,,,,,,,runs/frozen_stage0_20260714/ls_vista3d_frz_pt_f100/best.pt,train-val best over 12 val pts from runs/frozen_stage0_20260714/ls_vista3d_frz_pt_f100
+ls_vista3d_frz_pt_f100,vista3d,SegResNet-f48,frz_pt,True,True,1.0,core-probe,500,,,configs/lowshot/ls_vista3d_frz_pt_f100.yaml,,,,,,,,,,,superseded — executed on pre-arm framework 087f2da; values preserved in experiments_log.legacy_087f2da.csv
 ls_vocoB_frz_pt_f001,voco_b,SwinUNETR-fs48,frz_pt,True,True,0.01,core-probe,200,,,configs/lowshot/ls_vocoB_frz_pt_f001.yaml,,,,,,,,,,,
 ls_vocoB_frz_pt_f005,voco_b,SwinUNETR-fs48,frz_pt,True,True,0.05,core-probe,300,,,configs/lowshot/ls_vocoB_frz_pt_f005.yaml,,,,,,,,,,,
 ls_vocoB_frz_pt_f010,voco_b,SwinUNETR-fs48,frz_pt,True,True,0.1,core-probe,400,,,configs/lowshot/ls_vocoB_frz_pt_f010.yaml,,,,,,,,,,,
@@ -166,7 +166,7 @@ ls_vocoH_ft_sc_f025,voco_h,SwinUNETR-huge,ft_sc,False,False,0.25,baseline-scratc
 ls_vocoH_ft_sc_f100,voco_h,SwinUNETR-huge,ft_sc,False,False,1.0,baseline-scratch,500,2,42.18,configs/lowshot/ls_vocoH_ft_sc_f100.yaml,,,,,,,,,,,
 ls_biomedparse_frz_sc_f100,biomedparse,Focal2D,frz_sc,False,True,1.0,control-floor,500,,,configs/lowshot/ls_biomedparse_frz_sc_f100.yaml,,,,,,,,,,,
 ls_ctclip_frz_sc_f100,ctclip,CTViT,frz_sc,False,True,1.0,control-floor,500,,,configs/lowshot/ls_ctclip_frz_sc_f100.yaml,,,,,,,,,,,
-ls_ctfm_frz_sc_f100,ctfm,SegResNet-f32,frz_sc,False,True,1.0,control-floor,500,,,configs/lowshot/ls_ctfm_frz_sc_f100.yaml,running,250,0.7383,,,,,,,runs/frozen_stage0_20260714/ls_ctfm_frz_sc_f100/best.pt,train-val best over 11 val pts from runs/frozen_stage0_20260714/ls_ctfm_frz_sc_f100 (IN PROGRESS)
+ls_ctfm_frz_sc_f100,ctfm,SegResNet-f32,frz_sc,False,True,1.0,control-floor,500,,,configs/lowshot/ls_ctfm_frz_sc_f100.yaml,,,,,,,,,,,superseded — executed on pre-arm framework 087f2da; values preserved in experiments_log.legacy_087f2da.csv
 ls_dino3d_frz_sc_f100,dino3d,ViT-L,frz_sc,False,True,1.0,control-floor,500,,,configs/lowshot/ls_dino3d_frz_sc_f100.yaml,,,,,,,,,,,
 ls_samMed3d_frz_sc_f100,sam_med3d,ViT-B,frz_sc,False,True,1.0,control-floor,500,,,configs/lowshot/ls_samMed3d_frz_sc_f100.yaml,,,,,,,,,,,
 ls_supSegres_frz_sc_f100,suprem_segresnet,SegResNet-small,frz_sc,False,True,1.0,control-floor,500,,,configs/lowshot/ls_supSegres_frz_sc_f100.yaml,,,,,,,,,,,

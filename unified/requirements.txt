@@ -8,10 +8,14 @@ pyyaml>=6.0
 tqdm>=4.66
 wandb>=0.16
 
-# Per-model extras (uncomment depending on which adapters you use):
+# Per-model extras. This exact set was verified to load all 12 encoders
+# (scripts/verify_setup.py --load-weights) on torch 2.13 / monai 1.4:
+# safetensors>=0.4         # CT-FM (encoder-only checkpoint is .safetensors)
+# torchvision>=0.17        # Merlin (resnet152 definition the I3D tower inflates)
 # einops>=0.7              # 3DINO, CT-CLIP
 # timm>=0.9                # 3DINO
 # xformers>=0.0.23         # 3DINO (optional fast attention)
-# transformers>=4.40       # BiomedParse text branch (we discard it but the import chain may need it)
+# transformers>=4.40,<5    # BiomedParse text branch (we discard it but the import chain needs it)
 # open-clip-torch>=2.24    # BiomedParse vision-language path
 # vector-quantize-pytorch==1.1.2  # CT-CLIP / CTViT
+# beartype>=0.17           # pulled in by CTViT's runtime type checks

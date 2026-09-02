@@ -34,9 +34,11 @@ import torch
 
 from ..registry import register_backbone
 from ..seg_model import BackboneInterface
+from ._loading import assert_encoder_loaded
 from ._neck import PyramidNeck
+from ...utils.paths import upstream
 
-VISTA_REPO = Path("/store/home/skrljl/projects/foundation_models/VISTA/vista3d")
+VISTA_REPO = upstream("VISTA", "vista3d")
 
 
 def _import_seg_res_encoder():
@@ -116,14 +118,10 @@ class CTFMBackbone(BackboneInterface):
                 k: v for k, v in encoder_state.items()
                 if not k.endswith((".running_mean", ".running_var", ".num_batches_tracked"))
             }
-            missing, unexpected = self.encoder.load_state_dict(
-                encoder_state, strict=False,
+            assert_encoder_loaded(
+                "ctfm", self.encoder,
+                self.encoder.load_state_dict(encoder_state, strict=False),
             )
-            if len(missing) > 10:
-                raise RuntimeError(
-                    f"CT-FM: {len(missing)} missing encoder keys — "
-                    f"checkpoint prefix likely mismatched. Sample missing: {missing[:5]}"
-                )
 
         # Native channels per stage: init_filters · (1, 2, 4, 8, 16).
         native_ch = tuple(init_filters * (2 ** i) for i in range(len(blocks_down)))

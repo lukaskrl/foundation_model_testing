@@ -19,8 +19,8 @@
 # this exact command after any kill to continue.
 set -u
 
-REPO="/store/home/skrljl/projects/foundation_models/unified"
-PY="/store/home/skrljl/projects/foundation_models/env/bin/python"
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PY="${PY:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/env/bin/python}"
 cd "$REPO" || { echo "cannot cd to $REPO"; exit 1; }
 
 export CUDA_VISIBLE_DEVICES=1          # GPU 0 belongs to other users

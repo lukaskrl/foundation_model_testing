@@ -6,7 +6,7 @@ model:
   # OOM-crashed at step 0 in the back-to-back batch under the slightest
   # contention from a preceding run.
   batch_size: 2
-  weights: /store/home/skrljl/projects/foundation_models/weights/VoCo/VoComni_B.pt
+  weights: /home/lukas/projects/foundation_model_testing/weights/VoCo/VoComni_B.pt
   preprocessing:
     # VoCo pretrained with the narrow soft-tissue window
     # (Large-Scale-Medical/Self-supervised/voco_train.py:113 — a_min=-175,

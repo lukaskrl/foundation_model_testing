@@ -20,7 +20,7 @@ model:
   amp: true
   batch_size: 2          # matches ctfm_unet_128: x num_samples(2) = 4 patches/forward
   grad_accum_steps: 2    # eff optimizer batch = 2*2*2 = 8, matches every prior run
-  weights: /store/home/skrljl/projects/foundation_models/weights/CT-FM/ct_fm_feature_extractor/model.safetensors
+  weights: /home/lukas/projects/foundation_model_testing/weights/CT-FM/ct_fm_feature_extractor/model.safetensors
   preprocessing:
     axcodes: SPL
     intensity:

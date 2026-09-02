@@ -10,7 +10,7 @@
 # than blind retrying.
 #
 # Run fully detached (setsid/nohup) so it survives the session ending.
-REPO="/store/home/skrljl/projects/foundation_models/unified"
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO" || exit 1
 LOG="$REPO/runs/SUPERVISOR.log"
 MODELS=(suprem_unet suprem_segresnet suprem_swinunetr vista3d ctclip \

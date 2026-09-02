@@ -10,7 +10,7 @@
 #
 # Usage: eval_hd95_safe.sh [SPLIT] [GPU] [MIN_AVAIL_MB]
 set -u
-REPO="/store/home/skrljl/projects/foundation_models/unified"
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PY="$REPO/../env/bin/python"
 cd "$REPO" || exit 1
 SPLIT="${1:-val}"

@@ -94,10 +94,12 @@ import torch.nn.functional as F
 
 from ..registry import register_backbone
 from ..seg_model import BackboneInterface
+from ._loading import assert_encoder_loaded
 from .dino3d import SpatialPriorModule3D
 from ._neck import LayerTapNeck, MultiCanvasNeck, UpsampleNeck
+from ...utils.paths import upstream
 
-CTCLIP_REPO = Path("/store/home/skrljl/projects/foundation_models/CT-CLIP")
+CTCLIP_REPO = upstream("CT-CLIP")
 
 
 def _import_ctvit():
@@ -111,7 +113,7 @@ def _import_ctvit():
     if not pkg_dir.exists():
         raise NotImplementedError(
             f"CT-CLIP source missing at {pkg_dir}. Ensure the CT-CLIP repo is "
-            "cloned at /store/home/skrljl/projects/foundation_models/CT-CLIP."
+            "cloned next to this one (git submodule update --init CT-CLIP)."
         )
     import importlib.util
     import types
@@ -262,7 +264,10 @@ class CTClipBackbone(BackboneInterface):
             }
             if not visual:
                 visual = state
-            self.encoder.load_state_dict(visual, strict=False)
+            assert_encoder_loaded(
+                "ctclip", self.encoder,
+                self.encoder.load_state_dict(visual, strict=False),
+            )
 
         # CTViT's ContinuousPositionBias has a hard-coded device=cuda; patch
         # so it respects the passed `device` argument.

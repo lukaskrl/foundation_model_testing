@@ -25,6 +25,7 @@ import torch
 
 from ..registry import register_backbone
 from ..seg_model import BackboneInterface
+from ._loading import assert_encoder_loaded
 from .voco import _SwinAdapter
 
 
@@ -76,12 +77,10 @@ class SupremSwinUNETRBackbone(BackboneInterface):
                 raise RuntimeError(
                     "SuPreM SwinUNETR: no 'backbone.swinViT.*' keys found in checkpoint"
                 )
-            missing, unexpected = self.swinViT.load_state_dict(state, strict=False)
-            unexpected_swin = [k for k in unexpected if "decoder" not in k and "out." not in k]
-            if unexpected_swin and len(unexpected_swin) > 20:
-                raise RuntimeError(
-                    f"SuPreM SwinUNETR: too many unexpected swinViT keys ({len(unexpected_swin)})"
-                )
+            assert_encoder_loaded(
+                "suprem_swinunetr", self.swinViT,
+                self.swinViT.load_state_dict(state, strict=False),
+            )
 
         native_ch = (
             feature_size * 1,
