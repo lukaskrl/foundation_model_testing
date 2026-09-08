@@ -59,9 +59,13 @@ honest scope limit. At n ≈ 9–11 even the frozen correlation has a confidence
 interval far too wide to rank encoders with. **Do not use the probe to order
 encoders.**
 
-Where it *is* better conditioned is a **paired** comparison — same encoder, same
-voxels, same readout, one input factor changed. That removes the between-encoder
-variance driving the noise above, and is the basis of §5.
+A **paired** comparison — same encoder, same voxels, same readout, one input factor
+changed — was expected to be better conditioned, since it removes the
+between-encoder variance driving the noise above. **It is not** (§5.1): the paired
+window deltas were confirmed against training runs and the probe overestimated them
+by 2–15× and mis-ranked which encoder was affected most. The probe is not a
+quantitative instrument in any form. Use it to generate hypotheses, never to
+measure.
 
 ---
 
@@ -158,22 +162,53 @@ it adds a per-encoder distribution-mismatch penalty of differing size (vista3d
 pretraining window — is then the *least biased* comparison available, and Arm W
 measures interface mismatch rather than information availability.
 
-### 5.1 Pre-registered confirmation (recorded before the runs finished)
+### 5.1 Pre-registered confirmation — RESOLVED
 
 Three Arm W runs, frozen, 25 % data. Arm N baselines already exist, so no extra
 runs are needed for the control side.
 
-| run | window | Arm N baseline (mean Dice) | probe predicts | benchmark result |
-|---|---|---|---|---|
-| `ls_vista3dWN_frz_pt_f025` | narrow | 0.8280 | **large drop** (−0.116 at probe) | _pending_ |
-| `ls_supUnetWS_frz_pt_f025` | broad | 0.7999 | **moderate drop** (−0.031) | _pending_ |
-| `ls_vista3dWS_frz_pt_f025` | broad | 0.8280 | ~no change (+0.013) | _pending_ |
+Five runs, frozen, 25 % data, **all five under the current framework** — the Arm N
+twins were re-run rather than taken from `results/legacy_lowshot/`, because those
+are July-17 runs at effective batch 4 / fp32 / 135 steps per epoch against the
+current 6 / bf16 / 90. That drift is worth about as much Dice as the window effect
+itself, so the legacy baselines are not a valid control here. This is what
+`wandb.run_tag: v2` in `base.yaml` is warning about.
 
-The middle row is the discriminating one. The probe→Dice transfer for window
-deltas is **assumed, not shown** — that is exactly what these runs buy. A plausible
-alternative reading of the broad-window penalty is dynamic-range compression rather
-than distribution mismatch; the decision-relevant claim ("giving the information
-back does not help") is robust to which.
+| encoder | window | Arm N | Arm W | **actual Δ** | probe predicted | over-estimate |
+|---|---|---|---|---|---|---|
+| vista3d | narrow | 0.8330 | 0.8253 | **−0.0077** | −0.116 | **15×** |
+| vista3d | broad | 0.8330 | 0.8313 | −0.0017 | +0.013 | sign wrong |
+| suprem_unet | broad | 0.8030 | 0.7884 | **−0.0146** | −0.031 | 2.1× |
+
+**Two conclusions, and they point opposite ways.**
+
+*The probe failed.* It overestimated every delta by 2–15×, got one sign wrong, and
+mis-ranked the effects — it called vista3d-under-narrow the largest effect
+(−0.116) when suprem_unet-under-broad is (−0.0146). §2's scope limit therefore
+extends to paired comparisons too.
+
+*The finding survives, smaller and more useful than predicted.* Window cost at
+benchmark level is **−0.002 to −0.015 Dice** — against a 0.030 gap between these
+two encoders in the same cell, and a 0.229 spread across all eleven encoders
+frozen at 25 %. **Roughly 16× smaller than the between-encoder spread.** Forcing
+vista3d into the soft-tissue window that clips 27.6 % of foreground voxels and
+flattens 97–99 % of lung voxels costs 0.008 Dice. The trainable adapter absorbs
+almost all of it.
+
+So the README's caveat — that an Arm N ranking "cannot separate worse
+representation from narrower input window" — is too strong. It can: the window
+term is bounded at ~0.015 while the ranking spans 0.229. The clipping statistic is
+right; the confound it was thought to create is small enough to quote a bound for
+rather than control away with 360 runs.
+
+The counterintuitive direction does hold: handing `suprem_unet` back the HU range
+its pretraining window clipped makes it **worse** (−0.0146), the largest of the
+three effects. The five soft-windowed encoders are not handicapped by their window.
+
+**Limits.** One seed per cell, two encoders, one condition (frozen @ 25 %). The
+−0.0017 row is inside noise (`early_stop_min_delta` is 0.002); −0.008 and −0.015
+are plausibly real but unreplicated. Nothing here is tested at other fractions,
+fine-tuned, or on the other nine encoders.
 
 ---
 
