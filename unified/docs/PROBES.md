@@ -205,10 +205,61 @@ The counterintuitive direction does hold: handing `suprem_unet` back the HU rang
 its pretraining window clipped makes it **worse** (−0.0146), the largest of the
 three effects. The five soft-windowed encoders are not handicapped by their window.
 
-**Limits.** One seed per cell, two encoders, one condition (frozen @ 25 %). The
-−0.0017 row is inside noise (`early_stop_min_delta` is 0.002); −0.008 and −0.015
-are plausibly real but unreplicated. Nothing here is tested at other fractions,
-fine-tuned, or on the other nine encoders.
+**Limits.** Two encoders, one condition (frozen @ 25 %). Nothing here is tested at
+other fractions, fine-tuned, or on the other nine encoders. The single-seed limit is
+resolved in §5.2.
+
+---
+
+### 5.2 The noise floor, measured
+
+Everything above compares single runs. Until now this benchmark had never measured
+its own run-to-run variance, so no delta in it was falsifiable.
+
+**These are true replicates.** `train.seed: 42` in `configs/base.yaml` is never
+consumed — there is no `torch.manual_seed` anywhere in the training path
+(documented at `unified/utils/checkpoint.py:127`). Adapter initialisation and the
+augmentation stream are drawn fresh per process, so repeating one config yields
+independent replicates rather than cudnn-nondeterminism twins.
+
+Four runs of `ls_vista3d_frz_pt_f025`, identical config, current framework:
+
+| run | best dice | @epoch |
+|---|---|---|
+| `runs/lowshot/ls_vista3d_frz_pt_f025` | 0.83303 | 450 |
+| `runs/noise/vista3d_frz_f025_r2` | 0.83235 | 450 |
+| `runs/noise/vista3d_frz_f025_r3` | 0.83313 | 500 |
+| `runs/noise/vista3d_frz_f025_r4` | 0.83386 | 450 |
+
+**σ = 0.00062** (n = 4, mean 0.83309, range 0.00151, 95 % CI on σ
+[0.00035, 0.00230]). A difference of two single runs therefore carries
+SE = σ√2 = 0.00087.
+
+Applying that to §5.1 — `z` at the point estimate, and at the pessimistic end of
+the σ CI:
+
+| effect | Δ | z | z at σ_hi | verdict |
+|---|---|---|---|---|
+| suprem_unet, broad | −0.0146 | 16.7 | 4.5 | **real** |
+| vista3d, narrow | −0.0077 | 8.8 | 2.4 | **real** |
+| vista3d, broad | −0.0017 | 1.9 | 0.5 | **not distinguishable from noise** |
+
+So the window bound of §5.1 survives, and survives even if σ is three times what
+we measured. The −0.0017 row does not, and should be quoted as "no measurable
+effect", not as a small one. The bound is unchanged: window cost is **0 to −0.015
+Dice** against a 0.229 spread across eleven encoders.
+
+**Scope limit, and it matters.** σ was measured in *one* cell, frozen at 25 %,
+where only the 9.2 M adapter+head parameters move. Fine-tuned cells train the
+whole encoder and are expected to be noisier. **This σ must not be carried to the
+fine-tuned comparisons** — in particular the scratch-vs-pretrained result
+(`ctfm` 0.8702 scratch vs 0.8679 pretrained, Δ = 0.0023 fine-tuned at 100 % data)
+has *no* error bar and does not acquire one from this measurement. That cell needs
+its own replicates before "pretraining is nearly free" can be claimed.
+
+Secondary note: the benchmark's statistic is best-over-evals, a max, which can
+compress variance relative to a single evaluation. Here it does not matter — the
+sd of the final-epoch dice is 0.00059, essentially identical.
 
 ---
 

@@ -1,0 +1,51 @@
+{
+  "what": "run-to-run noise floor of one benchmark cell",
+  "cell": {
+    "backbone": "vista3d",
+    "condition": "frz_pt",
+    "fraction": 0.25,
+    "config": "configs/lowshot/ls_vista3d_frz_pt_f025.yaml"
+  },
+  "why_these_are_true_replicates": "train.seed in configs/base.yaml is never consumed: there is no torch.manual_seed anywhere in the training path (documented at unified/utils/checkpoint.py:127). Adapter init and the augmentation stream therefore differ per process, so repeats of one config are independent replicates, not cudnn-nondeterminism twins.",
+  "statistic": "best val mean_dice over the run (gt-present averaging), the benchmark's own statistic",
+  "replicates": [
+    {
+      "run": "ls_vista3d_frz_pt_f025",
+      "best_dice": 0.8330283372298531,
+      "best_epoch": 450,
+      "final_dice": 0.8327610751856929,
+      "n_eval": 20
+    },
+    {
+      "run": "noise/vista3d_frz_f025_r2",
+      "best_dice": 0.8323473883711774,
+      "best_epoch": 450,
+      "final_dice": 0.8323473883711774,
+      "n_eval": 18
+    },
+    {
+      "run": "noise/vista3d_frz_f025_r3",
+      "best_dice": 0.8331279837566873,
+      "best_epoch": 500,
+      "final_dice": 0.8331279837566873,
+      "n_eval": 20
+    },
+    {
+      "run": "noise/vista3d_frz_f025_r4",
+      "best_dice": 0.8338550764581432,
+      "best_epoch": 450,
+      "final_dice": 0.8337400654087896,
+      "n_eval": 19
+    }
+  ],
+  "n": 4,
+  "mean": 0.8330896964539652,
+  "sd": 0.000616997761341412,
+  "range": 0.001507688086965775,
+  "sd_ci95": [
+    0.00034952284946026776,
+    0.002300480177644168
+  ],
+  "se_of_two_run_difference": 0.000872566602042863,
+  "scope_limit": "Measured in ONE cell, frozen at 25%. Only the 9.2M adapter+head params move here. Fine-tuned cells train the whole encoder and are expected to be noisier; this sigma must NOT be transferred to ft cells (notably the scratch-vs-pretrained comparison)."
+}
