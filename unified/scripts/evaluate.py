@@ -41,7 +41,8 @@ def main():
     ids = _read_split(Path(args.splits_dir) / f"{args.split}.txt")
     if args.limit is not None:
         ids = ids[: args.limit]
-    ds = TotalSegmentatorDataset(cfg["data"]["dataset_root"], ids, classes)
+    ds = TotalSegmentatorDataset(cfg["data"]["dataset_root"], ids, classes,
+                                use_source_affine=bool(cfg["data"].get("use_source_affine", False)))
     tf = build_val_transforms(cfg)
 
     class Composed(torch.utils.data.Dataset):
@@ -58,15 +59,18 @@ def main():
     loader = DataLoader(Composed(ds, tf), batch_size=1, num_workers=cfg["data"]["num_workers"])
 
     mcfg = cfg["model"]
-    backbone = build_backbone(mcfg["name"], weights=None, **mcfg.get("kwargs", {}))
+    # Frozen runs save only the trainable adapter+head, so the encoder must come from
+    # the same weights file the run used (see scripts/eval_bridge.py for the full note).
+    weights = mcfg.get("weights") if mcfg.get("pretrained", True) else None
+    backbone = build_backbone(mcfg["name"], weights=weights, **mcfg.get("kwargs", {}))
     # Build the head exactly as train.py does — including deep supervision — so a
     # strict checkpoint load matches the saved head.aux_heads.* parameters. The
     # aux heads are inert at eval (the head returns only the main logits when not
     # training), but they must exist for a strict load.
-    head = build_head(
-        cfg["head"].get("name", "unified_seg_head"),
-        **{k: v for k, v in cfg["head"].items() if k != "name"},
-    )
+    head_kwargs = {k: v for k, v in cfg["head"].items() if k != "name"}
+    if hasattr(backbone, "head_kwargs"):
+        head_kwargs.update(backbone.head_kwargs())
+    head = build_head(cfg["head"].get("name", "unified_seg_head"), **head_kwargs)
     model = SegModel(backbone, head,
                      freeze_backbone=bool(mcfg.get("freeze_backbone", False)))
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

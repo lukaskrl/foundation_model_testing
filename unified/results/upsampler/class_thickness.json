@@ -1,0 +1,577 @@
+{
+ "colon": {
+  "thick_mm": 17.393557947362215,
+  "vol_ml": 623.2393266394138,
+  "n": 4
+ },
+ "femur_left": {
+  "thick_mm": 21.743428359866716,
+  "vol_ml": 199.46925,
+  "n": 3
+ },
+ "femur_right": {
+  "thick_mm": 21.413191076624635,
+  "vol_ml": 194.626125,
+  "n": 3
+ },
+ "gluteus_maximus_left": {
+  "thick_mm": 23.68388676881016,
+  "vol_ml": 514.61325,
+  "n": 3
+ },
+ "gluteus_maximus_right": {
+  "thick_mm": 21.33841141246918,
+  "vol_ml": 520.8975,
+  "n": 3
+ },
+ "gluteus_medius_left": {
+  "thick_mm": 20.448136351898082,
+  "vol_ml": 267.23925,
+  "n": 3
+ },
+ "gluteus_medius_right": {
+  "thick_mm": 19.108206909157374,
+  "vol_ml": 236.01375,
+  "n": 3
+ },
+ "gluteus_minimus_left": {
+  "thick_mm": 12.780735350440445,
+  "vol_ml": 75.083625,
+  "n": 3
+ },
+ "gluteus_minimus_right": {
+  "thick_mm": 12.949144486692013,
+  "vol_ml": 78.472125,
+  "n": 3
+ },
+ "hip_left": {
+  "thick_mm": 15.76077898974767,
+  "vol_ml": 378.74925,
+  "n": 3
+ },
+ "hip_right": {
+  "thick_mm": 15.49855100004751,
+  "vol_ml": 367.007625,
+  "n": 3
+ },
+ "iliac_artery_left": {
+  "thick_mm": 7.9881101376720896,
+  "vol_ml": 28.72125,
+  "n": 3
+ },
+ "iliac_artery_right": {
+  "thick_mm": 9.409629629629631,
+  "vol_ml": 40.213125,
+  "n": 3
+ },
+ "iliac_vena_left": {
+  "thick_mm": 9.787767133382461,
+  "vol_ml": 44.82675,
+  "n": 3
+ },
+ "iliac_vena_right": {
+  "thick_mm": 9.097230406599882,
+  "vol_ml": 34.7355,
+  "n": 3
+ },
+ "iliopsoas_left": {
+  "thick_mm": 14.284573254221815,
+  "vol_ml": 70.41938494920731,
+  "n": 5
+ },
+ "iliopsoas_right": {
+  "thick_mm": 15.429013939081054,
+  "vol_ml": 93.06563814878464,
+  "n": 5
+ },
+ "sacrum": {
+  "thick_mm": 10.135802469135802,
+  "vol_ml": 157.939875,
+  "n": 3
+ },
+ "small_bowel": {
+  "thick_mm": 14.830421720329223,
+  "vol_ml": 586.5159375,
+  "n": 4
+ },
+ "urinary_bladder": {
+  "thick_mm": 25.197332674734504,
+  "vol_ml": 229.55403243255614,
+  "n": 3
+ },
+ "aorta": {
+  "thick_mm": 17.656542556992783,
+  "vol_ml": 255.814875,
+  "n": 5
+ },
+ "atrial_appendage_left": {
+  "thick_mm": 7.772492594860254,
+  "vol_ml": 5.6176875,
+  "n": 4
+ },
+ "autochthon_left": {
+  "thick_mm": 16.74810695693327,
+  "vol_ml": 220.86675,
+  "n": 5
+ },
+ "autochthon_right": {
+  "thick_mm": 16.411849537315227,
+  "vol_ml": 200.741625,
+  "n": 5
+ },
+ "brachiocephalic_trunk": {
+  "thick_mm": 7.906797235023042,
+  "vol_ml": 6.183,
+  "n": 4
+ },
+ "brachiocephalic_vein_left": {
+  "thick_mm": 8.38466836115364,
+  "vol_ml": 12.727125000000001,
+  "n": 4
+ },
+ "brachiocephalic_vein_right": {
+  "thick_mm": 6.66105870897306,
+  "vol_ml": 4.809375,
+  "n": 4
+ },
+ "brain": {
+  "thick_mm": 19.613329806929386,
+  "vol_ml": 250.28325,
+  "n": 1
+ },
+ "clavicula_left": {
+  "thick_mm": 9.466286461707037,
+  "vol_ml": 21.547687500000002,
+  "n": 4
+ },
+ "clavicula_right": {
+  "thick_mm": 9.738333432438584,
+  "vol_ml": 19.9681875,
+  "n": 4
+ },
+ "common_carotid_artery_left": {
+  "thick_mm": 5.383335187622047,
+  "vol_ml": 5.2599374999999995,
+  "n": 4
+ },
+ "common_carotid_artery_right": {
+  "thick_mm": 5.083526245862139,
+  "vol_ml": 3.304125,
+  "n": 4
+ },
+ "costal_cartilages": {
+  "thick_mm": 7.1129655468498445,
+  "vol_ml": 132.269625,
+  "n": 5
+ },
+ "esophagus": {
+  "thick_mm": 8.420430854760252,
+  "vol_ml": 26.298,
+  "n": 5
+ },
+ "heart": {
+  "thick_mm": 23.77442102137767,
+  "vol_ml": 451.8045,
+  "n": 5
+ },
+ "humerus_left": {
+  "thick_mm": 14.975850117130523,
+  "vol_ml": 46.780875,
+  "n": 4
+ },
+ "lung_lower_lobe_left": {
+  "thick_mm": 26.956892961266142,
+  "vol_ml": 582.5115,
+  "n": 5
+ },
+ "lung_lower_lobe_right": {
+  "thick_mm": 29.676170568561872,
+  "vol_ml": 798.58575,
+  "n": 5
+ },
+ "lung_middle_lobe_right": {
+  "thick_mm": 24.332581061164333,
+  "vol_ml": 395.9685,
+  "n": 5
+ },
+ "lung_upper_lobe_left": {
+  "thick_mm": 33.502127441431284,
+  "vol_ml": 735.21675,
+  "n": 5
+ },
+ "lung_upper_lobe_right": {
+  "thick_mm": 35.94799431737509,
+  "vol_ml": 922.134375,
+  "n": 4
+ },
+ "pulmonary_vein": {
+  "thick_mm": 7.282082324455207,
+  "vol_ml": 20.273625,
+  "n": 5
+ },
+ "rib_left_1": {
+  "thick_mm": 5.84732752116597,
+  "vol_ml": 10.830375,
+  "n": 4
+ },
+ "rib_left_2": {
+  "thick_mm": 5.63164009939401,
+  "vol_ml": 13.5793125,
+  "n": 4
+ },
+ "rib_left_3": {
+  "thick_mm": 5.697230194044391,
+  "vol_ml": 14.9664375,
+  "n": 4
+ },
+ "rib_left_4": {
+  "thick_mm": 5.919907407407408,
+  "vol_ml": 20.6971875,
+  "n": 4
+ },
+ "rib_left_5": {
+  "thick_mm": 5.981538461538461,
+  "vol_ml": 17.620875,
+  "n": 5
+ },
+ "rib_left_6": {
+  "thick_mm": 6.211911357340719,
+  "vol_ml": 16.635375,
+  "n": 5
+ },
+ "rib_left_7": {
+  "thick_mm": 6.064718732932824,
+  "vol_ml": 15.420375,
+  "n": 5
+ },
+ "rib_left_8": {
+  "thick_mm": 5.051168945743273,
+  "vol_ml": 12.882375,
+  "n": 5
+ },
+ "rib_right_1": {
+  "thick_mm": 5.9006529833703,
+  "vol_ml": 11.869875,
+  "n": 4
+ },
+ "rib_right_2": {
+  "thick_mm": 5.445084405889341,
+  "vol_ml": 12.8671875,
+  "n": 4
+ },
+ "rib_right_3": {
+  "thick_mm": 5.398189536420118,
+  "vol_ml": 13.850999999999999,
+  "n": 4
+ },
+ "rib_right_4": {
+  "thick_mm": 5.9675097015924,
+  "vol_ml": 17.1028125,
+  "n": 4
+ },
+ "rib_right_5": {
+  "thick_mm": 6.093198992443325,
+  "vol_ml": 15.467625,
+  "n": 5
+ },
+ "rib_right_6": {
+  "thick_mm": 6.2534974818130955,
+  "vol_ml": 16.169625,
+  "n": 5
+ },
+ "rib_right_7": {
+  "thick_mm": 5.851508120649652,
+  "vol_ml": 15.325875,
+  "n": 5
+ },
+ "scapula_left": {
+  "thick_mm": 8.638007300961316,
+  "vol_ml": 91.78312500000001,
+  "n": 4
+ },
+ "scapula_right": {
+  "thick_mm": 7.559971979248598,
+  "vol_ml": 75.06,
+  "n": 4
+ },
+ "skull": {
+  "thick_mm": 9.488847177728648,
+  "vol_ml": 19.4805,
+  "n": 4
+ },
+ "spinal_cord": {
+  "thick_mm": 8.692121212121211,
+  "vol_ml": 48.40425,
+  "n": 5
+ },
+ "sternum": {
+  "thick_mm": 10.021826536473291,
+  "vol_ml": 66.133125,
+  "n": 5
+ },
+ "subclavian_artery_left": {
+  "thick_mm": 6.392714519648219,
+  "vol_ml": 10.8675,
+  "n": 4
+ },
+ "subclavian_artery_right": {
+  "thick_mm": 6.468263083400305,
+  "vol_ml": 8.6079375,
+  "n": 4
+ },
+ "superior_vena_cava": {
+  "thick_mm": 10.99812356034446,
+  "vol_ml": 25.8508125,
+  "n": 4
+ },
+ "thyroid_gland": {
+  "thick_mm": 7.872355310723456,
+  "vol_ml": 14.765625,
+  "n": 4
+ },
+ "trachea": {
+  "thick_mm": 9.59616617001506,
+  "vol_ml": 35.359875,
+  "n": 4
+ },
+ "vertebrae_C1": {
+  "thick_mm": 7.38478419897586,
+  "vol_ml": 22.71375,
+  "n": 1
+ },
+ "vertebrae_C2": {
+  "thick_mm": 8.877381364738483,
+  "vol_ml": 28.832625,
+  "n": 1
+ },
+ "vertebrae_C3": {
+  "thick_mm": 7.341453831041257,
+  "vol_ml": 21.0195,
+  "n": 1
+ },
+ "vertebrae_C4": {
+  "thick_mm": 5.166666666666666,
+  "vol_ml": 10.145249999999999,
+  "n": 2
+ },
+ "vertebrae_C5": {
+  "thick_mm": 6.677388042043566,
+  "vol_ml": 14.564812499999999,
+  "n": 2
+ },
+ "vertebrae_C6": {
+  "thick_mm": 4.795518315034892,
+  "vol_ml": 5.7864375,
+  "n": 4
+ },
+ "vertebrae_C7": {
+  "thick_mm": 6.915225282938287,
+  "vol_ml": 13.186125,
+  "n": 4
+ },
+ "vertebrae_T1": {
+  "thick_mm": 7.712908421477077,
+  "vol_ml": 21.004312499999997,
+  "n": 4
+ },
+ "vertebrae_T2": {
+  "thick_mm": 8.543103796987975,
+  "vol_ml": 27.6496875,
+  "n": 4
+ },
+ "vertebrae_T3": {
+  "thick_mm": 8.271764549881865,
+  "vol_ml": 28.1964375,
+  "n": 4
+ },
+ "vertebrae_T4": {
+  "thick_mm": 8.489860584311547,
+  "vol_ml": 30.218062500000002,
+  "n": 4
+ },
+ "vertebrae_T5": {
+  "thick_mm": 8.40937471805148,
+  "vol_ml": 31.7199375,
+  "n": 4
+ },
+ "vertebrae_T6": {
+  "thick_mm": 8.716031975992134,
+  "vol_ml": 34.2613125,
+  "n": 4
+ },
+ "vertebrae_T7": {
+  "thick_mm": 9.00097218990567,
+  "vol_ml": 35.8171875,
+  "n": 4
+ },
+ "vertebrae_T8": {
+  "thick_mm": 8.11171344867859,
+  "vol_ml": 26.5798125,
+  "n": 4
+ },
+ "adrenal_gland_left": {
+  "thick_mm": 5.490855135658915,
+  "vol_ml": 3.3665625,
+  "n": 4
+ },
+ "adrenal_gland_right": {
+  "thick_mm": 5.155060267428132,
+  "vol_ml": 3.4998750000000003,
+  "n": 4
+ },
+ "humerus_right": {
+  "thick_mm": 15.93254774481918,
+  "vol_ml": 44.11125,
+  "n": 3
+ },
+ "inferior_vena_cava": {
+  "thick_mm": 10.791022050950648,
+  "vol_ml": 55.937250000000006,
+  "n": 4
+ },
+ "kidney_left": {
+  "thick_mm": 13.999813722467973,
+  "vol_ml": 74.388375,
+  "n": 4
+ },
+ "liver": {
+  "thick_mm": 39.27668805218635,
+  "vol_ml": 1578.1921874999998,
+  "n": 4
+ },
+ "pancreas": {
+  "thick_mm": 10.419248575163845,
+  "vol_ml": 46.44,
+  "n": 4
+ },
+ "rib_left_10": {
+  "thick_mm": 5.174605092293371,
+  "vol_ml": 10.0828125,
+  "n": 4
+ },
+ "rib_left_11": {
+  "thick_mm": 5.051894965589561,
+  "vol_ml": 5.77125,
+  "n": 4
+ },
+ "rib_left_12": {
+  "thick_mm": 4.177396382281726,
+  "vol_ml": 1.8950625,
+  "n": 4
+ },
+ "rib_left_9": {
+  "thick_mm": 5.521600245510863,
+  "vol_ml": 12.644437499999999,
+  "n": 4
+ },
+ "rib_right_10": {
+  "thick_mm": 5.48299387263345,
+  "vol_ml": 14.7470625,
+  "n": 4
+ },
+ "rib_right_11": {
+  "thick_mm": 5.07319018713326,
+  "vol_ml": 8.2974375,
+  "n": 4
+ },
+ "rib_right_12": {
+  "thick_mm": 4.604542092937262,
+  "vol_ml": 2.602125,
+  "n": 4
+ },
+ "rib_right_8": {
+  "thick_mm": 5.204045617405097,
+  "vol_ml": 17.5314375,
+  "n": 4
+ },
+ "rib_right_9": {
+  "thick_mm": 5.33983394955343,
+  "vol_ml": 17.080875,
+  "n": 4
+ },
+ "spleen": {
+  "thick_mm": 21.920279551653586,
+  "vol_ml": 170.5640625,
+  "n": 4
+ },
+ "stomach": {
+  "thick_mm": 19.395719676300104,
+  "vol_ml": 209.7950625,
+  "n": 4
+ },
+ "vertebrae_L1": {
+  "thick_mm": 9.636150758468839,
+  "vol_ml": 46.163250000000005,
+  "n": 4
+ },
+ "vertebrae_T10": {
+  "thick_mm": 9.34440672696795,
+  "vol_ml": 39.767624999999995,
+  "n": 4
+ },
+ "vertebrae_T11": {
+  "thick_mm": 9.487986689765538,
+  "vol_ml": 40.624875,
+  "n": 4
+ },
+ "vertebrae_T12": {
+  "thick_mm": 9.53062946183268,
+  "vol_ml": 44.0724375,
+  "n": 4
+ },
+ "vertebrae_T9": {
+  "thick_mm": 8.23886604887516,
+  "vol_ml": 28.6554375,
+  "n": 4
+ },
+ "duodenum": {
+  "thick_mm": 12.386752136752136,
+  "vol_ml": 52.822125,
+  "n": 3
+ },
+ "gallbladder": {
+  "thick_mm": 8.676442762535478,
+  "vol_ml": 10.317375,
+  "n": 3
+ },
+ "kidney_right": {
+  "thick_mm": 19.089267285861716,
+  "vol_ml": 124.858125,
+  "n": 3
+ },
+ "portal_vein_and_splenic_vein": {
+  "thick_mm": 6.6990185387131955,
+  "vol_ml": 20.732625,
+  "n": 3
+ },
+ "prostate": {
+  "thick_mm": 15.459743819261812,
+  "vol_ml": 36.2154375,
+  "n": 2
+ },
+ "vertebrae_L2": {
+  "thick_mm": 8.519056547880206,
+  "vol_ml": 58.3081875,
+  "n": 2
+ },
+ "vertebrae_L3": {
+  "thick_mm": 9.286737288067856,
+  "vol_ml": 60.5019375,
+  "n": 2
+ },
+ "vertebrae_L4": {
+  "thick_mm": 10.062847085085831,
+  "vol_ml": 69.9418125,
+  "n": 2
+ },
+ "vertebrae_L5": {
+  "thick_mm": 10.254304625210132,
+  "vol_ml": 72.1153125,
+  "n": 2
+ },
+ "vertebrae_S1": {
+  "thick_mm": 12.309985682606985,
+  "vol_ml": 65.242125,
+  "n": 2
+ }
+}

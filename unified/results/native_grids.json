@@ -1,0 +1,2138 @@
+{
+  "what": "native encoder_forward output per backbone \u2014 Phase 0 of the I1/I2 interface",
+  "patch": [
+    96,
+    96,
+    96
+  ],
+  "device": "cpu",
+  "note": "random init (weights=None); shapes/channels are architecture properties",
+  "models": {
+    "ctfm": {
+      "config_stem": "ctfm",
+      "backbone": "ctfm",
+      "kwargs": {
+        "init_filters": 32,
+        "blocks_down": [
+          1,
+          2,
+          2,
+          4,
+          4
+        ],
+        "in_channels": 1,
+        "norm": "instance"
+      },
+      "patch": [
+        96,
+        96,
+        96
+      ],
+      "build_seconds": 3.1,
+      "total_params": 78112160,
+      "adapter_params": 351168,
+      "has_encoder_forward": true,
+      "taps": [
+        {
+          "index": 0,
+          "shape": [
+            1,
+            32,
+            96,
+            96,
+            96
+          ],
+          "channels": 32,
+          "stride": [
+            1,
+            1,
+            1
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        },
+        {
+          "index": 1,
+          "shape": [
+            1,
+            64,
+            48,
+            48,
+            48
+          ],
+          "channels": 64,
+          "stride": [
+            2,
+            2,
+            2
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        },
+        {
+          "index": 2,
+          "shape": [
+            1,
+            128,
+            24,
+            24,
+            24
+          ],
+          "channels": 128,
+          "stride": [
+            4,
+            4,
+            4
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        },
+        {
+          "index": 3,
+          "shape": [
+            1,
+            256,
+            12,
+            12,
+            12
+          ],
+          "channels": 256,
+          "stride": [
+            8,
+            8,
+            8
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        },
+        {
+          "index": 4,
+          "shape": [
+            1,
+            512,
+            6,
+            6,
+            6
+          ],
+          "channels": 512,
+          "stride": [
+            16,
+            16,
+            16
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        }
+      ],
+      "errors": [],
+      "forward_seconds": 0.7,
+      "n_taps_returned": 5,
+      "n_encoder_taps": 5,
+      "n_distinct_grids": 5,
+      "distinct_grids": [
+        {
+          "stride": [
+            16,
+            16,
+            16
+          ],
+          "n_taps": 1,
+          "channels": [
+            512
+          ],
+          "shareable_projection": true
+        },
+        {
+          "stride": [
+            8,
+            8,
+            8
+          ],
+          "n_taps": 1,
+          "channels": [
+            256
+          ],
+          "shareable_projection": true
+        },
+        {
+          "stride": [
+            4,
+            4,
+            4
+          ],
+          "n_taps": 1,
+          "channels": [
+            128
+          ],
+          "shareable_projection": true
+        },
+        {
+          "stride": [
+            2,
+            2,
+            2
+          ],
+          "n_taps": 1,
+          "channels": [
+            64
+          ],
+          "shareable_projection": true
+        },
+        {
+          "stride": [
+            1,
+            1,
+            1
+          ],
+          "n_taps": 1,
+          "channels": [
+            32
+          ],
+          "shareable_projection": true
+        }
+      ],
+      "coarsest_stride": 16,
+      "finest_stride": 1,
+      "k_upblocks_to_stride1": 4,
+      "has_native_stride1": true,
+      "any_nonlattice_tap": false,
+      "raw_input_smuggled": false
+    },
+    "vista3d": {
+      "config_stem": "vista3d",
+      "backbone": "vista3d",
+      "kwargs": {
+        "init_filters": 48,
+        "blocks_down": [
+          1,
+          2,
+          2,
+          4,
+          4
+        ],
+        "in_channels": 1,
+        "norm": "instance"
+      },
+      "patch": [
+        96,
+        96,
+        96
+      ],
+      "build_seconds": 1.0,
+      "total_params": 175476880,
+      "adapter_params": 525760,
+      "has_encoder_forward": true,
+      "taps": [
+        {
+          "index": 0,
+          "shape": [
+            1,
+            48,
+            96,
+            96,
+            96
+          ],
+          "channels": 48,
+          "stride": [
+            1,
+            1,
+            1
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        },
+        {
+          "index": 1,
+          "shape": [
+            1,
+            96,
+            48,
+            48,
+            48
+          ],
+          "channels": 96,
+          "stride": [
+            2,
+            2,
+            2
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        },
+        {
+          "index": 2,
+          "shape": [
+            1,
+            192,
+            24,
+            24,
+            24
+          ],
+          "channels": 192,
+          "stride": [
+            4,
+            4,
+            4
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        },
+        {
+          "index": 3,
+          "shape": [
+            1,
+            384,
+            12,
+            12,
+            12
+          ],
+          "channels": 384,
+          "stride": [
+            8,
+            8,
+            8
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        },
+        {
+          "index": 4,
+          "shape": [
+            1,
+            768,
+            6,
+            6,
+            6
+          ],
+          "channels": 768,
+          "stride": [
+            16,
+            16,
+            16
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        }
+      ],
+      "errors": [],
+      "forward_seconds": 1.5,
+      "n_taps_returned": 5,
+      "n_encoder_taps": 5,
+      "n_distinct_grids": 5,
+      "distinct_grids": [
+        {
+          "stride": [
+            16,
+            16,
+            16
+          ],
+          "n_taps": 1,
+          "channels": [
+            768
+          ],
+          "shareable_projection": true
+        },
+        {
+          "stride": [
+            8,
+            8,
+            8
+          ],
+          "n_taps": 1,
+          "channels": [
+            384
+          ],
+          "shareable_projection": true
+        },
+        {
+          "stride": [
+            4,
+            4,
+            4
+          ],
+          "n_taps": 1,
+          "channels": [
+            192
+          ],
+          "shareable_projection": true
+        },
+        {
+          "stride": [
+            2,
+            2,
+            2
+          ],
+          "n_taps": 1,
+          "channels": [
+            96
+          ],
+          "shareable_projection": true
+        },
+        {
+          "stride": [
+            1,
+            1,
+            1
+          ],
+          "n_taps": 1,
+          "channels": [
+            48
+          ],
+          "shareable_projection": true
+        }
+      ],
+      "coarsest_stride": 16,
+      "finest_stride": 1,
+      "k_upblocks_to_stride1": 4,
+      "has_native_stride1": true,
+      "any_nonlattice_tap": false,
+      "raw_input_smuggled": false
+    },
+    "biomedparse": {
+      "config_stem": "biomedparse",
+      "backbone": "biomedparse",
+      "kwargs": {
+        "backbone": "focal",
+        "embed_dim": 192,
+        "depths": [
+          2,
+          2,
+          18,
+          2
+        ],
+        "focal_levels": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "focal_windows": [
+          3,
+          3,
+          3,
+          3
+        ],
+        "patch_size": 4,
+        "use_conv_embed": true,
+        "scaling_modulator": true,
+        "use_layerscale": true,
+        "use_postln": true
+      },
+      "patch": [
+        96,
+        96,
+        96
+      ],
+      "build_seconds": 2.6,
+      "total_params": 206356536,
+      "adapter_params": 609600,
+      "has_encoder_forward": true,
+      "taps": [
+        {
+          "index": 0,
+          "shape": [
+            1,
+            1,
+            96,
+            96,
+            96
+          ],
+          "channels": 1,
+          "stride": [
+            1,
+            1,
+            1
+          ],
+          "stride_exact": true,
+          "anisotropic": false,
+          "is_raw_input": true
+        },
+        {
+          "index": 1,
+          "shape": [
+            1,
+            192,
+            96,
+            24,
+            24
+          ],
+          "channels": 192,
+          "stride": [
+            1,
+            4,
+            4
+          ],
+          "stride_exact": true,
+          "anisotropic": true
+        },
+        {
+          "index": 2,
+          "shape": [
+            1,
+            384,
+            96,
+            12,
+            12
+          ],
+          "channels": 384,
+          "stride": [
+            1,
+            8,
+            8
+          ],
+          "stride_exact": true,
+          "anisotropic": true
+        },
+        {
+          "index": 3,
+          "shape": [
+            1,
+            768,
+            96,
+            6,
+            6
+          ],
+          "channels": 768,
+          "stride": [
+            1,
+            16,
+            16
+          ],
+          "stride_exact": true,
+          "anisotropic": true
+        }
+      ],
+      "errors": [],
+      "forward_seconds": 3.2,
+      "n_taps_returned": 4,
+      "n_encoder_taps": 3,
+      "n_distinct_grids": 3,
+      "distinct_grids": [
+        {
+          "stride": [
+            1,
+            16,
+            16
+          ],
+          "n_taps": 1,
+          "channels": [
+            768
+          ],
+          "shareable_projection": true
+        },
+        {
+          "stride": [
+            1,
+            8,
+            8
+          ],
+          "n_taps": 1,
+          "channels": [
+            384
+          ],
+          "shareable_projection": true
+        },
+        {
+          "stride": [
+            1,
+            4,
+            4
+          ],
+          "n_taps": 1,
+          "channels": [
+            192
+          ],
+          "shareable_projection": true
+        }
+      ],
+      "coarsest_stride": 16,
+      "finest_stride": 4,
+      "k_upblocks_to_stride1": 4,
+      "has_native_stride1": false,
+      "any_nonlattice_tap": false,
+      "raw_input_smuggled": true
+    },
+    "suprem_unet": {
+      "config_stem": "suprem_unet",
+      "backbone": "suprem_unet",
+      "kwargs": {
+        "act": "relu"
+      },
+      "patch": [
+        96,
+        96,
+        96
+      ],
+      "build_seconds": 0.1,
+      "total_params": 20298240,
+      "adapter_params": 1224640,
+      "has_encoder_forward": true,
+      "taps": [
+        {
+          "index": 0,
+          "shape": [
+            1,
+            64,
+            96,
+            96,
+            96
+          ],
+          "channels": 64,
+          "stride": [
+            1,
+            1,
+            1
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        },
+        {
+          "index": 1,
+          "shape": [
+            1,
+            128,
+            48,
+            48,
+            48
+          ],
+          "channels": 128,
+          "stride": [
+            2,
+            2,
+            2
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        },
+        {
+          "index": 2,
+          "shape": [
+            1,
+            256,
+            24,
+            24,
+            24
+          ],
+          "channels": 256,
+          "stride": [
+            4,
+            4,
+            4
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        },
+        {
+          "index": 3,
+          "shape": [
+            1,
+            512,
+            12,
+            12,
+            12
+          ],
+          "channels": 512,
+          "stride": [
+            8,
+            8,
+            8
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        }
+      ],
+      "errors": [],
+      "forward_seconds": 0.4,
+      "n_taps_returned": 4,
+      "n_encoder_taps": 4,
+      "n_distinct_grids": 4,
+      "distinct_grids": [
+        {
+          "stride": [
+            8,
+            8,
+            8
+          ],
+          "n_taps": 1,
+          "channels": [
+            512
+          ],
+          "shareable_projection": true
+        },
+        {
+          "stride": [
+            4,
+            4,
+            4
+          ],
+          "n_taps": 1,
+          "channels": [
+            256
+          ],
+          "shareable_projection": true
+        },
+        {
+          "stride": [
+            2,
+            2,
+            2
+          ],
+          "n_taps": 1,
+          "channels": [
+            128
+          ],
+          "shareable_projection": true
+        },
+        {
+          "stride": [
+            1,
+            1,
+            1
+          ],
+          "n_taps": 1,
+          "channels": [
+            64
+          ],
+          "shareable_projection": true
+        }
+      ],
+      "coarsest_stride": 8,
+      "finest_stride": 1,
+      "k_upblocks_to_stride1": 3,
+      "has_native_stride1": true,
+      "any_nonlattice_tap": false,
+      "raw_input_smuggled": false
+    },
+    "suprem_segresnet": {
+      "config_stem": "suprem_segresnet",
+      "backbone": "suprem_segresnet",
+      "kwargs": {
+        "init_filters": 16,
+        "blocks_down": [
+          1,
+          2,
+          2,
+          4
+        ],
+        "blocks_up": [
+          1,
+          1,
+          1
+        ],
+        "in_channels": 1,
+        "out_channels": 32,
+        "norm": "instance"
+      },
+      "patch": [
+        96,
+        96,
+        96
+      ],
+      "build_seconds": 0.0,
+      "total_params": 5792144,
+      "adapter_params": 1094080,
+      "has_encoder_forward": true,
+      "taps": [
+        {
+          "index": 0,
+          "shape": [
+            1,
+            16,
+            96,
+            96,
+            96
+          ],
+          "channels": 16,
+          "stride": [
+            1,
+            1,
+            1
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        },
+        {
+          "index": 1,
+          "shape": [
+            1,
+            32,
+            48,
+            48,
+            48
+          ],
+          "channels": 32,
+          "stride": [
+            2,
+            2,
+            2
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        },
+        {
+          "index": 2,
+          "shape": [
+            1,
+            64,
+            24,
+            24,
+            24
+          ],
+          "channels": 64,
+          "stride": [
+            4,
+            4,
+            4
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        },
+        {
+          "index": 3,
+          "shape": [
+            1,
+            128,
+            12,
+            12,
+            12
+          ],
+          "channels": 128,
+          "stride": [
+            8,
+            8,
+            8
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        }
+      ],
+      "errors": [],
+      "forward_seconds": 0.2,
+      "n_taps_returned": 4,
+      "n_encoder_taps": 4,
+      "n_distinct_grids": 4,
+      "distinct_grids": [
+        {
+          "stride": [
+            8,
+            8,
+            8
+          ],
+          "n_taps": 1,
+          "channels": [
+            128
+          ],
+          "shareable_projection": true
+        },
+        {
+          "stride": [
+            4,
+            4,
+            4
+          ],
+          "n_taps": 1,
+          "channels": [
+            64
+          ],
+          "shareable_projection": true
+        },
+        {
+          "stride": [
+            2,
+            2,
+            2
+          ],
+          "n_taps": 1,
+          "channels": [
+            32
+          ],
+          "shareable_projection": true
+        },
+        {
+          "stride": [
+            1,
+            1,
+            1
+          ],
+          "n_taps": 1,
+          "channels": [
+            16
+          ],
+          "shareable_projection": true
+        }
+      ],
+      "coarsest_stride": 8,
+      "finest_stride": 1,
+      "k_upblocks_to_stride1": 3,
+      "has_native_stride1": true,
+      "any_nonlattice_tap": false,
+      "raw_input_smuggled": false
+    },
+    "suprem_swinunetr": {
+      "config_stem": "suprem_swinunetr",
+      "backbone": "suprem_swinunetr",
+      "kwargs": {
+        "feature_size": 48,
+        "in_chans": 1,
+        "use_v2": false
+      },
+      "patch": [
+        96,
+        96,
+        96
+      ],
+      "build_seconds": 0.1,
+      "total_params": 8353682,
+      "adapter_params": 291680,
+      "has_encoder_forward": true,
+      "taps": [
+        {
+          "index": 0,
+          "shape": [
+            1,
+            1,
+            96,
+            96,
+            96
+          ],
+          "channels": 1,
+          "stride": [
+            1,
+            1,
+            1
+          ],
+          "stride_exact": true,
+          "anisotropic": false,
+          "is_raw_input": true
+        },
+        {
+          "index": 1,
+          "shape": [
+            1,
+            48,
+            48,
+            48,
+            48
+          ],
+          "channels": 48,
+          "stride": [
+            2,
+            2,
+            2
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        },
+        {
+          "index": 2,
+          "shape": [
+            1,
+            96,
+            24,
+            24,
+            24
+          ],
+          "channels": 96,
+          "stride": [
+            4,
+            4,
+            4
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        },
+        {
+          "index": 3,
+          "shape": [
+            1,
+            192,
+            12,
+            12,
+            12
+          ],
+          "channels": 192,
+          "stride": [
+            8,
+            8,
+            8
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        },
+        {
+          "index": 4,
+          "shape": [
+            1,
+            384,
+            6,
+            6,
+            6
+          ],
+          "channels": 384,
+          "stride": [
+            16,
+            16,
+            16
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        }
+      ],
+      "errors": [],
+      "forward_seconds": 1.1,
+      "n_taps_returned": 5,
+      "n_encoder_taps": 4,
+      "n_distinct_grids": 4,
+      "distinct_grids": [
+        {
+          "stride": [
+            16,
+            16,
+            16
+          ],
+          "n_taps": 1,
+          "channels": [
+            384
+          ],
+          "shareable_projection": true
+        },
+        {
+          "stride": [
+            8,
+            8,
+            8
+          ],
+          "n_taps": 1,
+          "channels": [
+            192
+          ],
+          "shareable_projection": true
+        },
+        {
+          "stride": [
+            4,
+            4,
+            4
+          ],
+          "n_taps": 1,
+          "channels": [
+            96
+          ],
+          "shareable_projection": true
+        },
+        {
+          "stride": [
+            2,
+            2,
+            2
+          ],
+          "n_taps": 1,
+          "channels": [
+            48
+          ],
+          "shareable_projection": true
+        }
+      ],
+      "coarsest_stride": 16,
+      "finest_stride": 2,
+      "k_upblocks_to_stride1": 4,
+      "has_native_stride1": false,
+      "any_nonlattice_tap": false,
+      "raw_input_smuggled": true
+    },
+    "voco_b": {
+      "config_stem": "voco_b",
+      "backbone": "voco_b",
+      "kwargs": {
+        "feature_size": 48,
+        "use_v2": true,
+        "in_chans": 1
+      },
+      "patch": [
+        96,
+        96,
+        96
+      ],
+      "build_seconds": 0.1,
+      "total_params": 18929042,
+      "adapter_params": 291680,
+      "has_encoder_forward": true,
+      "taps": [
+        {
+          "index": 0,
+          "shape": [
+            1,
+            1,
+            96,
+            96,
+            96
+          ],
+          "channels": 1,
+          "stride": [
+            1,
+            1,
+            1
+          ],
+          "stride_exact": true,
+          "anisotropic": false,
+          "is_raw_input": true
+        },
+        {
+          "index": 1,
+          "shape": [
+            1,
+            48,
+            48,
+            48,
+            48
+          ],
+          "channels": 48,
+          "stride": [
+            2,
+            2,
+            2
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        },
+        {
+          "index": 2,
+          "shape": [
+            1,
+            96,
+            24,
+            24,
+            24
+          ],
+          "channels": 96,
+          "stride": [
+            4,
+            4,
+            4
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        },
+        {
+          "index": 3,
+          "shape": [
+            1,
+            192,
+            12,
+            12,
+            12
+          ],
+          "channels": 192,
+          "stride": [
+            8,
+            8,
+            8
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        },
+        {
+          "index": 4,
+          "shape": [
+            1,
+            384,
+            6,
+            6,
+            6
+          ],
+          "channels": 384,
+          "stride": [
+            16,
+            16,
+            16
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        }
+      ],
+      "errors": [],
+      "forward_seconds": 1.4,
+      "n_taps_returned": 5,
+      "n_encoder_taps": 4,
+      "n_distinct_grids": 4,
+      "distinct_grids": [
+        {
+          "stride": [
+            16,
+            16,
+            16
+          ],
+          "n_taps": 1,
+          "channels": [
+            384
+          ],
+          "shareable_projection": true
+        },
+        {
+          "stride": [
+            8,
+            8,
+            8
+          ],
+          "n_taps": 1,
+          "channels": [
+            192
+          ],
+          "shareable_projection": true
+        },
+        {
+          "stride": [
+            4,
+            4,
+            4
+          ],
+          "n_taps": 1,
+          "channels": [
+            96
+          ],
+          "shareable_projection": true
+        },
+        {
+          "stride": [
+            2,
+            2,
+            2
+          ],
+          "n_taps": 1,
+          "channels": [
+            48
+          ],
+          "shareable_projection": true
+        }
+      ],
+      "coarsest_stride": 16,
+      "finest_stride": 2,
+      "k_upblocks_to_stride1": 4,
+      "has_native_stride1": false,
+      "any_nonlattice_tap": false,
+      "raw_input_smuggled": true
+    },
+    "voco_h": {
+      "config_stem": "voco_h",
+      "backbone": "voco_h",
+      "kwargs": {
+        "feature_size": 192,
+        "use_v2": true,
+        "in_chans": 1
+      },
+      "patch": [
+        96,
+        96,
+        96
+      ],
+      "build_seconds": 1.6,
+      "total_params": 295938818,
+      "adapter_params": 1075040,
+      "has_encoder_forward": true,
+      "taps": [
+        {
+          "index": 0,
+          "shape": [
+            1,
+            1,
+            96,
+            96,
+            96
+          ],
+          "channels": 1,
+          "stride": [
+            1,
+            1,
+            1
+          ],
+          "stride_exact": true,
+          "anisotropic": false,
+          "is_raw_input": true
+        },
+        {
+          "index": 1,
+          "shape": [
+            1,
+            192,
+            48,
+            48,
+            48
+          ],
+          "channels": 192,
+          "stride": [
+            2,
+            2,
+            2
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        },
+        {
+          "index": 2,
+          "shape": [
+            1,
+            384,
+            24,
+            24,
+            24
+          ],
+          "channels": 384,
+          "stride": [
+            4,
+            4,
+            4
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        },
+        {
+          "index": 3,
+          "shape": [
+            1,
+            768,
+            12,
+            12,
+            12
+          ],
+          "channels": 768,
+          "stride": [
+            8,
+            8,
+            8
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        },
+        {
+          "index": 4,
+          "shape": [
+            1,
+            1536,
+            6,
+            6,
+            6
+          ],
+          "channels": 1536,
+          "stride": [
+            16,
+            16,
+            16
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        }
+      ],
+      "errors": [],
+      "forward_seconds": 4.5,
+      "n_taps_returned": 5,
+      "n_encoder_taps": 4,
+      "n_distinct_grids": 4,
+      "distinct_grids": [
+        {
+          "stride": [
+            16,
+            16,
+            16
+          ],
+          "n_taps": 1,
+          "channels": [
+            1536
+          ],
+          "shareable_projection": true
+        },
+        {
+          "stride": [
+            8,
+            8,
+            8
+          ],
+          "n_taps": 1,
+          "channels": [
+            768
+          ],
+          "shareable_projection": true
+        },
+        {
+          "stride": [
+            4,
+            4,
+            4
+          ],
+          "n_taps": 1,
+          "channels": [
+            384
+          ],
+          "shareable_projection": true
+        },
+        {
+          "stride": [
+            2,
+            2,
+            2
+          ],
+          "n_taps": 1,
+          "channels": [
+            192
+          ],
+          "shareable_projection": true
+        }
+      ],
+      "coarsest_stride": 16,
+      "finest_stride": 2,
+      "k_upblocks_to_stride1": 4,
+      "has_native_stride1": false,
+      "any_nonlattice_tap": false,
+      "raw_input_smuggled": true
+    },
+    "ctclip": {
+      "config_stem": "ctclip",
+      "backbone": "ctclip",
+      "kwargs": {
+        "dim": 512,
+        "codebook_size": 8192,
+        "image_size": 480,
+        "patch_size": 20,
+        "temporal_patch_size": 10,
+        "spatial_depth": 4,
+        "temporal_depth": 4,
+        "dim_head": 32,
+        "heads": 8,
+        "use_image_encoder_only": true,
+        "pyramid_mode": "upsample"
+      },
+      "patch": [
+        96,
+        96,
+        96
+      ],
+      "build_seconds": 0.2,
+      "total_params": 26400088,
+      "adapter_params": 509888,
+      "has_encoder_forward": true,
+      "taps": [
+        {
+          "index": 0,
+          "shape": [
+            1,
+            1,
+            96,
+            96,
+            96
+          ],
+          "channels": 1,
+          "stride": [
+            1,
+            1,
+            1
+          ],
+          "stride_exact": true,
+          "anisotropic": false,
+          "is_raw_input": true
+        },
+        {
+          "index": 1,
+          "shape": [
+            1,
+            512,
+            10,
+            24,
+            24
+          ],
+          "channels": 512,
+          "stride": [
+            9.6,
+            4,
+            4
+          ],
+          "stride_exact": false,
+          "anisotropic": true
+        }
+      ],
+      "errors": [],
+      "forward_seconds": 1.6,
+      "n_taps_returned": 2,
+      "n_encoder_taps": 1,
+      "n_distinct_grids": 1,
+      "distinct_grids": [
+        {
+          "stride": [
+            9.6,
+            4,
+            4
+          ],
+          "n_taps": 1,
+          "channels": [
+            512
+          ],
+          "shareable_projection": true
+        }
+      ],
+      "coarsest_stride": 9.6,
+      "finest_stride": 9.6,
+      "k_upblocks_to_stride1": null,
+      "has_native_stride1": false,
+      "any_nonlattice_tap": true,
+      "raw_input_smuggled": true
+    },
+    "sam_med3d": {
+      "config_stem": "sam_med3d",
+      "backbone": "sam_med3d",
+      "kwargs": {
+        "arch": "vit_b_ori",
+        "patch_size": 16,
+        "in_chans": 1,
+        "window_size": 14,
+        "out_chans": 384,
+        "use_rel_pos": true,
+        "pyramid_mode": "upsample"
+      },
+      "patch": [
+        96,
+        96,
+        96
+      ],
+      "build_seconds": 0.4,
+      "total_params": 93307840,
+      "adapter_params": 382912,
+      "has_encoder_forward": true,
+      "taps": [
+        {
+          "index": 0,
+          "shape": [
+            1,
+            1,
+            96,
+            96,
+            96
+          ],
+          "channels": 1,
+          "stride": [
+            1,
+            1,
+            1
+          ],
+          "stride_exact": true,
+          "anisotropic": false,
+          "is_raw_input": true
+        },
+        {
+          "index": 1,
+          "shape": [
+            1,
+            384,
+            8,
+            8,
+            8
+          ],
+          "channels": 384,
+          "stride": [
+            12,
+            12,
+            12
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        }
+      ],
+      "errors": [],
+      "forward_seconds": 3.1,
+      "n_taps_returned": 2,
+      "n_encoder_taps": 1,
+      "n_distinct_grids": 1,
+      "distinct_grids": [
+        {
+          "stride": [
+            12,
+            12,
+            12
+          ],
+          "n_taps": 1,
+          "channels": [
+            384
+          ],
+          "shareable_projection": true
+        }
+      ],
+      "coarsest_stride": 12,
+      "finest_stride": 12,
+      "k_upblocks_to_stride1": null,
+      "has_native_stride1": false,
+      "any_nonlattice_tap": false,
+      "raw_input_smuggled": true
+    },
+    "dino3d_layerwise": {
+      "config_stem": "dino3d_layerwise",
+      "backbone": "dino3d",
+      "kwargs": {
+        "arch": "vit_large_3d",
+        "img_size": 112,
+        "patch_size": 16,
+        "in_chans": 1,
+        "extract_blocks": [
+          5,
+          11,
+          17,
+          23
+        ],
+        "pyramid_mode": "layerwise"
+      },
+      "patch": [
+        96,
+        96,
+        96
+      ],
+      "build_seconds": 3.0,
+      "total_params": 307928000,
+      "adapter_params": 1017792,
+      "has_encoder_forward": true,
+      "taps": [
+        {
+          "index": 0,
+          "shape": [
+            1,
+            1,
+            96,
+            96,
+            96
+          ],
+          "channels": 1,
+          "stride": [
+            1,
+            1,
+            1
+          ],
+          "stride_exact": true,
+          "anisotropic": false,
+          "is_raw_input": true
+        },
+        {
+          "index": 1,
+          "shape": [
+            1,
+            1024,
+            6,
+            6,
+            6
+          ],
+          "channels": 1024,
+          "stride": [
+            16,
+            16,
+            16
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        },
+        {
+          "index": 2,
+          "shape": [
+            1,
+            1024,
+            6,
+            6,
+            6
+          ],
+          "channels": 1024,
+          "stride": [
+            16,
+            16,
+            16
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        },
+        {
+          "index": 3,
+          "shape": [
+            1,
+            1024,
+            6,
+            6,
+            6
+          ],
+          "channels": 1024,
+          "stride": [
+            16,
+            16,
+            16
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        },
+        {
+          "index": 4,
+          "shape": [
+            1,
+            1024,
+            6,
+            6,
+            6
+          ],
+          "channels": 1024,
+          "stride": [
+            16,
+            16,
+            16
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        }
+      ],
+      "errors": [],
+      "forward_seconds": 0.3,
+      "n_taps_returned": 5,
+      "n_encoder_taps": 4,
+      "n_distinct_grids": 1,
+      "distinct_grids": [
+        {
+          "stride": [
+            16,
+            16,
+            16
+          ],
+          "n_taps": 4,
+          "channels": [
+            1024
+          ],
+          "shareable_projection": true
+        }
+      ],
+      "coarsest_stride": 16,
+      "finest_stride": 16,
+      "k_upblocks_to_stride1": 4,
+      "has_native_stride1": false,
+      "any_nonlattice_tap": false,
+      "raw_input_smuggled": true
+    },
+    "merlin": {
+      "config_stem": "merlin",
+      "backbone": "merlin",
+      "kwargs": {
+        "input_mode": "native_spacing"
+      },
+      "patch": [
+        96,
+        96,
+        96
+      ],
+      "build_seconds": 1.2,
+      "total_params": 122604988,
+      "adapter_params": 722784,
+      "has_encoder_forward": true,
+      "taps": [
+        {
+          "index": 0,
+          "shape": [
+            1,
+            1,
+            96,
+            96,
+            96
+          ],
+          "channels": 1,
+          "stride": [
+            1,
+            1,
+            1
+          ],
+          "stride_exact": true,
+          "anisotropic": false,
+          "is_raw_input": true
+        },
+        {
+          "index": 1,
+          "shape": [
+            1,
+            64,
+            48,
+            48,
+            48
+          ],
+          "channels": 64,
+          "stride": [
+            2,
+            2,
+            2
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        },
+        {
+          "index": 2,
+          "shape": [
+            1,
+            256,
+            24,
+            24,
+            24
+          ],
+          "channels": 256,
+          "stride": [
+            4,
+            4,
+            4
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        },
+        {
+          "index": 3,
+          "shape": [
+            1,
+            512,
+            12,
+            12,
+            12
+          ],
+          "channels": 512,
+          "stride": [
+            8,
+            8,
+            8
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        },
+        {
+          "index": 4,
+          "shape": [
+            1,
+            1024,
+            6,
+            6,
+            6
+          ],
+          "channels": 1024,
+          "stride": [
+            16,
+            16,
+            16
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        }
+      ],
+      "errors": [],
+      "forward_seconds": 0.2,
+      "n_taps_returned": 5,
+      "n_encoder_taps": 4,
+      "n_distinct_grids": 4,
+      "distinct_grids": [
+        {
+          "stride": [
+            16,
+            16,
+            16
+          ],
+          "n_taps": 1,
+          "channels": [
+            1024
+          ],
+          "shareable_projection": true
+        },
+        {
+          "stride": [
+            8,
+            8,
+            8
+          ],
+          "n_taps": 1,
+          "channels": [
+            512
+          ],
+          "shareable_projection": true
+        },
+        {
+          "stride": [
+            4,
+            4,
+            4
+          ],
+          "n_taps": 1,
+          "channels": [
+            256
+          ],
+          "shareable_projection": true
+        },
+        {
+          "stride": [
+            2,
+            2,
+            2
+          ],
+          "n_taps": 1,
+          "channels": [
+            64
+          ],
+          "shareable_projection": true
+        }
+      ],
+      "coarsest_stride": 16,
+      "finest_stride": 2,
+      "k_upblocks_to_stride1": 4,
+      "has_native_stride1": false,
+      "any_nonlattice_tap": false,
+      "raw_input_smuggled": true
+    },
+    "dino3d_upsample": {
+      "config_stem": "dino3d_upsample",
+      "backbone": "dino3d",
+      "kwargs": {
+        "arch": "vit_large_3d",
+        "img_size": 112,
+        "patch_size": 16,
+        "in_chans": 1,
+        "extract_blocks": [
+          5,
+          11,
+          17,
+          23
+        ],
+        "pyramid_mode": "upsample"
+      },
+      "patch": [
+        96,
+        96,
+        96
+      ],
+      "build_seconds": 2.8,
+      "total_params": 307928000,
+      "adapter_params": 1017792,
+      "has_encoder_forward": true,
+      "taps": [
+        {
+          "index": 0,
+          "shape": [
+            1,
+            1,
+            96,
+            96,
+            96
+          ],
+          "channels": 1,
+          "stride": [
+            1,
+            1,
+            1
+          ],
+          "stride_exact": true,
+          "anisotropic": false,
+          "is_raw_input": true
+        },
+        {
+          "index": 1,
+          "shape": [
+            1,
+            1024,
+            6,
+            6,
+            6
+          ],
+          "channels": 1024,
+          "stride": [
+            16,
+            16,
+            16
+          ],
+          "stride_exact": true,
+          "anisotropic": false
+        }
+      ],
+      "errors": [],
+      "forward_seconds": 0.3,
+      "n_taps_returned": 2,
+      "n_encoder_taps": 1,
+      "n_distinct_grids": 1,
+      "distinct_grids": [
+        {
+          "stride": [
+            16,
+            16,
+            16
+          ],
+          "n_taps": 1,
+          "channels": [
+            1024
+          ],
+          "shareable_projection": true
+        }
+      ],
+      "coarsest_stride": 16,
+      "finest_stride": 16,
+      "k_upblocks_to_stride1": 4,
+      "has_native_stride1": false,
+      "any_nonlattice_tap": false,
+      "raw_input_smuggled": true
+    },
+    "merlin_isotropic": {
+      "config_stem": "merlin_isotropic",
+      "backbone": "merlin",
+      "kwargs": {
+        "input_mode": "isotropic"
+      },
+      "patch": [
+        96,
+        96,
+        96
+      ],
+      "build_seconds": 1.3,
+      "total_params": 122604988,
+      "adapter_params": 722784,
+      "has_encoder_forward": true,
+      "taps": [
+        {
+          "index": 0,
+          "shape": [
+            1,
+            1,
+            96,
+            96,
+            96
+          ],
+          "channels": 1,
+          "stride": [
+            1,
+            1,
+            1
+          ],
+          "stride_exact": true,
+          "anisotropic": false,
+          "is_raw_input": true
+        },
+        {
+          "index": 1,
+          "shape": [
+            1,
+            64,
+            96,
+            48,
+            48
+          ],
+          "channels": 64,
+          "stride": [
+            1,
+            2,
+            2
+          ],
+          "stride_exact": true,
+          "anisotropic": true
+        },
+        {
+          "index": 2,
+          "shape": [
+            1,
+            256,
+            48,
+            24,
+            24
+          ],
+          "channels": 256,
+          "stride": [
+            2,
+            4,
+            4
+          ],
+          "stride_exact": true,
+          "anisotropic": true
+        },
+        {
+          "index": 3,
+          "shape": [
+            1,
+            512,
+            24,
+            12,
+            12
+          ],
+          "channels": 512,
+          "stride": [
+            4,
+            8,
+            8
+          ],
+          "stride_exact": true,
+          "anisotropic": true
+        },
+        {
+          "index": 4,
+          "shape": [
+            1,
+            1024,
+            12,
+            6,
+            6
+          ],
+          "channels": 1024,
+          "stride": [
+            8,
+            16,
+            16
+          ],
+          "stride_exact": true,
+          "anisotropic": true
+        }
+      ],
+      "errors": [],
+      "forward_seconds": 0.3,
+      "n_taps_returned": 5,
+      "n_encoder_taps": 4,
+      "n_distinct_grids": 4,
+      "distinct_grids": [
+        {
+          "stride": [
+            8,
+            16,
+            16
+          ],
+          "n_taps": 1,
+          "channels": [
+            1024
+          ],
+          "shareable_projection": true
+        },
+        {
+          "stride": [
+            4,
+            8,
+            8
+          ],
+          "n_taps": 1,
+          "channels": [
+            512
+          ],
+          "shareable_projection": true
+        },
+        {
+          "stride": [
+            2,
+            4,
+            4
+          ],
+          "n_taps": 1,
+          "channels": [
+            256
+          ],
+          "shareable_projection": true
+        },
+        {
+          "stride": [
+            1,
+            2,
+            2
+          ],
+          "n_taps": 1,
+          "channels": [
+            64
+          ],
+          "shareable_projection": true
+        }
+      ],
+      "coarsest_stride": 16,
+      "finest_stride": 2,
+      "k_upblocks_to_stride1": 4,
+      "has_native_stride1": false,
+      "any_nonlattice_tap": false,
+      "raw_input_smuggled": true
+    }
+  }
+}

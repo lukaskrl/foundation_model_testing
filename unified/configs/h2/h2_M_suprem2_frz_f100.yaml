@@ -1,0 +1,31 @@
+# H2 pilot — head M: ONE U-Net head pretrained with TWO frozen encoders
+# (suprem_unet + suprem_swinunetr), alternating per micro-batch (see
+# unified/models/backbones/multi.py). Matched to the existing single-encoder heads
+# runs/lowshot/ls_supUnet_frz_pt_f100 and ls_supSwin_frz_pt_f100: same data, same
+# recipe, same 500 epochs = same total optimizer steps (each encoder gets half).
+# Both members share SuPreM preprocessing (HU [-175, 250], RAS), which the shared
+# data pipeline requires. 2.25 mm corpus (use_source_affine false), like S_unet/S_swin.
+model:
+  name: multi
+  batch_size: 3
+  preprocessing:
+    intensity:
+      a_min: -175.0
+      a_max: 250.0
+      b_min: 0.0
+      b_max: 1.0
+      clip: true
+  kwargs:
+    eval_member: 0          # validation / checkpoint selection runs through suprem_unet
+    members:
+      - name: suprem_unet
+        weights: /home/lukas/projects/foundation_model_testing/weights/SuPreM/supervised_suprem_unet_2100.pth
+        kwargs: {act: relu}
+      - name: suprem_swinunetr
+        weights: /home/lukas/projects/foundation_model_testing/weights/SuPreM/supervised_suprem_swinunetr_2100.pth
+        kwargs: {feature_size: 48, in_chans: 1, use_v2: false}
+  grad_accum_steps: 2
+  freeze_backbone: true
+  pretrained: true
+data:
+  train_fraction: 1.0

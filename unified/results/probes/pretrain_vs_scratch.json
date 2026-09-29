@@ -1,0 +1,191 @@
+{
+  "what": "fine-tuned noise floor, pretrained vs scratch at 100% data, and frozen random twins",
+  "statistic": "best val mean_dice over the run (gt-present averaging); val split = 57 subjects, also used for checkpoint selection",
+  "ft_noise_floor": {
+    "cell": "ctfm ft_sc f100",
+    "replicates": [
+      {
+        "run": "runs/lowshot/ls_ctfm_ft_sc_f100",
+        "best_dice": 0.87023,
+        "best_epoch": 475,
+        "complete": true
+      },
+      {
+        "run": "runs/noise/ctfm_ft_sc_f100_r2",
+        "best_dice": 0.86654,
+        "best_epoch": 325,
+        "complete": true
+      },
+      {
+        "run": "runs/noise/ctfm_ft_sc_f100_r3",
+        "best_dice": 0.87019,
+        "best_epoch": 475,
+        "complete": true
+      },
+      {
+        "run": "runs/noise/ctfm_ft_sc_f100_r4",
+        "best_dice": 0.86886,
+        "best_epoch": 425,
+        "complete": true
+      }
+    ],
+    "n": 4,
+    "mean": 0.86895,
+    "sd": 0.00173,
+    "sd_ci95": [
+      0.00098,
+      0.00646
+    ],
+    "se_two_run_difference": 0.00245
+  },
+  "ft_pretrained_vs_scratch_f100": {
+    "ctfm": {
+      "pretrained": {
+        "run": "runs/lowshot/ls_ctfm_ft_pt_f100",
+        "best_dice": 0.86791,
+        "best_epoch": 400,
+        "complete": true
+      },
+      "scratch": {
+        "run": "runs/lowshot/ls_ctfm_ft_sc_f100",
+        "best_dice": 0.87023,
+        "best_epoch": 475,
+        "complete": true
+      },
+      "delta_pt_minus_sc": -0.00104,
+      "z_vs_ctfm_sigma": -0.43,
+      "scratch_reference": "mean of 4 scratch replicates"
+    },
+    "vista3d": {
+      "pretrained": {
+        "run": "runs/lowshot/ls_vista3d_ft_pt_f100",
+        "best_dice": 0.87202,
+        "best_epoch": 375,
+        "complete": true
+      },
+      "scratch": {
+        "run": "runs/lowshot/ls_vista3d_ft_sc_f100",
+        "best_dice": 0.86993,
+        "best_epoch": 300,
+        "complete": true
+      },
+      "delta_pt_minus_sc": 0.00209,
+      "z_vs_ctfm_sigma": 0.85
+    },
+    "biomedparse": {
+      "pretrained": {
+        "run": "runs/lowshot/ls_biomedparse_ft_pt_f100",
+        "best_dice": 0.86391,
+        "best_epoch": 400,
+        "complete": true
+      },
+      "scratch": {
+        "run": "runs/lowshot/ls_biomedparse_ft_sc_f100",
+        "best_dice": 0.85726,
+        "best_epoch": 500,
+        "complete": true
+      },
+      "delta_pt_minus_sc": 0.00665,
+      "z_vs_ctfm_sigma": 2.72
+    },
+    "supSwin": {
+      "pretrained": {
+        "run": "runs/lowshot/ls_supSwin_ft_pt_f100",
+        "best_dice": 0.845,
+        "best_epoch": 425,
+        "complete": true
+      },
+      "scratch": {
+        "run": "runs/lowshot/ls_supSwin_ft_sc_f100",
+        "best_dice": 0.8453,
+        "best_epoch": 500,
+        "complete": true
+      },
+      "delta_pt_minus_sc": -0.0003,
+      "z_vs_ctfm_sigma": -0.12
+    },
+    "vocoB": {
+      "pretrained": {
+        "run": "runs/lowshot/ls_vocoB_ft_pt_f100",
+        "best_dice": 0.85529,
+        "best_epoch": 500,
+        "complete": true
+      },
+      "scratch": {
+        "run": "runs/lowshot/ls_vocoB_ft_sc_f100",
+        "best_dice": 0.86069,
+        "best_epoch": 500,
+        "complete": true
+      },
+      "delta_pt_minus_sc": -0.0054,
+      "z_vs_ctfm_sigma": -2.21
+    }
+  },
+  "frozen_pretrained_vs_random_f100": {
+    "biomedparse": {
+      "pretrained": {
+        "run": "runs/lowshot/ls_biomedparse_frz_pt_f100",
+        "best_dice": 0.84294,
+        "best_epoch": 475,
+        "complete": true
+      },
+      "random_twin": {
+        "run": "runs/lowshot/ls_biomedparse_frz_sc_f100",
+        "best_dice": 0.82483,
+        "best_epoch": 375,
+        "complete": true
+      },
+      "delta": 0.01811,
+      "retained": 0.9785
+    },
+    "supSwin": {
+      "pretrained": {
+        "run": "runs/lowshot/ls_supSwin_frz_pt_f100",
+        "best_dice": 0.83416,
+        "best_epoch": 475,
+        "complete": true
+      },
+      "random_twin": {
+        "run": "runs/lowshot/ls_supSwin_frz_sc_f100",
+        "best_dice": 0.82114,
+        "best_epoch": 500,
+        "complete": true
+      },
+      "delta": 0.01302,
+      "retained": 0.9844
+    },
+    "vocoB": {
+      "pretrained": {
+        "run": "runs/lowshot/ls_vocoB_frz_pt_f100",
+        "best_dice": 0.84358,
+        "best_epoch": 475,
+        "complete": true
+      },
+      "random_twin": {
+        "run": "runs/lowshot/ls_vocoB_frz_sc_f100",
+        "best_dice": 0.80835,
+        "best_epoch": 475,
+        "complete": true
+      },
+      "delta": 0.03523,
+      "retained": 0.9582
+    }
+  },
+  "notes": [
+    "ls_vista3d_ft_sc_f100 and ls_biomedparse_ft_sc_f100 were killed on 2026-09-04 and resumed from epoch checkpoints (optimizer, scheduler and scaler restored) on 2026-09-10",
+    "ls_vocoB_ft_pt_f100 was killed at epoch 25 on 2026-09-01 and resumed from epoch_0020.pt on 2026-09-14",
+    "no torch.manual_seed in the training path: repeats of one config are independent replicates"
+  ],
+  "per_class_replicate_sd": {
+    "cell": "vista3d frz_pt f025, 4 replicates",
+    "n_classes": 115,
+    "median": 0.0042,
+    "p90": 0.0123,
+    "max": 0.0212,
+    "air_classes_mean": 0.0022
+  },
+  "contamination": {
+    "vista3d": "VISTA/vista3d/data/jsons/TotalSegmentatorV2_5_folds.json 'training' contains 47 of our 57 val and 73 of our 89 test subjects",
+    "voco_b": "Large-Scale-Medical/VoComni/VoComni.json has 20,020 renumbered entries and no TotalSegmentator subject ids, so overlap is unknown"
+  }
+}

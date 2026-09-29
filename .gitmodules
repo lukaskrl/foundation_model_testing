@@ -28,3 +28,6 @@
 [submodule "LVM-Med"]
 	path = LVM-Med
 	url = https://github.com/duyhominhnguyen/LVM-Med.git
+[submodule "Merlin"]
+	path = Merlin
+	url = https://github.com/StanfordMIMI/Merlin.git

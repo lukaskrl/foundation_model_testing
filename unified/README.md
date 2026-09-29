@@ -134,8 +134,7 @@ checkouts in the parent directory (`3DINO/`, `BiomedParse/`, `CT-CLIP/`, `Merlin
 repo layout intact:
 
 ```bash
-git submodule update --init --depth 1            # the 10 pinned upstream repos
-git clone --depth 1 https://github.com/StanfordMIMI/Merlin.git ../Merlin
+git submodule update --init --depth 1            # the 11 pinned upstream repos, Merlin included
 ```
 
 `unified/utils/paths.py` resolves both roots from its own location, so a fresh clone
@@ -220,6 +219,34 @@ GPU=2 ARM=S COND='frz_pt|ft_pt' FRAC=1.0 bash scripts/run_lowshot_matrix.sh   # 
 GPU=3 ARM=W COND='frz_pt|ft_pt' FRAC=1.0 bash scripts/run_lowshot_matrix.sh   # 36 runs
 ```
 
+### Head-to-head arm A: CT-FM's own pipeline
+
+Trains CT-FM through its authors' lighter recipe (`CT-FM/evaluation/totalseg.yaml`) on this
+repo's split, then scores that checkpoint and ours under both protocols. It needs its own
+venv and a one-time setup:
+
+```bash
+python3.10 -m venv ../CT-FM/.venv
+../CT-FM/.venv/bin/pip install -r ../CT-FM/requirements.txt
+../CT-FM/.venv/bin/python scripts/setup_ctfm_original.py   # lighter patch + dataset view
+GPU=0 bash scripts/run_ctfm_original.sh                     # 300 epochs, auto-resumes
+python -m scripts.eval_bridge --model ctfm_original --split test --source-affine true \
+    --checkpoint ../CT-FM/evaluation/runs/totalseg/checkpoints/ct_fm_headtohead_v1/best.ckpt
+```
+
+`--source-affine true` is required. CT-FM's pipeline trains at the native 1.5 mm, and the
+default resolves to this repo's 2.25 mm corpus. `results/bridge/*_WRONG_2p25mm.json` is what
+that mistake looks like.
+
+The setup script does two things. It patches the pinned `lighter==0.0.3a18`, which otherwise
+crashes on the first training step after every validation epoch. It also builds
+`$DATA_ROOT/TotalSegmentatorDataset_ctfm` (symlinks plus a comma-separated `meta.csv`),
+after `prepare_data` has written the merged labels CT-FM reads. The patch lives inside the
+venv, so **reinstalling that venv reverts it**. Re-run the setup script afterwards;
+`run_ctfm_original.sh` refuses to start on an unpatched lighter. Single-GPU deviations from
+the published recipe are in `configs/ctfm_original/local.yaml`. Results are in
+`results/bridge/`.
+
 ## Three results worth knowing before you read numbers
 
 - **Dice must be averaged over gt-present classes only.** A case holds ~60 of 117
@@ -232,6 +259,9 @@ GPU=3 ARM=W COND='frz_pt|ft_pt' FRAC=1.0 bash scripts/run_lowshot_matrix.sh   # 
   (`voco_b/h`, `suprem_*`) were pretrained with a `[-175, 250]` soft-tissue window; on
   this whole-body task that clips **27.6 % of foreground voxels** and flattens the lungs
   entirely (97–99 % of lung-lobe and trachea voxels). Matching each encoder's pretraining
-  normalization is a defensible default, but it means an Arm N ranking cannot separate
-  "worse representation" from "narrower input window". Arm W measures the difference —
-  quote `window_cost` beside any cross-encoder claim.
+  normalization is a defensible default, but it means an Arm N ranking cannot by itself
+  separate "worse representation" from "narrower input window". Arm W measures the
+  difference, with one confound: the additive intensity augmentations are scaled to the
+  normalized range, so forcing a window also changes their strength in HU (up to 7.2×).
+  The first Arm W runs put the combined cost at 0 to 0.015 Dice (`docs/PROBES.md` §5) —
+  quote `window_cost`, and that caveat, beside any cross-encoder claim.

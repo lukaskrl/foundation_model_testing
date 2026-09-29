@@ -63,6 +63,18 @@ data:
   # the foreground bbox; unified previously used 0 (tight crop). Margin > 0
   # protects against truncating organs at the field-of-view boundary.
   crop_foreground_margin: 10
+  # VOXEL GEOMETRY. false = the behaviour of every run before 2026-09-22:
+  # TotalSegmentatorDataset hands MONAI plain tensors, EnsureTyped invents an
+  # IDENTITY affine, MONAI believes the voxels are 1.0 mm, and Spacingd(1.5)
+  # resamples the already-1.5 mm TotalSegmentator data a SECOND time — the run
+  # is effectively 2.25 mm. true attaches the real NIfTI affine, Spacingd
+  # becomes a no-op, and the run stays at the native 1.5 mm.
+  # Left false so the existing corpus of 2.25 mm runs stays reproducible and a
+  # resumed run cannot change resolution mid-training. It enters
+  # preprocessing_fingerprint, so the two regimes never share a disk cache.
+  # NEW WORK SHOULD SET THIS TRUE (see docs/HEAD_DESIGN.md §7 and
+  # the spacing note in docs/ARCHITECTURE.md).
+  use_source_affine: false
   augment:
     # flip_prob now drives a LATERALITY-SAFE left<->right mirror (transforms.py):
     # it flips along the L-R axis AND swaps *_left<->*_right labels, so laterality

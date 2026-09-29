@@ -128,9 +128,8 @@ def _import_i3res():
     models_dir = MERLIN_REPO / "merlin" / "models"
     if not models_dir.exists():
         raise ImportError(
-            f"Merlin source not found at {MERLIN_REPO}. Clone it:\n"
-            "    git clone --depth 1 https://github.com/StanfordMIMI/Merlin.git "
-            f"{MERLIN_REPO}"
+            f"Merlin source not found at {MERLIN_REPO}. It is a submodule:\n"
+            "    git submodule update --init --depth 1 Merlin"
         )
     if "merlin.models.i3res" not in sys.modules:
         for name in ("merlin", "merlin.models"):

@@ -1,0 +1,321 @@
+{
+  "dims": {
+    "ctfm": 992,
+    "vista3d": 1488,
+    "voco_b": 720,
+    "voco_h": 2880,
+    "suprem_unet": 960,
+    "suprem_segresnet": 240,
+    "suprem_swinunetr": 720,
+    "biomedparse": 1344,
+    "ctclip_layerwise": 2560,
+    "merlin": 1856,
+    "sam_med3d": 384,
+    "dino3d_layerwise": 4096
+  },
+  "D": 192,
+  "runs": [
+    {
+      "seed": 0,
+      "n_test_subj": 11,
+      "singles_matched": {
+        "ctfm": 0.2739425937792188,
+        "vista3d": 0.5732315519105708,
+        "voco_b": 0.33679832869389076,
+        "voco_h": 0.2646981224319653,
+        "suprem_unet": 0.3876862668579346,
+        "suprem_segresnet": 0.23898722015713392,
+        "suprem_swinunetr": 0.2475187608383988,
+        "biomedparse": 0.2816435261057657,
+        "ctclip_layerwise": 0.06998613609916024,
+        "merlin": 0.20838141487094394,
+        "sam_med3d": 0.23092043300142936,
+        "dino3d_layerwise": 0.306599607200999
+      },
+      "greedy_matched": [
+        [
+          1,
+          0.5732315519105708,
+          "vista3d"
+        ],
+        [
+          2,
+          0.5719553334475086,
+          "suprem_unet"
+        ],
+        [
+          3,
+          0.5626771791854448,
+          "suprem_segresnet"
+        ],
+        [
+          4,
+          0.5489816597025645,
+          "sam_med3d"
+        ],
+        [
+          5,
+          0.5283360680271136,
+          "suprem_swinunetr"
+        ],
+        [
+          6,
+          0.521290885480611,
+          "biomedparse"
+        ],
+        [
+          7,
+          0.5072213960974886,
+          "voco_b"
+        ],
+        [
+          8,
+          0.4958476600024784,
+          "ctfm"
+        ],
+        [
+          9,
+          0.48855461984088544,
+          "merlin"
+        ],
+        [
+          10,
+          0.4725894490747075,
+          "ctclip_layerwise"
+        ],
+        [
+          11,
+          0.4650588219233772,
+          "voco_h"
+        ],
+        [
+          12,
+          0.4373990137522158,
+          "dino3d_layerwise"
+        ]
+      ],
+      "full_dim_best_single": 0.5437605571524616,
+      "full_dim_all": 0.3934512343094276
+    }
+  ],
+  "cka": {
+    "ctfm": {
+      "ctfm": 1.0,
+      "vista3d": 0.23778946697711945,
+      "voco_b": 0.08540666848421097,
+      "voco_h": 0.04699787124991417,
+      "suprem_unet": 0.19495853781700134,
+      "suprem_segresnet": 0.20702233910560608,
+      "suprem_swinunetr": 0.08802036941051483,
+      "biomedparse": 0.21092459559440613,
+      "ctclip_layerwise": 0.06798733025789261,
+      "merlin": 0.23102065920829773,
+      "sam_med3d": 0.19532930850982666,
+      "dino3d_layerwise": 0.34833070635795593
+    },
+    "vista3d": {
+      "ctfm": 0.23778946697711945,
+      "vista3d": 1.0,
+      "voco_b": 0.3866904675960541,
+      "voco_h": 0.20125707983970642,
+      "suprem_unet": 0.4256041646003723,
+      "suprem_segresnet": 0.3467678129673004,
+      "suprem_swinunetr": 0.40493470430374146,
+      "biomedparse": 0.4818834662437439,
+      "ctclip_layerwise": 0.09873118251562119,
+      "merlin": 0.4845990836620331,
+      "sam_med3d": 0.3189943730831146,
+      "dino3d_layerwise": 0.5040162205696106
+    },
+    "voco_b": {
+      "ctfm": 0.08540666848421097,
+      "vista3d": 0.3866904675960541,
+      "voco_b": 1.0,
+      "voco_h": 0.3907536268234253,
+      "suprem_unet": 0.3093302249908447,
+      "suprem_segresnet": 0.23018820583820343,
+      "suprem_swinunetr": 0.567075252532959,
+      "biomedparse": 0.45275673270225525,
+      "ctclip_layerwise": 0.0555773563683033,
+      "merlin": 0.3907324969768524,
+      "sam_med3d": 0.30936744809150696,
+      "dino3d_layerwise": 0.4646015763282776
+    },
+    "voco_h": {
+      "ctfm": 0.04699787124991417,
+      "vista3d": 0.20125707983970642,
+      "voco_b": 0.3907535672187805,
+      "voco_h": 1.0,
+      "suprem_unet": 0.14454077184200287,
+      "suprem_segresnet": 0.1119232028722763,
+      "suprem_swinunetr": 0.33719247579574585,
+      "biomedparse": 0.2555606961250305,
+      "ctclip_layerwise": 0.02884119562804699,
+      "merlin": 0.21131059527397156,
+      "sam_med3d": 0.1664978563785553,
+      "dino3d_layerwise": 0.23635300993919373
+    },
+    "suprem_unet": {
+      "ctfm": 0.19495853781700134,
+      "vista3d": 0.4256041646003723,
+      "voco_b": 0.3093302249908447,
+      "voco_h": 0.14454077184200287,
+      "suprem_unet": 1.0,
+      "suprem_segresnet": 0.40540972352027893,
+      "suprem_swinunetr": 0.34394556283950806,
+      "biomedparse": 0.39163926243782043,
+      "ctclip_layerwise": 0.09225109964609146,
+      "merlin": 0.380531907081604,
+      "sam_med3d": 0.25283631682395935,
+      "dino3d_layerwise": 0.35394391417503357
+    },
+    "suprem_segresnet": {
+      "ctfm": 0.20702233910560608,
+      "vista3d": 0.3467678427696228,
+      "voco_b": 0.23018820583820343,
+      "voco_h": 0.11192318797111511,
+      "suprem_unet": 0.40540969371795654,
+      "suprem_segresnet": 1.0,
+      "suprem_swinunetr": 0.2662287950515747,
+      "biomedparse": 0.3380054831504822,
+      "ctclip_layerwise": 0.07060093432664871,
+      "merlin": 0.33397582173347473,
+      "sam_med3d": 0.21662607789039612,
+      "dino3d_layerwise": 0.2834968566894531
+    },
+    "suprem_swinunetr": {
+      "ctfm": 0.08802036941051483,
+      "vista3d": 0.40493470430374146,
+      "voco_b": 0.567075252532959,
+      "voco_h": 0.33719247579574585,
+      "suprem_unet": 0.34394562244415283,
+      "suprem_segresnet": 0.2662287950515747,
+      "suprem_swinunetr": 1.0,
+      "biomedparse": 0.519008219242096,
+      "ctclip_layerwise": 0.09089658409357071,
+      "merlin": 0.49656566977500916,
+      "sam_med3d": 0.3350345492362976,
+      "dino3d_layerwise": 0.45814526081085205
+    },
+    "biomedparse": {
+      "ctfm": 0.21092459559440613,
+      "vista3d": 0.4818834662437439,
+      "voco_b": 0.45275673270225525,
+      "voco_h": 0.2555606961250305,
+      "suprem_unet": 0.39163926243782043,
+      "suprem_segresnet": 0.3380054831504822,
+      "suprem_swinunetr": 0.5190081000328064,
+      "biomedparse": 1.0,
+      "ctclip_layerwise": 0.11019083112478256,
+      "merlin": 0.5859813690185547,
+      "sam_med3d": 0.3524857759475708,
+      "dino3d_layerwise": 0.5541034936904907
+    },
+    "ctclip_layerwise": {
+      "ctfm": 0.06798733025789261,
+      "vista3d": 0.0987311601638794,
+      "voco_b": 0.0555773563683033,
+      "voco_h": 0.02884119562804699,
+      "suprem_unet": 0.09225109964609146,
+      "suprem_segresnet": 0.07060093432664871,
+      "suprem_swinunetr": 0.09089658409357071,
+      "biomedparse": 0.11019083112478256,
+      "ctclip_layerwise": 1.0,
+      "merlin": 0.0968007743358612,
+      "sam_med3d": 0.06356634199619293,
+      "dino3d_layerwise": 0.11666747182607651
+    },
+    "merlin": {
+      "ctfm": 0.23102065920829773,
+      "vista3d": 0.4845990836620331,
+      "voco_b": 0.3907324969768524,
+      "voco_h": 0.21131059527397156,
+      "suprem_unet": 0.380531907081604,
+      "suprem_segresnet": 0.3339759111404419,
+      "suprem_swinunetr": 0.49656566977500916,
+      "biomedparse": 0.5859813690185547,
+      "ctclip_layerwise": 0.096800796687603,
+      "merlin": 1.0,
+      "sam_med3d": 0.34602901339530945,
+      "dino3d_layerwise": 0.5381031036376953
+    },
+    "sam_med3d": {
+      "ctfm": 0.19532930850982666,
+      "vista3d": 0.3189943730831146,
+      "voco_b": 0.30936744809150696,
+      "voco_h": 0.1664978563785553,
+      "suprem_unet": 0.25283631682395935,
+      "suprem_segresnet": 0.21662603318691254,
+      "suprem_swinunetr": 0.3350345492362976,
+      "biomedparse": 0.3524857759475708,
+      "ctclip_layerwise": 0.06356634199619293,
+      "merlin": 0.34602901339530945,
+      "sam_med3d": 1.0,
+      "dino3d_layerwise": 0.4272134006023407
+    },
+    "dino3d_layerwise": {
+      "ctfm": 0.34833070635795593,
+      "vista3d": 0.5040162205696106,
+      "voco_b": 0.4646015763282776,
+      "voco_h": 0.23635300993919373,
+      "suprem_unet": 0.35394391417503357,
+      "suprem_segresnet": 0.2834968566894531,
+      "suprem_swinunetr": 0.4581453502178192,
+      "biomedparse": 0.5541034936904907,
+      "ctclip_layerwise": 0.11666747182607651,
+      "merlin": 0.5381031036376953,
+      "sam_med3d": 0.4272134006023407,
+      "dino3d_layerwise": 1.0
+    }
+  },
+  "unique": {
+    "ctfm": {
+      "r2_from_others": 0.6338433027267456,
+      "unique_frac": 0.3661566972732544
+    },
+    "vista3d": {
+      "r2_from_others": 0.7442768812179565,
+      "unique_frac": 0.25572311878204346
+    },
+    "voco_b": {
+      "r2_from_others": 0.8784723877906799,
+      "unique_frac": 0.12152761220932007
+    },
+    "voco_h": {
+      "r2_from_others": 0.7605382204055786,
+      "unique_frac": 0.2394617795944214
+    },
+    "suprem_unet": {
+      "r2_from_others": 0.7216110229492188,
+      "unique_frac": 0.27838897705078125
+    },
+    "suprem_segresnet": {
+      "r2_from_others": 0.5907332897186279,
+      "unique_frac": 0.40926671028137207
+    },
+    "suprem_swinunetr": {
+      "r2_from_others": 0.8455294966697693,
+      "unique_frac": 0.1544705033302307
+    },
+    "biomedparse": {
+      "r2_from_others": 0.7835521697998047,
+      "unique_frac": 0.2164478302001953
+    },
+    "ctclip_layerwise": {
+      "r2_from_others": 0.34239643812179565,
+      "unique_frac": 0.6576035618782043
+    },
+    "merlin": {
+      "r2_from_others": 0.7502322196960449,
+      "unique_frac": 0.24976778030395508
+    },
+    "sam_med3d": {
+      "r2_from_others": 0.6405696868896484,
+      "unique_frac": 0.35943031311035156
+    },
+    "dino3d_layerwise": {
+      "r2_from_others": 0.8240238428115845,
+      "unique_frac": 0.17597615718841553
+    }
+  }
+}

@@ -1,0 +1,18 @@
+# Wiring into head M (waits until M exists), full-data wiring for all heads, random-twin control.
+wire_dino3d_n20_into_M_r1 | configs/h2/h2_dino3d_pt_n20.yaml | 100 | --init-head-from runs/h2/h2_M_suprem2_frz_f100/best.pt --freeze-head
+wire_dino3d_n20_into_M_r2 | configs/h2/h2_dino3d_pt_n20.yaml | 100 | --init-head-from runs/h2/h2_M_suprem2_frz_f100/best.pt --freeze-head
+wire_dino3d_n20_into_M_r3 | configs/h2/h2_dino3d_pt_n20.yaml | 100 | --init-head-from runs/h2/h2_M_suprem2_frz_f100/best.pt --freeze-head
+wire_dino3d_f100_into_M_r1 | configs/h2/h2_dino3d_pt_f100.yaml | 100 | --init-head-from runs/h2/h2_M_suprem2_frz_f100/best.pt --freeze-head
+wire_dino3d_f100_into_Sunet_r1 | configs/h2/h2_dino3d_pt_f100.yaml | 100 | --init-head-from runs/lowshot/ls_supUnet_frz_pt_f100/best.pt --freeze-head
+wire_dino3d_f100_into_Sswin_r1 | configs/h2/h2_dino3d_pt_f100.yaml | 100 | --init-head-from runs/lowshot/ls_supSwin_frz_pt_f100/best.pt --freeze-head
+fresh_dino3d_f100_r1 | configs/h2/h2_dino3d_pt_f100.yaml | 100 |
+wire_dino3d_f100_into_M_r2 | configs/h2/h2_dino3d_pt_f100.yaml | 100 | --init-head-from runs/h2/h2_M_suprem2_frz_f100/best.pt --freeze-head
+wire_dino3d_f100_into_Sunet_r2 | configs/h2/h2_dino3d_pt_f100.yaml | 100 | --init-head-from runs/lowshot/ls_supUnet_frz_pt_f100/best.pt --freeze-head
+wire_dino3d_f100_into_Sswin_r2 | configs/h2/h2_dino3d_pt_f100.yaml | 100 | --init-head-from runs/lowshot/ls_supSwin_frz_pt_f100/best.pt --freeze-head
+fresh_dino3d_f100_r2 | configs/h2/h2_dino3d_pt_f100.yaml | 100 |
+wire_dino3d_f100_into_M_r3 | configs/h2/h2_dino3d_pt_f100.yaml | 100 | --init-head-from runs/h2/h2_M_suprem2_frz_f100/best.pt --freeze-head
+wire_dino3d_f100_into_Sunet_r3 | configs/h2/h2_dino3d_pt_f100.yaml | 100 | --init-head-from runs/lowshot/ls_supUnet_frz_pt_f100/best.pt --freeze-head
+wire_dino3d_f100_into_Sswin_r3 | configs/h2/h2_dino3d_pt_f100.yaml | 100 | --init-head-from runs/lowshot/ls_supSwin_frz_pt_f100/best.pt --freeze-head
+fresh_dino3d_f100_r3 | configs/h2/h2_dino3d_pt_f100.yaml | 100 |
+wire_dino3dTWIN_n20_into_M_r1 | configs/h2/h2_dino3d_sc_n20.yaml | 100 | --init-head-from runs/h2/h2_M_suprem2_frz_f100/best.pt --freeze-head
+wire_dino3dTWIN_n20_into_M_r2 | configs/h2/h2_dino3d_sc_n20.yaml | 100 | --init-head-from runs/h2/h2_M_suprem2_frz_f100/best.pt --freeze-head

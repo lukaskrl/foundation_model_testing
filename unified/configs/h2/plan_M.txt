@@ -1,0 +1,2 @@
+# Head M pretraining (500 epochs, matched to S_unet / S_swin).
+h2_M_suprem2_frz_f100 | configs/h2/h2_M_suprem2_frz_f100.yaml | 500 |

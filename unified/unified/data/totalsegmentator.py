@@ -88,6 +88,7 @@ class TotalSegmentatorDataset(Dataset):
         classes: Optional[Sequence[str]] = None,
         skip_missing_masks: bool = True,
         use_merged_label: bool = True,
+        use_source_affine: bool = False,
     ):
         """
         Args:
@@ -95,6 +96,24 @@ class TotalSegmentatorDataset(Dataset):
                 when present (~50× faster than the 117-file merge). Set False
                 to force the per-organ merge — useful for benchmarking or to
                 bypass a stale merged file.
+            use_source_affine: attach the NIfTI affine to the returned tensors.
+
+                THE VOXEL-GEOMETRY SWITCH. False reproduces the behaviour every
+                run before 2026-09-22 had: plain tensors, so MONAI's
+                ``EnsureTyped`` builds a MetaTensor with an IDENTITY affine and
+                believes the voxels are 1.0 mm. ``Spacingd(pixdim=1.5)`` then
+                resamples the already-1.5 mm TotalSegmentator data a second time
+                — 2.25 mm effective. (``image_meta_dict`` below carries the real
+                affine but no MONAI transform consumes it.)
+
+                True hands MONAI the real affine, so ``Spacingd`` is a no-op and
+                the data stays at its native 1.5 mm.
+
+                It is a flag rather than a straight fix so the existing corpus of
+                2.25 mm runs stays reproducible and a resumed run cannot silently
+                change resolution mid-training. It feeds
+                ``preprocessing_fingerprint``, so the two regimes never share a
+                disk cache. New work should set it True.
         """
         self.root = Path(root)
         if not self.root.exists():
@@ -103,6 +122,7 @@ class TotalSegmentatorDataset(Dataset):
         self.class_to_idx = class_index_map(self.classes)
         self.skip_missing_masks = skip_missing_masks
         self.use_merged_label = use_merged_label
+        self.use_source_affine = bool(use_source_affine)
 
         self.items: List[TSItem] = []
         n_merged = 0
@@ -168,6 +188,15 @@ class TotalSegmentatorDataset(Dataset):
         # MONAI conventions: 4D channel-first tensor (C, D, H, W).
         image_t = torch.from_numpy(image)[None, ...].float()
         label_t = torch.from_numpy(label)[None, ...].long()
+
+        if self.use_source_affine:
+            # Hand MONAI the geometry instead of letting EnsureTyped invent an
+            # identity affine. The label shares the CT grid (the merge asserts
+            # equal shapes above), so one affine serves both.
+            from monai.data import MetaTensor
+            aff = torch.as_tensor(nii.affine, dtype=torch.float32)
+            image_t = MetaTensor(image_t, affine=aff)
+            label_t = MetaTensor(label_t, affine=aff)
 
         return {
             "image": image_t,
