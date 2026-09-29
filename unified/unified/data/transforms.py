@@ -32,6 +32,26 @@ def _resolved_preprocessing(cfg):
     return axcodes, intensity
 
 
+def _guide_hu(cfg) -> bool:
+    """``data.guide_hu``: carry the raw-HU patch as a SECOND input channel.
+
+    For heads that need the CT itself in Hounsfield units next to the encoder's
+    own normalized input (the frozen guided upsampler, docs/UPSAMPLER_PLAN.md). The
+    HU copy is taken right after the cache load, goes through every SPATIAL
+    transform together with the image (orientation, crop, flip, rot90, affine) and
+    through NO intensity transform, and is concatenated as channel 1 at the very
+    end. Off by default, so every existing run is unchanged.
+    """
+    return bool(cfg["data"].get("guide_hu", False))
+
+
+def _hu_concat_list(cfg):
+    if not _guide_hu(cfg):
+        return []
+    from monai.transforms import ConcatItemsd, DeleteItemsd
+    return [ConcatItemsd(keys=("image", "hu"), name="image", dim=0), DeleteItemsd(keys="hu")]
+
+
 def _det_transform_list(cfg):
     """Model-independent preprocessing prefix — cacheable, shared across all models.
 
@@ -358,6 +378,10 @@ def _orient_intensity_list(cfg, *, reindex_class_indices=False):
     axcodes, intens = _resolved_preprocessing(cfg)
     keys = ("image", "label")
     t = []
+    if _guide_hu(cfg):
+        from monai.transforms import CopyItemsd
+        t.append(CopyItemsd(keys="image", names="hu"))     # raw HU, before any intensity op
+        keys = ("image", "label", "hu")
     if reindex_class_indices:
         # Must precede Orientationd: it reads the source affine off the still-RAS
         # label to compute the same permute/flip Orientationd will apply.
@@ -427,6 +451,13 @@ def _rand_transform_list(cfg):
     d = cfg["data"]
     keys = ("image", "label")
     num_classes = int(d["num_classes"])
+    # Spatial transforms move the HU guide channel with the image (see _guide_hu);
+    # the intensity transforms below stay keys="image" only.
+    guide = _guide_hu(cfg)
+    if guide:
+        keys = ("image", "label", "hu")
+    pad_modes = ("constant",) * len(keys)
+    interp_modes = ("bilinear", "nearest", "bilinear") if guide else ("bilinear", "nearest")
 
     # Class-balanced sampler: equal weight to every organ class, zero weight on
     # background. This boosts rare-class recall and is the single biggest free
@@ -447,8 +478,7 @@ def _rand_transform_list(cfg):
     _, _intens = _resolved_preprocessing(cfg)
     aug_scale = _intensity_aug_scale(_intens)
     t = [
-        SpatialPadd(keys=keys, spatial_size=tuple(d["patch_size"]),
-                    mode=("constant", "constant")),
+        SpatialPadd(keys=keys, spatial_size=tuple(d["patch_size"]), mode=pad_modes),
         RandCropByLabelClassesd(
             keys=keys,
             label_key="label",
@@ -473,7 +503,8 @@ def _rand_transform_list(cfg):
         axcodes, _ = _resolved_preprocessing(cfg)
         remap, n_pairs = _lr_label_remap(num_classes)
         t.append(_lateral_flip_transform(
-            lr_axis=_lr_axis(axcodes), remap=remap, prob=float(aug["flip_prob"])))
+            lr_axis=_lr_axis(axcodes), remap=remap, prob=float(aug["flip_prob"]),
+            keys=keys))
     # rot90 stays gated + off: a 180° axial rotation ALSO swaps left/right and is
     # not made safe here, so leave rot_prob=0 unless doing a dedicated ablation.
     if aug.get("rot_prob", 0.0) > 0:
@@ -495,7 +526,7 @@ def _rand_transform_list(cfg):
         t.append(RandAffined(
             keys=keys,
             spatial_size=tuple(d["patch_size"]),
-            mode=("bilinear", "nearest"),
+            mode=interp_modes,
             prob=aug["affine_prob"],
             rotate_range=(rot, rot, rot),
             scale_range=(scale, scale, scale),
@@ -555,13 +586,13 @@ def build_train_post_transforms(cfg):
     windowing followed by the stochastic augmentations."""
     from monai.transforms import Compose
     return Compose(_orient_intensity_list(cfg, reindex_class_indices=True)
-                   + _rand_transform_list(cfg))
+                   + _rand_transform_list(cfg) + _hu_concat_list(cfg))
 
 
 def build_val_post_transforms(cfg):
     """Per-epoch suffix for validation: orientation + intensity only (deterministic)."""
     from monai.transforms import Compose
-    return Compose(_orient_intensity_list(cfg))
+    return Compose(_orient_intensity_list(cfg) + _hu_concat_list(cfg))
 
 
 def build_train_transforms(cfg):
@@ -569,10 +600,11 @@ def build_train_transforms(cfg):
     from monai.transforms import Compose
     return Compose(_det_transform_list(cfg)
                    + _orient_intensity_list(cfg, reindex_class_indices=True)
-                   + _rand_transform_list(cfg))
+                   + _rand_transform_list(cfg) + _hu_concat_list(cfg))
 
 
 def build_val_transforms(cfg):
     """Full val pipeline (no caching)."""
     from monai.transforms import Compose
-    return Compose(_det_transform_list(cfg) + _orient_intensity_list(cfg))
+    return Compose(_det_transform_list(cfg) + _orient_intensity_list(cfg)
+                   + _hu_concat_list(cfg))

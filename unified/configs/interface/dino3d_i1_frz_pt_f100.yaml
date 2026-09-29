@@ -1,0 +1,38 @@
+# Arms I1 / I2 — the pyramid-free interface (docs/HEAD_DESIGN.md §7).
+# Hand-written, NOT produced by scripts.gen_lowshot_configs: these do not belong in
+# the Arm N/S/B/W matrix and must never be merged into its MANIFEST.csv.
+#
+# use_source_affine: true — these run at the NATIVE 1.5 mm. Every run before
+# 2026-09-22 is at 2.25 mm (MONAI saw an identity affine, so Spacingd(1.5)
+# resampled already-1.5 mm data again). I1/I2 measure a RESOLUTION deficit, so
+# they must not be measured at an accidentally coarsened resolution. They get
+# their own cache fingerprint and are NOT comparable to the 2.25 mm corpus.
+model:
+  name: dino3d
+  batch_size: 3
+  weights: /home/lukas/projects/foundation_model_testing/weights/3DINO/3dino_vit_weights.pth
+  preprocessing:
+    intensity:
+      mode: percentile
+      lower: 0.05
+      upper: 99.95
+      b_min: -1.0
+      b_max: 1.0
+      clip: true
+  kwargs:
+    arch: vit_large_3d
+    img_size: 112
+    patch_size: 16
+    in_chans: 1
+    extract_blocks: [5, 11, 17, 23]
+    interface: i1
+    interface_width: 256
+    interface_patch_size: [96, 96, 96]
+  grad_accum_steps: 2
+  freeze_backbone: true
+  pretrained: true
+data:
+  train_fraction: 1.0
+  use_source_affine: true
+head:
+  name: interface_seg_head

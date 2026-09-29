@@ -17,3 +17,4 @@ from . import suprem_segresnet   # noqa: F401
 from . import suprem_unet        # noqa: F401
 from . import sam_med3d          # noqa: F401
 from . import merlin             # noqa: F401
+from . import multi              # noqa: F401  -- H2 pilot: several encoders, one head

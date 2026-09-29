@@ -1,0 +1,10 @@
+# H1 gate: dino3d, 20 scans, wired into the two EXISTING single-encoder heads vs a fresh head. 100 epochs = 36k micro-steps.
+wire_dino3d_n20_into_Sunet_r1 | configs/h2/h2_dino3d_pt_n20.yaml | 100 | --init-head-from runs/lowshot/ls_supUnet_frz_pt_f100/best.pt --freeze-head
+wire_dino3d_n20_into_Sswin_r1 | configs/h2/h2_dino3d_pt_n20.yaml | 100 | --init-head-from runs/lowshot/ls_supSwin_frz_pt_f100/best.pt --freeze-head
+fresh_dino3d_n20_r1 | configs/h2/h2_dino3d_pt_n20.yaml | 100 |
+wire_dino3d_n20_into_Sunet_r2 | configs/h2/h2_dino3d_pt_n20.yaml | 100 | --init-head-from runs/lowshot/ls_supUnet_frz_pt_f100/best.pt --freeze-head
+wire_dino3d_n20_into_Sswin_r2 | configs/h2/h2_dino3d_pt_n20.yaml | 100 | --init-head-from runs/lowshot/ls_supSwin_frz_pt_f100/best.pt --freeze-head
+fresh_dino3d_n20_r2 | configs/h2/h2_dino3d_pt_n20.yaml | 100 |
+wire_dino3d_n20_into_Sunet_r3 | configs/h2/h2_dino3d_pt_n20.yaml | 100 | --init-head-from runs/lowshot/ls_supUnet_frz_pt_f100/best.pt --freeze-head
+wire_dino3d_n20_into_Sswin_r3 | configs/h2/h2_dino3d_pt_n20.yaml | 100 | --init-head-from runs/lowshot/ls_supSwin_frz_pt_f100/best.pt --freeze-head
+fresh_dino3d_n20_r3 | configs/h2/h2_dino3d_pt_n20.yaml | 100 |

@@ -232,6 +232,9 @@ GPU=3 ARM=W COND='frz_pt|ft_pt' FRAC=1.0 bash scripts/run_lowshot_matrix.sh   # 
   (`voco_b/h`, `suprem_*`) were pretrained with a `[-175, 250]` soft-tissue window; on
   this whole-body task that clips **27.6 % of foreground voxels** and flattens the lungs
   entirely (97–99 % of lung-lobe and trachea voxels). Matching each encoder's pretraining
-  normalization is a defensible default, but it means an Arm N ranking cannot separate
-  "worse representation" from "narrower input window". Arm W measures the difference —
-  quote `window_cost` beside any cross-encoder claim.
+  normalization is a defensible default, but it means an Arm N ranking cannot by itself
+  separate "worse representation" from "narrower input window". Arm W measures the
+  difference, with one confound: the additive intensity augmentations are scaled to the
+  normalized range, so forcing a window also changes their strength in HU (up to 7.2×).
+  The first Arm W runs put the combined cost at 0 to 0.015 Dice (`docs/PROBES.md` §5) —
+  quote `window_cost`, and that caveat, beside any cross-encoder claim.

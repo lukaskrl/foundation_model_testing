@@ -67,7 +67,8 @@ def main():
 
     classes = load_classes()
     ids = _read_split(REPO / "unified" / "data" / "splits" / "val.txt")[: args.subjects]
-    ds = TotalSegmentatorDataset(cfg["data"]["dataset_root"], ids, classes)
+    ds = TotalSegmentatorDataset(cfg["data"]["dataset_root"], ids, classes,
+                                use_source_affine=bool(cfg["data"].get("use_source_affine", False)))
     tf = build_val_transforms(cfg)
 
     class Composed(torch.utils.data.Dataset):

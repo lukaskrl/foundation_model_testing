@@ -72,6 +72,16 @@ def _build_loader(cfg, ds, batch_size, shuffle, num_workers=None):
     )
 
 
+def _src_affine(cfg) -> bool:
+    """Voxel-geometry switch — see TotalSegmentatorDataset.use_source_affine.
+
+    False (the default, and what every run before 2026-09-22 used) makes MONAI
+    assume 1.0 mm voxels, so Spacingd(1.5) resamples the already-1.5 mm data
+    again and the run is effectively 2.25 mm. True keeps the native 1.5 mm.
+    """
+    return bool(cfg["data"].get("use_source_affine", False))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", required=True, help="model config YAML")
@@ -82,6 +92,12 @@ def main():
     ap.add_argument("--resume", nargs="?", const=True, default=None, metavar="CKPT",
                     help="resume from a checkpoint; omit path to auto-detect the "
                          "latest checkpoint inside --output")
+    ap.add_argument("--init-head-from", default=None, metavar="CKPT",
+                    help="load ONLY the head.* weights from another run's checkpoint "
+                         "(head transfer / wiring; the backbone is built as usual)")
+    ap.add_argument("--freeze-head", action="store_true",
+                    help="freeze the head so only the backbone adapter trains "
+                         "(wiring an encoder into a pretrained head)")
     ap.add_argument("--allow-cpu", action="store_true",
                     help="permit training on CPU; without it a missing GPU is a "
                          "hard error instead of a ~100x slower silent fallback")
@@ -147,9 +163,21 @@ def main():
         train_ids = sorted(order[:n])          # nested prefix
         log.info("low-shot: train_fraction=%.4f seed=%d -> %d/%d train cases",
                  frac, seed, len(train_ids), len(order))
+        # Fixed epoch length: tile the subset back to the full split's length, so
+        # every fraction gets the same micro-batches per epoch and therefore the
+        # same optimizer steps, LR schedule and validation cadence. Without it a
+        # 20-case run gets ~7 steps/epoch and label budget is confounded with
+        # optimization budget.
+        if bool(cfg["data"].get("fixed_epoch_length", False)):
+            full = len(order)
+            reps = -(-full // len(train_ids))
+            train_ids = (train_ids * reps)[:full]
+            log.info("fixed_epoch_length: subset tiled to %d items/epoch", len(train_ids))
 
-    train_raw = TotalSegmentatorDataset(cfg["data"]["dataset_root"], train_ids, classes)
-    val_raw = TotalSegmentatorDataset(cfg["data"]["dataset_root"], val_ids, classes)
+    train_raw = TotalSegmentatorDataset(cfg["data"]["dataset_root"], train_ids, classes,
+                                       use_source_affine=_src_affine(cfg))
+    val_raw = TotalSegmentatorDataset(cfg["data"]["dataset_root"], val_ids, classes,
+                                     use_source_affine=_src_affine(cfg))
 
     # Disk cache: ``<cache.dir>/<fingerprint>/<subject>.pt``. Fingerprint
     # encodes axcodes/spacing/intensity/margin so per-model preprocessing
@@ -160,6 +188,9 @@ def main():
         fp = preprocessing_fingerprint(cfg)
         cache_root = Path(cache_cfg["dir"]) / fp
         log.info("disk cache: %s (fingerprint=%s)", cache_root, fp)
+        log.info("voxel geometry: use_source_affine=%s -> effective spacing %s",
+                 _src_affine(cfg),
+                 "1.5mm (native)" if _src_affine(cfg) else "2.25mm (Spacingd re-resamples; pre-2026-09-22 behaviour)")
 
     train_ds = _build_dataset(cfg, train_raw, training=True, cache_dir=cache_root)
     val_ds = _build_dataset(cfg, val_raw, training=False, cache_dir=cache_root)
@@ -184,20 +215,42 @@ def main():
     # so the backbone keeps its architecture but starts from random init — the
     # twin baseline that localizes where (frozen? low-shot?) pretraining helps.
     pretrained = bool(mcfg.get("pretrained", True))
+    bb_kwargs = dict(mcfg.get("kwargs", {}))
+    if mcfg["name"] == "multi":
+        # Member weights live inside kwargs.members; the scratch switch must reach them.
+        bb_kwargs["pretrained"] = pretrained
     backbone = build_backbone(
         mcfg["name"],
         weights=(mcfg.get("weights") if pretrained else None),
-        **mcfg.get("kwargs", {}),
+        **bb_kwargs,
     )
     if not pretrained:
         log.info("model %s: SCRATCH (random init, pretrained weights skipped)",
                  mcfg["name"])
-    head = build_head(
-        cfg["head"].get("name", "unified_seg_head"),
-        **{k: v for k, v in cfg["head"].items() if k != "name"},
-    )
+    head_kwargs = {k: v for k, v in cfg["head"].items() if k != "name"}
+    # An InterfaceBackbone (Arms I1/I2) does not satisfy the 5-level contract,
+    # so it declares the stride ladder and width its head must expect.
+    if hasattr(backbone, "head_kwargs"):
+        head_kwargs.update(backbone.head_kwargs())
+    head = build_head(cfg["head"].get("name", "unified_seg_head"), **head_kwargs)
     model = SegModel(backbone, head,
                      freeze_backbone=bool(mcfg.get("freeze_backbone", False)))
+    if args.init_head_from:
+        state = torch.load(args.init_head_from, map_location="cpu", weights_only=False)
+        sd = state.get("model", state)
+        head_sd = {k[len("head."):]: v for k, v in sd.items() if k.startswith("head.")}
+        if not head_sd:
+            raise SystemExit(f"--init-head-from: no head.* keys in {args.init_head_from}")
+        model.head.load_state_dict(head_sd, strict=True)
+        log.info("head initialized from %s (%d tensors)", args.init_head_from, len(head_sd))
+    if args.freeze_head:
+        if not args.init_head_from and not args.resume:
+            raise SystemExit("--freeze-head without --init-head-from would freeze a random head")
+        for p in model.head.parameters():
+            p.requires_grad_(False)
+        # The head stays in train() mode on purpose: deep supervision returns the
+        # multi-scale outputs only in training mode, and the loss expects them.
+        log.info("head FROZEN: only the backbone adapter trains")
     log.info("model %s, trainable params: %d / %d total (freeze_backbone=%s)",
              mcfg["name"], model.num_trainable_params(),
              model.num_total_params(), model.freeze_backbone)

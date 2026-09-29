@@ -103,6 +103,35 @@ Spacingd  -> 1.5 mm iso            intensity window (range|percentile|sigmoid|zn
 CropForegroundd (margin 10)        class-balanced patch sampling + augmentation
 ```
 
+> ### Two resolution regimes — read this before comparing numbers
+>
+> `data.use_source_affine` decides what `Spacingd` actually does.
+>
+> * **`false` (default; every run before 2026-09-22 — the "2.25 mm corpus").**
+>   `TotalSegmentatorDataset` returns plain tensors and MONAI's `EnsureTyped`
+>   builds a MetaTensor with an **identity affine**, so MONAI believes the voxels
+>   are 1.0 mm. TotalSegmentator is already 1.5 mm, so `Spacingd(pixdim=1.5)`
+>   resamples it a second time and the run is **effectively 2.25 mm**. The
+>   dataset does return the real affine in `image_meta_dict`, but no MONAI
+>   transform consumes it.
+> * **`true` (new work).** The affine is attached to the tensors, `Spacingd`
+>   becomes a no-op, and the run stays at the native **1.5 mm**.
+>
+> Evidence (s0000): NIfTI affine column norms 1.5/1.5/1.5; MONAI reports pixdim
+> 1.0; the val chain goes (294,192,179) → `Spacingd` → (196,128,120) and labelled
+> voxels drop 785,170 → 235,714 (≈1.5³). With the affine attached both are
+> restored.
+>
+> The flag feeds `preprocessing_fingerprint`, so the two regimes never share a
+> disk cache, and it is **added to the hash only when true** — the 2.25 mm corpus
+> keeps its existing fingerprint `833d9d046402` and its warm cache.
+>
+> What this means: every comparison *within* the 2.25 mm corpus is valid (one
+> identical pipeline for all 12 encoders and all arms), but its absolute Dice is
+> not comparable to published TotalSegmentator numbers, nor to the CT-FM original
+> repo, which reads the affine correctly and trains at true 1.5 mm. Never put a
+> 2.25 mm and a 1.5 mm number in the same table.
+
 Orientation and intensity are **not** cached because they are part of each model's
 input interface. Cache location is `data.cache.dir`; the key includes a fingerprint of
 the cached prefix (`unified/data/cache.py:preprocessing_fingerprint`) — which hashes

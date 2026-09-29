@@ -54,6 +54,15 @@ def preprocessing_fingerprint(cfg) -> str:
         "cls_indices": {"num_classes": int(d["num_classes"]),
                         "max_samples_per_class": 10000, "version": 1},
     }
+    # Voxel geometry. With use_source_affine False MONAI sees an identity affine,
+    # assumes 1.0 mm, and Spacingd(1.5) resamples already-1.5 mm data again ->
+    # 2.25 mm. True keeps the native 1.5 mm. The two produce DIFFERENT cached
+    # volumes from the same `spacing` value, so this must enter the hash or a
+    # 1.5 mm run would silently load 2.25 mm cache files.
+    # Added only when True, so the pre-2026-09-22 corpus keeps its existing
+    # fingerprint (833d9d046402) and its warm 42 GB cache.
+    if bool(d.get("use_source_affine", False)):
+        spec["use_source_affine"] = True
     blob = json.dumps(spec, sort_keys=True).encode("utf-8")
     return hashlib.sha1(blob).hexdigest()[:12]
 

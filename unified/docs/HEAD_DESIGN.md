@@ -413,7 +413,8 @@ of the skeleton. Nothing downstream recovers what was clipped before the first c
 a cross-encoder ranking read off Arm N alone cannot separate "worse representation"
 from "narrower input window".
 
-Arm W separates them. A linear window is `clamp → affine`; the affine half is undone by
+Arm W separates them, up to one confound described below. A linear window is
+`clamp → affine`; the affine half is undone by
 any layer that can learn, the clamp half is permanent. **That makes the prediction
 arm-dependent**, which is exactly why it is worth running:
 
@@ -438,6 +439,17 @@ broadening HURTS voco while narrowing hurts ctfm    -> input fidelity dominates;
                                                        the native window is right
 ```
 
+**Confound: augmentation strength moves with the window.** `RandShiftIntensityd`
+offsets and `RandGaussianNoised` std are multiplied by `_intensity_aug_scale`, which is
+the width of the *normalized* output range — 1.0 for every `range` window. A 0.10
+offset is therefore 0.10 × the window width in HU: 42.5 HU under `[-175, 250]`, about
+202 HU under `vista3d`'s native window, 307 HU under `[-1024, 2048]`. Forcing a window
+changes the HU-equivalent augmentation by up to 7.2× (`suprem_unet` → `wshared`), so a
+measured `window_cost` is the window **plus** an augmentation-strength change, and the
+current runs cannot tell the two apart. Separating them needs the additive augmentations
+defined in HU and applied identically under every window. Measured Arm W results, with a
+per-anatomy breakdown, are in `docs/PROBES.md` §5.
+
 `wshared` is expressed as *"delete the per-encoder override"* so it equals `base.yaml`'s
 window by construction rather than by a duplicated literal that could drift. `wnarrow`
 forces the SuPreM / VoCo soft-tissue window onto encoders that never saw it. Six of the
@@ -452,6 +464,75 @@ Cost is config-only — the window runs *after* the disk cache and
 window variant shares the one existing cache.
 
 ---
+
+### Arms I1 / I2 — the pyramid-free interface
+
+**Status: design fixed 2026-09-21, not yet implemented.** No runs exist. Nothing below
+describes code that is in the tree today.
+
+**Update 2026-09-22 — partially implemented.** `unified/models/interface.py` now provides
+`InterfaceBackbone` and the `interface_seg_head` decoder; `scripts/test_interface.py`
+asserts the invariants below; `configs/interface/*.yaml` hold the first four runs
+(ctfm and dino3d x I1/I2, frozen, 100% data). No results yet. The measured native grids
+every I1/I2 decision depends on are in `docs/NATIVE_GRIDS.md` (regenerate with
+`python -m scripts.probe_native_grids`).
+
+These runs set `data.use_source_affine: true`, i.e. they are at the native **1.5 mm**,
+unlike the 2.25 mm corpus every other result in this repo belongs to (see the resolution
+note in `docs/ARCHITECTURE.md`). I1/I2 measure a *resolution* deficit, so measuring them at
+an accidentally coarsened resolution would defeat the arm. I1/I2 numbers are therefore not
+comparable to Arm N/S/B/W numbers.
+
+Measured invariants (`python -m scripts.test_interface`, patch 96³, W=256):
+
+| encoder | arm | native strides | k | adapter | decoder | trainable |
+|---|---|---|---|---|---|---|
+| ctfm | I1 | 16, 8, 4, 2, 1 | 4 | 256,512 | 4,094,582 | 4,351,094 |
+| ctfm | I2 | 16, 8, 4, 2, 1 | 4 | 293,856 | 4,094,582 | 4,388,438 |
+| dino3d | I1 | 16 | 4 | 262,656 | 4,094,582 | 4,357,238 |
+| dino3d | I2 | 16, 1 | 4 | 300,000 | 4,094,582 | 4,394,582 |
+
+The decoder is **byte-identical** for a 5-grid CNN and a 1-grid ViT, and `I2 − I1` is a
+constant **+37,344** for both. Adapter counts differ because they are a function of each
+encoder's own tap widths, which is the encoder's geometry rather than a choice made for it.
+
+Arms N/S/B/W all keep the 5-level contract of §1, so every encoder that does not natively
+produce five grids has its missing levels *manufactured* — by a fresh stem, by a
+`DownsampleNeck`, or by resampling (§`ARM_N_FINE_SOURCE`). Encoder identity is therefore
+perfectly correlated with which manufacturing strategy was used, and no between-encoder
+number in those arms is a clean comparison. I1 and I2 remove that correlation by dropping
+the fixed level count instead of filling it.
+
+**I1 — encoder-only.** The adapter is forbidden to invent spatial information:
+
+* no raw-voxel path, no synthesized deepest level, no upsampling of encoder features;
+* exactly **one** feature per *distinct native grid* the encoder produces, so a 5-grid CNN
+  contributes 5 and a columnar ViT contributes 1;
+* taps that share a grid (e.g. ViT blocks 5/11/17/23) are projected by a **shared** 1×1
+  conv and summed, so extra taps buy abstraction, never resolution or parameters;
+* every projection lands on one common width `W`;
+* the decoder climbs from the coarsest to the finest native grid with a weight-shared
+  upsample block applied `k` times, `k` = the number of stride doublings between them.
+
+**I2 — I1 plus one identical stem.** Every encoder, without exception, also gets the same
+fresh `ConvStem` producing a stride-1 feature. Nothing else changes.
+
+`I2 − I1` is then the **compensable resolution deficit**: how much of an encoder's
+disadvantage is recoverable by a fixed, tiny, trainable fine path — measured in the same
+units, with the same parameters, for a CNN and for a ViT. In the 5-level contract this
+quantity is unmeasurable because each encoder gets a different fine path by construction.
+
+**The three free parameters, and how they are set:**
+
+| Parameter | Decision | Why this and not the alternative |
+|---|---|---|
+| common width `W` | **256** | The stride-8 width of the §1 contract, so decoder cost stays in the current range. 128 would bottleneck CNNs whose deepest native level is 512 wide; 512 roughly quadruples the decoder. Fixing one width makes each encoder's adapter cost a pure function of its own tap widths rather than a hand-tuned per-encoder schedule. |
+| I2 stem scope | **stride 1 only** — one `ConvStem(out_ch=32)` (28,640 params) plus its own 1×1 projection to `W` (8,704), i.e. a constant **+37,344** for every encoder. The stem stays 32 wide and is projected like any other tap; emitting `W=256` directly would cost ~222k. | I2 exists to price the *finest* missing level. Adding stride 2 as well (the `fresh_stem_s0s1` variant, 84,992 params) would confound "how much fine detail can a fresh stem recover" with "how many fresh levels did we add", and `I2 − I1` would stop being one number per encoder. |
+| upsample block | **weight-shared**, instantiated once, applied `k` times | Otherwise the decoder's parameter count scales with how many grids an encoder happens to expose, and a 5-grid CNN gets a ~5× larger decoder than a 1-grid ViT — reintroducing exactly the capacity confound these arms exist to remove. Sharing also forces the block to be resolution-agnostic, which is the property the "unified adapter" claim rests on. |
+
+Unlike Arm S, I1/I2 are **not** a subtraction against an Arm N twin: they replace the
+contract rather than varying one term inside it. They are read against each encoder's own
+bespoke decoder (per-encoder parity) and against each other.
 
 ## 8. What is fair, and what is an honest artifact
 
@@ -482,7 +563,8 @@ choice, and this document used to claim it was. For five encoders the pretrained
 clips 27.6 % of foreground voxels and flattens the lungs entirely (Arm W, §7), and no
 representation recovers information destroyed before the first conv. Treat the window as
 a *factor with a measured cost*, not a settled question: report `window_cost` beside any
-cross-encoder ranking. Orientation is genuinely per-model and is not varied — `merlin`
+cross-encoder ranking, and note that it includes an augmentation-strength change (§7).
+Orientation is genuinely per-model and is not varied — `merlin`
 and `ctclip` are geometrically wrong under anything but `SRA`.
 
 **Honest artifacts, to be reported not hidden:**

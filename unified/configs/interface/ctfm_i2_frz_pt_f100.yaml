@@ -1,0 +1,44 @@
+# Arms I1 / I2 — the pyramid-free interface (docs/HEAD_DESIGN.md §7).
+# Hand-written, NOT produced by scripts.gen_lowshot_configs: these do not belong in
+# the Arm N/S/B/W matrix and must never be merged into its MANIFEST.csv.
+#
+# use_source_affine: true — these run at the NATIVE 1.5 mm. Every run before
+# 2026-09-22 is at 2.25 mm (MONAI saw an identity affine, so Spacingd(1.5)
+# resampled already-1.5 mm data again). I1/I2 measure a RESOLUTION deficit, so
+# they must not be measured at an accidentally coarsened resolution. They get
+# their own cache fingerprint and are NOT comparable to the 2.25 mm corpus.
+model:
+  name: ctfm
+  amp: true
+  # 2026-09-29: dropped from 3 to 2 (accum 2 -> 3) after this run OOM'd at epoch 298
+  # and again immediately on every resume. The OPTIMIZATION is unchanged: effective
+  # batch stays 3x2 = 2x3 = 6, and opt_steps_per_epoch stays ceil(361/2) = ceil(541/3)
+  # = 181, so the warmup-cosine horizon is identical. Every norm in the trainable path
+  # is GroupNorm (per-sample), so nothing depends on micro-batch statistics.
+  # Activation memory drops to 2/3, which is what the W=256 stride-1 stage needs.
+  batch_size: 2
+  weights: /home/lukas/projects/foundation_model_testing/weights/CT-FM/ct_fm_feature_extractor/model.safetensors
+  preprocessing:
+    axcodes: SPL
+    intensity:
+      a_min: -1024.0
+      a_max: 2048.0
+      b_min: 0.0
+      b_max: 1.0
+      clip: true
+  kwargs:
+    init_filters: 32
+    blocks_down: [1, 2, 2, 4, 4]
+    in_channels: 1
+    norm: instance
+    interface: i2
+    interface_width: 256
+    interface_patch_size: [96, 96, 96]
+  grad_accum_steps: 3
+  freeze_backbone: true
+  pretrained: true
+data:
+  train_fraction: 1.0
+  use_source_affine: true
+head:
+  name: interface_seg_head
