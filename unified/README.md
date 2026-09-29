@@ -134,8 +134,7 @@ checkouts in the parent directory (`3DINO/`, `BiomedParse/`, `CT-CLIP/`, `Merlin
 repo layout intact:
 
 ```bash
-git submodule update --init --depth 1            # the 10 pinned upstream repos
-git clone --depth 1 https://github.com/StanfordMIMI/Merlin.git ../Merlin
+git submodule update --init --depth 1            # the 11 pinned upstream repos, Merlin included
 ```
 
 `unified/utils/paths.py` resolves both roots from its own location, so a fresh clone
