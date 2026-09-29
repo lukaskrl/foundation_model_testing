@@ -220,6 +220,34 @@ GPU=2 ARM=S COND='frz_pt|ft_pt' FRAC=1.0 bash scripts/run_lowshot_matrix.sh   # 
 GPU=3 ARM=W COND='frz_pt|ft_pt' FRAC=1.0 bash scripts/run_lowshot_matrix.sh   # 36 runs
 ```
 
+### Head-to-head arm A: CT-FM's own pipeline
+
+Trains CT-FM through its authors' lighter recipe (`CT-FM/evaluation/totalseg.yaml`) on this
+repo's split, then scores that checkpoint and ours under both protocols. It needs its own
+venv and a one-time setup:
+
+```bash
+python3.10 -m venv ../CT-FM/.venv
+../CT-FM/.venv/bin/pip install -r ../CT-FM/requirements.txt
+../CT-FM/.venv/bin/python scripts/setup_ctfm_original.py   # lighter patch + dataset view
+GPU=0 bash scripts/run_ctfm_original.sh                     # 300 epochs, auto-resumes
+python -m scripts.eval_bridge --model ctfm_original --split test --source-affine true \
+    --checkpoint ../CT-FM/evaluation/runs/totalseg/checkpoints/ct_fm_headtohead_v1/best.ckpt
+```
+
+`--source-affine true` is required. CT-FM's pipeline trains at the native 1.5 mm, and the
+default resolves to this repo's 2.25 mm corpus. `results/bridge/*_WRONG_2p25mm.json` is what
+that mistake looks like.
+
+The setup script does two things. It patches the pinned `lighter==0.0.3a18`, which otherwise
+crashes on the first training step after every validation epoch. It also builds
+`$DATA_ROOT/TotalSegmentatorDataset_ctfm` (symlinks plus a comma-separated `meta.csv`),
+after `prepare_data` has written the merged labels CT-FM reads. The patch lives inside the
+venv, so **reinstalling that venv reverts it**. Re-run the setup script afterwards;
+`run_ctfm_original.sh` refuses to start on an unpatched lighter. Single-GPU deviations from
+the published recipe are in `configs/ctfm_original/local.yaml`. Results are in
+`results/bridge/`.
+
 ## Three results worth knowing before you read numbers
 
 - **Dice must be averaged over gt-present classes only.** A case holds ~60 of 117

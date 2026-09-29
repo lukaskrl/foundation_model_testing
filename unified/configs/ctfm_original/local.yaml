@@ -1,0 +1,17 @@
+# Overrides for CT-FM's own lighter pipeline (head-to-head arm A), layered on top of
+# CT-FM/evaluation/totalseg.yaml + evaluation/baselines/segresnetds_ctfm.yaml by
+# scripts/run_ctfm_original.sh. Faithful to totalseg.yaml otherwise: 300 epochs,
+# 96x160x160 patches, SPL orientation, val on crops up to 192x240x240.
+#
+# Machine paths (vars#dataset_dir, vars#cache_dir, vars#save_dir) are NOT set here:
+# the launcher passes them on the command line, resolved from FM_ROOT / DATA_ROOT.
+# The dataset dir is the one scripts/setup_ctfm_original.py builds (symlinks + a
+# comma-separated meta.csv; the official one is ";"-separated with a BOM).
+vars#num_workers: 8
+trainer#devices: 1
+# Published config is devices=4 x batch_size=2 = effective batch 8 (~135 optimizer
+# steps/epoch). On one GPU we match that with accumulation rather than training at
+# effective batch 2, which would be a different recipe.
+trainer#accumulate_grad_batches: 4
+trainer#strategy: "auto"
+trainer#sync_batchnorm: False
