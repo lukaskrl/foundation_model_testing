@@ -427,3 +427,22 @@ Ablations: each changes one thing in the recipe of `runs/upsampler/dino3d_label`
 
 The transfer matrix probes each `<encoder>_label_norm` upsampler on every encoder (the diagonal
 is the per-encoder upper bound).
+
+### Test split, dino3d heads (all 89 cases, 2026-10-05; `python -m scripts.upsampler_heads --test`)
+
+Macro means: I1 Dice 0.765 / NSD 1.5 mm 0.849; I1 + trilinear 0.770 / 0.854; I1 + guided 0.811 / 0.869;
+I2 0.828 / 0.872. Paired differences, 95% bootstrap CI over cases (2000 resamples):
+
+| a − b | Dice all | Dice thin (46) | Dice thick (69) | NSD 1.5 mm all |
+|---|---|---|---|---|
+| guided − trilinear | +0.041 [0.037, 0.045], 116/117 up | +0.059 [0.052, 0.066], 46/46 up | +0.030 [0.027, 0.034], 69/69 up | +0.015 [0.011, 0.020] |
+| trilinear − I1 | +0.005 [0.003, 0.007] | +0.005 | +0.005 | +0.005 |
+| guided − I1 | +0.046 [0.042, 0.050] | +0.065 | +0.035 | +0.020 |
+| I2 − I1 | +0.063 [0.060, 0.066] | +0.099 | +0.041 | +0.023 |
+| guided − I2 | −0.017 [−0.021, −0.013] | −0.034 | −0.006 | −0.003 [−0.007, +0.002] |
+
+The validation picture holds on test: guided − trilinear +0.041 (val +0.043); guided reaches 73% of
+I2's gain over I1 (val 74%). The NSD gains are much smaller than the Dice gains (thin Dice +0.059 but
+thin NSD 1.5 mm +0.012). One reading, not yet checked: the guidance mostly recovers missing volume
+of thin structures rather than moving boundaries that were already within a voxel. At 1.5 mm, guided
+and I2 do not differ on NSD.

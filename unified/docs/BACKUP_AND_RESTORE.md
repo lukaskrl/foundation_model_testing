@@ -18,6 +18,7 @@ outside git and has to be copied off and put back at the **same absolute paths**
 | should | `/home/lukas/data/cache/TotalSeg/3e6024a06c45/` | 136 GB | the 1.5 mm preprocessing cache every interface run reads; without it the first epoch of the first run rebuilds it |
 | optional | `/home/lukas/data/cache/upsampler/` | 31 GB | probe volume store (`vol15`, 19 GB) and feature banks (`banks`, 12 GB); both are rebuilt automatically (`scripts/upsampler_prepare.py`, then the probe builds missing banks) in roughly 1–2 h |
 | optional | `/home/lukas/data/model_checkpoints/` | 11 MB | |
+| optional | `/tmp/claude-1007/-home-lukas-projects-foundation-model-testing/` | 290 MB | Claude's scratch space: literature notes from the prior-art searches (`*/scratchpad/lit*_NOTES.md`) and the papers they cite, for the related-work section |
 | skip | `/home/lukas/data/cache/TotalSeg/833d9d046402/` | 42 GB | the old 2.25 mm cache (pre-spacing-fix runs only) |
 | skip | `/home/lukas/data/cache/ctfm_lighter/` | 136 GB | CT-FM original-pipeline arm only; rebuilt on use |
 | skip | `../env/` | 5 GB | rebuilt from `requirements.lock.txt` |
