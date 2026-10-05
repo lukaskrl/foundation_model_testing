@@ -41,6 +41,7 @@ from unified.upsampler.probe import dice_ce_loss, probe_volumes  # noqa: E402
 DEFAULT_STORE = "/home/lukas/data/cache/upsampler/vol15"
 N_CLASSES = 118
 PROBE_TRAIN_VOLS = 50        # must match scripts/upsampler_probe.py --n-train-vol
+SINGLE_WINDOW = (-1000.0, 1000.0)   # --single-window: drops the soft-tissue window
 
 
 class ScaledHead(torch.nn.Module):
@@ -56,8 +57,13 @@ class ScaledHead(torch.nn.Module):
 
 
 def module_kwargs(a):
-    return dict(dim=a.dim, width=a.width, depth=a.depth, radius=a.radius,
-                feature_keys=a.feature_keys)
+    kw = dict(dim=a.dim, width=a.width, depth=a.depth, radius=a.radius,
+              feature_keys=a.feature_keys)
+    if a.no_ct:
+        kw["guide_ct"] = False
+    if a.single_window:
+        kw["windows"] = [SINGLE_WINDOW]
+    return kw
 
 
 def main():
@@ -77,6 +83,13 @@ def main():
     ap.add_argument("--depth", type=int, default=3)
     ap.add_argument("--radius", type=int, default=1)
     ap.add_argument("--feature-keys", action="store_true")
+    # ablations (module kwargs, saved in the checkpoint so the probe rebuilds the same module)
+    ap.add_argument("--no-ct", action="store_true",
+                    help="guidance sees a constant image: weights from geometry only")
+    ap.add_argument("--single-window", action="store_true",
+                    help=f"one HU window {SINGLE_WINDOW} instead of the default two")
+    ap.add_argument("--n-train-vol", type=int, default=None,
+                    help="label objective: train on only the first N training volumes")
     ap.add_argument("--norm-feats", action="store_true",
                     help="label objective: head on features / global std, log-prior bias")
     ap.add_argument("--out-stride", type=int, default=2,
@@ -103,7 +116,9 @@ def main():
         # labels are used: keep the probe bank's volumes and the val split out entirely
         held = set(probe_volumes(store, "train", PROBE_TRAIN_VOLS)[0])
         rest = [s_ for s_ in train_ids if s_ not in held]
-        train_ids, val_ids = rest[:-12], rest[-12:]
+        train_ids, val_ids = rest[:-12][: a.n_train_vol], rest[-12:]
+        print(f"label objective: {len(train_ids)} training volumes, {len(val_ids)} for validation",
+              flush=True)
     enc = FrozenEncoder(a.encoder, device=dev)
     sample = SAMPLERS[a.objective]
     kw = dict(patch=a.patch)

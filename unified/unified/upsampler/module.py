@@ -288,9 +288,10 @@ class GuidedUpsampler3D(nn.Module):
     def __init__(self, dim: int = 32, width: int = 32, depth: int = 3, radius: int = 1,
                  windows: Sequence[Tuple[float, float]] = DEFAULT_WINDOWS,
                  feature_keys: bool = False, n_basis: int = 32, out_stride: int = 2,
-                 chunk: int = 256):
+                 chunk: int = 256, guide_ct: bool = True):
         super().__init__()
         self.windows = [tuple(map(float, w)) for w in windows]
+        self.guide_ct = guide_ct
         self.dim, self.radius, self.out_stride, self.chunk = dim, radius, out_stride, chunk
         self.guide = GuidanceEncoder(len(self.windows), width, depth)
         self.to_q = nn.Conv3d(width, dim, 1)
@@ -308,6 +309,10 @@ class GuidedUpsampler3D(nn.Module):
 
     # ------------------------------------------------------------ helpers
     def window(self, ct_hu):
+        if not self.guide_ct:
+            # Ablation: a constant image, so queries and keys are the same everywhere and
+            # the weights depend only on the neighbour geometry (the positional bias).
+            return ct_hu.new_zeros(ct_hu.shape[0], len(self.windows), *ct_hu.shape[2:])
         chans = [((ct_hu.clamp(lo, hi) - lo) / (hi - lo)) * 2 - 1 for lo, hi in self.windows]
         return torch.cat(chans, 1)
 

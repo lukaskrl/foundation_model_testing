@@ -402,3 +402,28 @@ Epoch 25 (first validation, one seed; `python -m scripts.upsampler_heads`):
   GPU3: per-encoder upsamplers with `--norm-feats` plus a dino3d control (`runs/upsampler/gpu3_oct5.sh`).
   Feature std per encoder: dino3d 1.03, SAM-Med3D 0.14, CT-FM 33.1, CT-CLIP 1.00 — so the first
   round's SAM-Med3D and CT-FM heads were mis-scaled in opposite directions.
+
+### Round before the node wipe (queued 2026-10-05 ~14:20; wipe Wed 7 Oct morning)
+
+Backup list and restore/relaunch commands: `docs/BACKUP_AND_RESTORE.md`.
+
+| GPU | job | state at the wipe |
+|---|---|---|
+| 0 | SAM-Med3D I1 + guided to 250 epochs (~Oct 6 09:30), then its test eval (`gpu0_oct5.sh`) | done |
+| 2 | dino3d I2 test eval, then **SAM-Med3D I1 + trilinear** control (`samMed3d_i1t_frz_pt_f100`, 128³, 250 epochs; `gpu2_oct5b.sh`) | ~epoch 80–90; resume after the reset |
+| 3 | after the normalized per-encoder upsamplers: eight upsampler ablations on dino3d, then probes of all of them and the transfer matrix on all four encoders, then the SAM-Med3D I1 and dino3d I2 + guided test evals (`gpu3_oct5b.sh`) | done by Oct 6 morning |
+
+Ablations: each changes one thing in the recipe of `runs/upsampler/dino3d_label` (label objective,
+4000 steps, `--val-batches 12`), output `runs/upsampler/dino3d_abl_<name>`:
+
+| name | change | question |
+|---|---|---|
+| `noct` | `--no-ct`: the guidance CNN sees a constant image, so the weights depend only on the neighbour geometry | is the gain the CT, or a learned interpolation kernel? |
+| `seed1`, `seed2` | `--seed 1/2` | probe-level seed noise for every other row |
+| `r2` | `--radius 2` (125 neighbours instead of 27) | neighbourhood size |
+| `1win` | `--single-window` (only −1000..1000 HU, no soft-tissue window) | CT windowing |
+| `n25`, `n75` | `--n-train-vol 25/75` (of 238 labelled volumes) | how many labelled volumes the upsampler needs |
+| `fkeys` | `--feature-keys` (keys also read the features, channel-count-invariant) | CT-only attention vs also the features |
+
+The transfer matrix probes each `<encoder>_label_norm` upsampler on every encoder (the diagonal
+is the per-encoder upper bound).
