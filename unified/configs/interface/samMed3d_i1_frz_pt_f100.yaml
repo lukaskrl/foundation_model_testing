@@ -1,0 +1,44 @@
+# Arm I1 on SAM-Med3D — the unseen-encoder half of the upsampler-inside-a-head experiment
+# (docs/UPSAMPLER_PLAN.md, "Inside a trained head"). Hand-written; not part of the Arm
+# N/S/B/W matrix.
+#
+# 128³ patches, not 96³: SAM-Med3D was pretrained on 128³ crops at 1.5 mm, so at 128³ the
+# encoder sees its own canvas (no resize) and its 8³ token grid sits at stride 16 exactly,
+# which the pyramid-free interface needs (at 96³ the wrapper resizes to 128³ and the grid
+# lands at stride 12, which the interface rejects). Batch 1 x 6 keeps the effective batch of
+# the dino3d runs (3 x 2). Run for 250 epochs (EPOCHS=250): 2 x 128³ patches per volume per
+# epoch is 1.19x the voxels of 2 x 96³, so 250 epochs here ≈ 500 epochs of the dino3d recipe.
+# Same 1.5 mm cache as the dino3d interface runs (use_source_affine: true).
+model:
+  name: sam_med3d
+  batch_size: 1
+  weights: /home/lukas/projects/foundation_model_testing/weights/SAM-Med3D/sam_med3d_turbo.pth
+  preprocessing:
+    intensity:
+      mode: znorm
+      a_min: -1000.0
+      a_max: 1000.0
+      mask_threshold: 0.0
+      aug_scale: 14.0
+  kwargs:
+    arch: vit_b_ori
+    patch_size: 16
+    in_chans: 1
+    window_size: 14
+    out_chans: 384
+    use_rel_pos: true
+    interface: i1
+    interface_width: 256
+    interface_patch_size: [128, 128, 128]
+  grad_accum_steps: 6
+  freeze_backbone: true
+  pretrained: true
+data:
+  train_fraction: 1.0
+  use_source_affine: true
+  patch_size: [128, 128, 128]
+head:
+  name: interface_seg_head
+eval:
+  sliding_window:
+    roi_size: [128, 128, 128]

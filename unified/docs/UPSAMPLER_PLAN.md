@@ -21,6 +21,16 @@ Every experiment below serves that sentence.
   raw-CT stem closes 79% of it. So most of a frozen ViT's dense deficit here is a resolution-interface problem.
 - 2D encoder-agnostic upsamplers exist: AnyUp (arXiv 2510.12764, ICLR 2026 oral), JAFAR, LoftUp, FeatUp,
   DiveUp (arXiv 2603.13571). No 3D or medical version was found in arXiv checks on 2026-09-28.
+- Re-check 2026-10-02 found closer work, none of which upsamples native 3D encoders encoder-agnostically:
+  - VoxelFeat (MIDL 2025): FeatUp extended to CT volumes with 3D position encodings, for a 2D encoder
+    (SAM2), label-free, trained per encoder, used for interactive segmentation. Must be cited; our
+    novelty claim narrows to "encoder-agnostic, for native 3D encoders, transfers unchanged".
+  - VoxCor (arXiv 2605.13798): training-free triplanar 2D-ViT features plus a closed-form projection.
+  - Upsample Anything (CVPR 2026): per-image test-time-optimised Gaussian kernels, encoder-agnostic,
+    training-free. A 3D port is the strongest training-free baseline after our bilateral.
+  - RaysUp (arXiv 2606.22749), Weighted Reverse Convolution (arXiv 2605.17472): more 2D upsamplers.
+  - "Big, Bright, or Invisible" (arXiv 2608.05960): frozen 3D CT encoders miss small, low-contrast
+    findings. Supports the motivation.
 
 ### Why it is a method, not a benchmark
 
@@ -273,3 +283,122 @@ decoder learn the same edge alignment itself? Design, all on frozen dino3d at 1.
 - Reading the outcome: near or above I2 → a reusable, encoder-agnostic alternative to a per-encoder
   stem; above I1 but well below I2 → partial; no gain over the trilinear control → the linear-probe
   gains do not survive a trained decoder.
+
+Epoch 25 (first validation, one seed; `python -m scripts.upsampler_heads`):
+
+| val mean Dice | I1 | I1 + tri | I1 + guided | I2 |
+|---|---|---|---|---|
+| epoch 25 | 0.5733 | 0.5825 | **0.6393** | 0.6582 |
+| epoch 50 | 0.6388 | 0.6464 | **0.6772** | 0.7001 |
+| epoch 75 | 0.6661 | 0.6749 | **0.6991** | 0.7286 |
+| epoch 100 | 0.6766 | 0.6861 | **0.7348** | 0.7431 |
+| epoch 125 | 0.6830 | 0.7034 | **0.7547** | 0.7551 |
+| epoch 150 | 0.6986 | 0.7126 | **0.7710** | 0.7824 |
+| epoch 175 | 0.7112 | 0.7270 | **0.7687** | 0.7918 |
+| epoch 200 | 0.7200 | 0.7366 | **0.7746** | 0.7977 |
+| epoch 225 | 0.7393 | 0.7427 | **0.7824** | 0.8039 |
+| epoch 250 | 0.7446 | 0.7437 | **0.7875** | 0.7996 |
+| epoch 275 | 0.7382 | 0.7518 | **0.7901** | 0.8066 |
+| epoch 300 | 0.7508 | 0.7524 | **0.8048** | 0.8121 |
+| epoch 325 | 0.7498 | 0.7575 | **0.8053** | 0.8198 |
+| epoch 350 | 0.7610 | 0.7662 | **0.8102** | 0.8149 |
+| epoch 375 | 0.7633 | 0.7646 | **0.8113** | 0.8248 |
+| epoch 400 | 0.7666 | 0.7698 | **0.8176** | 0.8230 |
+| epoch 425 | 0.7676 | 0.7719 | **0.8121** | 0.8299 |
+| epoch 450 | 0.7692 | 0.7742 | **0.8148** | 0.8332 |
+| epoch 475 | 0.7713 | 0.7733 | **0.8142** | 0.8328 |
+| epoch 500 | 0.7707 | 0.7743 | **0.8156** | 0.8340 |
+| **best** | 0.7713 (475) | 0.7743 (500) | **0.8176** (400) | 0.8340 (500) |
+
+- trilinear − I1 +0.009 (thin +0.003, 23/46 up; ρ(Δ, mm) +0.22): the extra path alone does little.
+- guided − trilinear +0.057 (thin +0.083, 42/46 up; thick +0.040, 51/69 up; ρ −0.42): the gain is
+  the guidance and concentrates in thin classes, as in the probe.
+- guided recovers 78% of I2 − I1 with zero trainable parameters (I2 adds 37,344).
+- Per-class swings are ±0.1–0.3 this early (stomach −0.13, scapula_right +0.33 vs I1); gaps may
+  still shrink with training (I2 − I1 went 0.085 → 0.063 from epoch 25 to 500).
+- Epoch 50: the gaps shrink. guided − trilinear +0.031 (thin +0.045, 34/46 up; thick +0.022, 58/69
+  up), guided − I1 +0.038 (63% of I2 − I1). trilinear − I1 stays small (+0.008). guided − I2 is
+  about flat overall (−0.019 → −0.023) but widens on thin classes (−0.021 → −0.040): I1 catches up
+  with both, while guided trails I2 by a roughly constant margin. Epoch 100 decides whether it holds.
+- Epochs 75 and 100: the shrinkage was not a trend. guided − trilinear went +0.024 (75) then +0.049
+  (100; thin +0.066, 39/46 up; thick +0.037, 56/69 up; ρ −0.37); guided − I1 +0.058 = 87% of
+  I2 − I1, and guided matches I2 on thick classes (+0.000) while trailing on thin (−0.021).
+  trilinear − I1 stays at +0.009 at every epoch. Single-epoch validation is noisy (guided moved
+  +0.036 from 75 to 100, I1 +0.011), so the summary is the mean over epochs 25–100: guided − tri
+  +0.040, guided − I1 +0.049, I2 − I1 +0.069 (guided recovers about 70% of the stem's gain).
+- Epochs 125 and 150: the lead holds and grows. At 150, guided − trilinear +0.058 (thin +0.076,
+  43/46 up; thick +0.047, 59/69 up; ρ −0.48), guided − I1 +0.072 = 86% of I2 − I1. Guided ties I2
+  at 125 (0.7547 vs 0.7551) and at 150 already equals I1's best after 500 epochs (0.7710 vs
+  0.7713). Guided ≥ I2 on thick classes at both epochs; the stem keeps a thin-class edge (−0.021,
+  −0.039). trilinear − I1 +0.020 and +0.014. Mean over epochs 25–150: guided − tri +0.045,
+  guided − I1 +0.057, I2 − I1 +0.072 (79%).
+- Epoch 175: guided − trilinear +0.042 (thin +0.054, 40/46 up), guided − I1 +0.057, guided − I2
+  −0.023 (thin −0.044, thick −0.009). trilinear − I1 has crept up to +0.016 (+0.017 at 200).
+- 2026-09-30 10:44 the container restarted and killed both runs (guided mid-epoch 200, trilinear
+  at 202). Both resumed at 10:49 with `--resume` (guided from epoch_0190.pt, trilinear from
+  epoch_0200.pt; model, optimizer, scheduler and best Dice restored). One resume each: say so in
+  the paper.
+- Epochs 200–375 (status 2026-10-01): the guided lead is stable, not shrinking. Mean over these
+  eight validations: guided − trilinear +0.044 (thin +0.061, thick +0.032, ρ −0.55), guided − I1
+  +0.050, I2 − I1 +0.064 (78%), guided − I2 −0.014 (thin −0.029, thick −0.005). The trilinear
+  control converges back to I1 (+0.001 at 375). At 375: guided − trilinear +0.047 with 45/46 thin
+  classes up, ρ −0.73; guided ≥ I1 on all 46 thin classes; guided 0.811 already 0.04 above I1's
+  500-epoch best (0.7713).
+- **Final (both done 2026-10-02; best val Dice, one seed).** guided − trilinear +0.043 (thin +0.057,
+  46/46 up; thick +0.034, 68/69 up; ρ −0.63); guided − I1 +0.046 (every one of 115 classes up);
+  I2 − I1 +0.063, so guided recovers 74%. trilinear − I1 +0.003 (27/46 thin up): the extra path
+  alone is nothing. guided − I2 −0.016 (thin −0.033, 2/46 up; thick −0.006). Mean thin Dice: I1
+  0.714, tri 0.719, guided 0.775, I2 0.808. Over epochs 400–500 guided plateaued near 0.815 while
+  I2 kept climbing, so the gap to I2 widened from −0.006 (epoch 400) to −0.018 (epoch 500).
+  Not done yet: the test split.
+
+### Next round (launched 2026-10-02; scope: 3D only, 2D AnyUp baseline dropped)
+
+| # | experiment | where | status |
+|---|---|---|---|
+| 1 | test split (89 volumes), per case Dice + NSD 1/2 vox, for the four finished dino3d heads | GPU0, `scripts/upsampler_test_eval.py` → `results/upsampler/test_heads/` | running |
+| 2 | label-supervised upsampler trained per encoder (sam_med3d, ctfm, ctclip): transfer upper bound | GPU0 after 1, `runs/upsampler/<enc>_label` | queued |
+| 3 | probe with each encoder's own upsampler, merged into `stage2_<enc>.json` | GPU0 after 2 | queued |
+| 4 | **I2 + guided skip** (`dino3d_i2g_frz_pt_f100`): does it stack on the stem? 4,394,582 params = I2 | GPU2, 500 epochs, 1.31 s/step, 71 GB | running since 09:50 |
+| 5 | **SAM-Med3D I1 + guided** (`samMed3d_i1g_frz_pt_f100`), dino3d upsampler unchanged | GPU0 after 3, 250 epochs | queued |
+| 6 | **SAM-Med3D I1** (`samMed3d_i1_frz_pt_f100`), the baseline for 5 | GPU3 (user OK), 250 epochs, 0.96 s/step × 1082 steps/epoch, 54 GB | running since 10:05, ~Oct 5 midday |
+
+- SAM-Med3D runs at 128³ patches (its pretraining canvas at 1.5 mm): the 8³ token grid then sits
+  at stride 16, as the interface needs, with no resize. Batch 1 × 6 = the dino3d effective batch;
+  250 epochs of 2 × 128³ ≈ 1.19× the voxels of 500 epochs of 2 × 96³. 4,193,398 trainable
+  parameters in both arms. CPU dry run passed (strides [16] / [16, 2], HU sensitivity > 0).
+- Queues: `runs/upsampler/gpu0_oct2e.sh` (1–3, 5). Earlier versions: a/b hit eval OOM (four
+  full-volume evals at once); c hung 10:50–13:05 waiting with `kill -0` on a finished eval that
+  stayed a zombie (this container's PID 1 never reaps orphans); d was stopped because NSD sums in
+  fp16 overflowed for large surfaces (fixed in `upsampler_test_eval.py` and `probe.py:surface_counts`;
+  the probe's 96³ patches never reached the overflow, so its results stand). Log: `runs/upsampler/gpu0_oct2.log`. The GPU2 chain for 6 (`gpu2_after_i2g.sh`) was
+  cancelled when GPU3 freed up; GPU2 is open after 4 (~Oct 5).
+
+### Results of the 2026-10-02 round (status 2026-10-05 10:30)
+
+- **I2 + guided** (done 09:10): best val 0.8424 vs I2 0.8340 (+0.008; thin +0.012, 38/46 up; thick
+  +0.006). Ahead of I2 at 19 of 20 validations. The frozen upsampler stacks on a trainable stem.
+- **SAM-Med3D, unseen encoder, in a trained head** (I1 at epoch 245/250 on GPU3; I1 + guided at
+  190/250 on GPU0). Guided − I1 at every shared validation, epochs 25–175: +0.078, +0.055, +0.077,
+  +0.055, +0.056, +0.041, +0.047. At 175: thin +0.058 (42/46 up), thick +0.039, ρ −0.47.
+- **Test split** (89 volumes, paired bootstrap, 2000 resamples): I1 and trilinear complete; guided
+  and I2 stopped at 35/89 (case 36 OOMs whenever two evals share GPU0; rerun alone). On the 35
+  shared cases: guided − trilinear +0.042 [0.037, 0.047], thin +0.057 [0.048, 0.066]; trilinear − I1
+  +0.005 [0.001, 0.008]; guided − I2 −0.018 [−0.023, −0.013]. NSD at 3 mm barely moves on full
+  volumes (0.905–0.912; guided − trilinear +0.003 [−0.003, +0.008]): report NSD at 1.5 mm too.
+- **Per-encoder upsamplers** came out *worse* than the transferred dino3d one (SAM-Med3D thin +0.039
+  vs +0.124; CT-FM +0.050 vs +0.084; CT-CLIP equal on thin, better on thick). Confounded: their
+  throwaway linear heads barely learned (SAM-Med3D val loss 2.54 vs trilinear 2.72; dino3d 1.22 vs
+  1.55), the same feature-scale problem the probe had (SAM-Med3D std 0.14) because label training
+  does not normalize features. Not a valid upper bound yet; retrain with the probe's normalization
+  (global std, log-prior bias).
+- **GPU access lost in the container (2026-10-05, first seen ~10:00):** `nvidia-smi` fails with
+  "Failed to initialize NVML", new processes see 0 CUDA devices; running processes keep their
+  contexts and train on. Needs a container restart from the host.
+- **2026-10-05 13:32 container restart** (GPU access back, all four GPUs empty). SAM-Med3D I1 had
+  finished at 11:57 (best val 0.7184 at epoch 250). SAM-Med3D I1 + guided was in its epoch-200
+  validation, before the epoch-200 checkpoint, so it resumed from epoch 190 (≈3 h lost); ETA
+  ~Oct 6 09:30. GPU2: guided and I2 test evals, one at a time (`runs/upsampler/gpu2_oct5.sh`).
+  GPU3: per-encoder upsamplers with `--norm-feats` plus a dino3d control (`runs/upsampler/gpu3_oct5.sh`).
+  Feature std per encoder: dino3d 1.03, SAM-Med3D 0.14, CT-FM 33.1, CT-CLIP 1.00 — so the first
+  round's SAM-Med3D and CT-FM heads were mis-scaled in opposite directions.

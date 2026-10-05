@@ -190,8 +190,9 @@ def surface_counts(pred, lab, n_classes, tols=NSD_TOL):
             nG = F.max_pool3d(dG, 2 * t + 1, 1, t)
             nP = F.max_pool3d(dP, 2 * t + 1, 1, t)
             c = out[t]
-            c[0] += dP.sum((0, 2, 3, 4)).float(); c[1] += dG.sum((0, 2, 3, 4)).float()
-            c[2] += (dP * nG).sum((0, 2, 3, 4)).float(); c[3] += (dG * nP).sum((0, 2, 3, 4)).float()
+            f32 = dict(dtype=torch.float32)   # fp16 sums overflow (inf) past 65504 voxels
+            c[0] += dP.sum((0, 2, 3, 4), **f32); c[1] += dG.sum((0, 2, 3, 4), **f32)
+            c[2] += (dP * nG).sum((0, 2, 3, 4), **f32); c[3] += (dG * nP).sum((0, 2, 3, 4), **f32)
     return out
 
 

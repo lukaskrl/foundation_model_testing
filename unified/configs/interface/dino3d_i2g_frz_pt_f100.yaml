@@ -1,0 +1,40 @@
+# I2 + upsampled stride-2 skip (guided) — does the frozen upsampler stack on top of a
+# trainable raw-CT stem? (docs/UPSAMPLER_PLAN.md, "Inside a trained head"). Identical to
+# dino3d_i2_frz_pt_f100.yaml except for the three marked lines, which are the same as in
+# dino3d_i1g_frz_pt_f100.yaml: the coarsest projected feature is delivered again at stride 2
+# through the FROZEN guided upsampler trained on dino3d labels (runs/upsampler/dino3d_label/best.pt).
+# Zero extra trainable parameters over I2. data.guide_hu adds the raw-HU patch as input
+# channel 1; only the guided upsampler reads it (the stem keeps reading channel 0).
+# Same 500-epoch recipe, so validation at any epoch compares directly with I2 at that epoch.
+model:
+  name: dino3d
+  batch_size: 3
+  weights: /home/lukas/projects/foundation_model_testing/weights/3DINO/3dino_vit_weights.pth
+  preprocessing:
+    intensity:
+      mode: percentile
+      lower: 0.05
+      upper: 99.95
+      b_min: -1.0
+      b_max: 1.0
+      clip: true
+  kwargs:
+    arch: vit_large_3d
+    img_size: 112
+    patch_size: 16
+    in_chans: 1
+    extract_blocks: [5, 11, 17, 23]
+    interface: i2
+    interface_width: 256
+    interface_patch_size: [96, 96, 96]
+    interface_upsampler: guided                                  # <-- skip variant
+    interface_upsampler_ckpt: /home/lukas/projects/foundation_model_testing/unified/runs/upsampler/dino3d_label/best.pt   # <--
+  grad_accum_steps: 2
+  freeze_backbone: true
+  pretrained: true
+data:
+  train_fraction: 1.0
+  use_source_affine: true
+  guide_hu: true                                             # <-- HU as channel 1
+head:
+  name: interface_seg_head

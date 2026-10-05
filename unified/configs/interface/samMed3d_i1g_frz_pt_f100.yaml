@@ -1,0 +1,41 @@
+# I1 + upsampled stride-2 skip (guided) on SAM-Med3D — does the dino3d-trained upsampler,
+# unchanged, help a trained decoder on an encoder it never saw? (docs/UPSAMPLER_PLAN.md,
+# "Inside a trained head"). Identical to samMed3d_i1_frz_pt_f100.yaml except for the three
+# marked lines, which are the same as in dino3d_i1g_frz_pt_f100.yaml. Zero extra trainable
+# parameters. See samMed3d_i1_frz_pt_f100.yaml for the 128³ / batch / 250-epoch choices.
+model:
+  name: sam_med3d
+  batch_size: 1
+  weights: /home/lukas/projects/foundation_model_testing/weights/SAM-Med3D/sam_med3d_turbo.pth
+  preprocessing:
+    intensity:
+      mode: znorm
+      a_min: -1000.0
+      a_max: 1000.0
+      mask_threshold: 0.0
+      aug_scale: 14.0
+  kwargs:
+    arch: vit_b_ori
+    patch_size: 16
+    in_chans: 1
+    window_size: 14
+    out_chans: 384
+    use_rel_pos: true
+    interface: i1
+    interface_width: 256
+    interface_patch_size: [128, 128, 128]
+    interface_upsampler: guided                                  # <-- skip variant
+    interface_upsampler_ckpt: /home/lukas/projects/foundation_model_testing/unified/runs/upsampler/dino3d_label/best.pt   # <--
+  grad_accum_steps: 6
+  freeze_backbone: true
+  pretrained: true
+data:
+  train_fraction: 1.0
+  use_source_affine: true
+  patch_size: [128, 128, 128]
+  guide_hu: true                                             # <-- HU as channel 1
+head:
+  name: interface_seg_head
+eval:
+  sliding_window:
+    roi_size: [128, 128, 128]
