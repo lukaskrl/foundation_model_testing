@@ -1,0 +1,42 @@
+# I1 + upsampled stride-2 skip (trilinear) on SAM-Med3D — the control for
+# samMed3d_i1g_frz_pt_f100.yaml: the same extra path, filled by trilinear interpolation
+# instead of the guided upsampler, so guided − trilinear isolates the guidance on an encoder
+# the upsampler never saw (as dino3d_i1t_frz_pt_f100.yaml does for dino3d). Identical to
+# samMed3d_i1_frz_pt_f100.yaml except for the two marked lines. Zero extra trainable
+# parameters. data.guide_hu is set only so the pipeline matches the guided run; the trilinear
+# skip ignores it. See samMed3d_i1_frz_pt_f100.yaml for the 128³ / batch / 250-epoch choices.
+model:
+  name: sam_med3d
+  batch_size: 1
+  weights: /home/lukas/projects/foundation_model_testing/weights/SAM-Med3D/sam_med3d_turbo.pth
+  preprocessing:
+    intensity:
+      mode: znorm
+      a_min: -1000.0
+      a_max: 1000.0
+      mask_threshold: 0.0
+      aug_scale: 14.0
+  kwargs:
+    arch: vit_b_ori
+    patch_size: 16
+    in_chans: 1
+    window_size: 14
+    out_chans: 384
+    use_rel_pos: true
+    interface: i1
+    interface_width: 256
+    interface_patch_size: [128, 128, 128]
+    interface_upsampler: trilinear                               # <-- skip variant
+  grad_accum_steps: 6
+  freeze_backbone: true
+  pretrained: true
+data:
+  train_fraction: 1.0
+  use_source_affine: true
+  patch_size: [128, 128, 128]
+  guide_hu: true                                             # <-- HU as channel 1
+head:
+  name: interface_seg_head
+eval:
+  sliding_window:
+    roi_size: [128, 128, 128]

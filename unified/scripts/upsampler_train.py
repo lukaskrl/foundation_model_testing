@@ -41,11 +41,29 @@ from unified.upsampler.probe import dice_ce_loss, probe_volumes  # noqa: E402
 DEFAULT_STORE = "/home/lukas/data/cache/upsampler/vol15"
 N_CLASSES = 118
 PROBE_TRAIN_VOLS = 50        # must match scripts/upsampler_probe.py --n-train-vol
+SINGLE_WINDOW = (-1000.0, 1000.0)   # --single-window: drops the soft-tissue window
+
+
+class ScaledHead(torch.nn.Module):
+    """The throwaway linear head applied to features divided by a fixed global std."""
+
+    def __init__(self, conv, sd: float):
+        super().__init__()
+        self.conv = conv
+        self.register_buffer("sd", torch.tensor(float(sd)))
+
+    def forward(self, x):
+        return self.conv(x / self.sd)
 
 
 def module_kwargs(a):
-    return dict(dim=a.dim, width=a.width, depth=a.depth, radius=a.radius,
-                feature_keys=a.feature_keys)
+    kw = dict(dim=a.dim, width=a.width, depth=a.depth, radius=a.radius,
+              feature_keys=a.feature_keys)
+    if a.no_ct:
+        kw["guide_ct"] = False
+    if a.single_window:
+        kw["windows"] = [SINGLE_WINDOW]
+    return kw
 
 
 def main():
@@ -65,6 +83,15 @@ def main():
     ap.add_argument("--depth", type=int, default=3)
     ap.add_argument("--radius", type=int, default=1)
     ap.add_argument("--feature-keys", action="store_true")
+    # ablations (module kwargs, saved in the checkpoint so the probe rebuilds the same module)
+    ap.add_argument("--no-ct", action="store_true",
+                    help="guidance sees a constant image: weights from geometry only")
+    ap.add_argument("--single-window", action="store_true",
+                    help=f"one HU window {SINGLE_WINDOW} instead of the default two")
+    ap.add_argument("--n-train-vol", type=int, default=None,
+                    help="label objective: train on only the first N training volumes")
+    ap.add_argument("--norm-feats", action="store_true",
+                    help="label objective: head on features / global std, log-prior bias")
     ap.add_argument("--out-stride", type=int, default=2,
                     help="label objective: output stride before the final trilinear step")
     ap.add_argument("--val-every", type=int, default=500)
@@ -89,7 +116,9 @@ def main():
         # labels are used: keep the probe bank's volumes and the val split out entirely
         held = set(probe_volumes(store, "train", PROBE_TRAIN_VOLS)[0])
         rest = [s_ for s_ in train_ids if s_ not in held]
-        train_ids, val_ids = rest[:-12], rest[-12:]
+        train_ids, val_ids = rest[:-12][: a.n_train_vol], rest[-12:]
+        print(f"label objective: {len(train_ids)} training volumes, {len(val_ids)} for validation",
+              flush=True)
     enc = FrozenEncoder(a.encoder, device=dev)
     sample = SAMPLERS[a.objective]
     kw = dict(patch=a.patch)
@@ -102,6 +131,19 @@ def main():
     head = None
     if a.objective == "label":
         head = torch.nn.Conv3d(C, N_CLASSES, 1).to(dev)
+        if a.norm_feats:
+            # As the probe (unified/upsampler/probe.py:fit_and_eval): features divided by
+            # one global std, bias at the log class prior. Without it a small-scale encoder
+            # (SAM-Med3D, std 0.14) leaves the throwaway head nearly untrained, and the
+            # upsampler gets almost no signal.
+            draws = [draw(rng, train_ids) for _ in range(8)]
+            sd = float(torch.cat([s_.feats.flatten() for s_ in draws]).std())
+            cnt = torch.bincount(torch.cat([s_.target.flatten() for s_ in draws]).cpu(),
+                                 minlength=N_CLASSES).double()
+            with torch.no_grad():
+                head.bias.copy_(torch.log((cnt + 1) / (cnt + 1).sum()).float().to(dev))
+            head = ScaledHead(head, sd)
+            print(f"label head on features / {sd:.4f}, bias at the log class prior", flush=True)
     else:
         stats.fit([draw(rng, train_ids).feats for _ in range(8)])   # from training crops
 
