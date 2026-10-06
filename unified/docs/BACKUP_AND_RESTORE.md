@@ -6,6 +6,23 @@ outside git and has to be copied off and put back at the **same absolute paths**
 900 configs hard-code `/home/lukas/projects/foundation_model_testing/...` and
 `/home/lukas/data/...` (weights, dataset root, upsampler checkpoint, volume store).
 
+## 0. Container vs host paths (found 2026-10-06)
+
+The work runs in a Docker container (hostname W4; PID 1 is `sshd -D`). Only two folders are mounted
+from the host's data volume; everything else in the container's home lives in the container only:
+
+| container | host (`ssh -p 44022 lukas@192.168.16.144` lands here) |
+|---|---|
+| `/home/lukas/projects` | `/mnt/data/homes/lukas/projects` |
+| `/home/lukas/data` | `/mnt/data/homes/lukas/data` |
+| `/home/lukas/.claude`, dotfiles, `/tmp` | not visible from the host |
+
+For the backup, the container-only items (Claude memory folder, scratch notes, `.netrc`, `.gitconfig`,
+`.ssh`, `.hf-cli`, `.claude.json`) were copied into `/home/lukas/projects/container_home_backup/`
+(mode 700), so they can be pulled from the host. In a new container, copy them back into
+`/home/lukas/` (`rsync -a container_home_backup/ /home/lukas/`). The table below gives container
+paths.
+
 ## 1. What to copy
 
 | priority | path | size | why |
