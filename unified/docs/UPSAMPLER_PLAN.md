@@ -558,6 +558,22 @@ heads, linear/simple decoders, layer-tap pyramids); CNN pipelines with full-reso
 If only two GPUs are free (GPU1 and GPU3 were taken by another tenant on 2026-10-06), run #1 and #2
 and drop #5/#6. Freeze experiments ~16 Oct; paper due 26 Oct.
 
+### Which of the benchmark's encoders the upsampler is for (from `docs/NATIVE_GRIDS.md`)
+
+| group | encoders | finest native feature | role |
+|---|---|---|---|
+| single-scale ViTs | dino3d (16), SAM-Med3D (16 at 128³), CT-CLIP (9.6×4×4), nnFoundation-ViT (8) | one coarse token grid | **the target.** dino3d, SAM-Med3D done; CT-CLIP probe only (a head needs the I1 interface extended to anisotropic, non-power-of-two grids; its features are weak); nnFoundation-ViT planned |
+| hierarchical / Swin | VoCo-B/H, SuPreM-SwinUNETR, Merlin | stride 2 | marginal: only stride 2 → 1 is missing, which a conv stem already fills; VoCo trained on TotalSegmentator volumes. Skip |
+| CNNs, full pyramid | CT-FM, VISTA3D, SuPreM-UNet/SegResNet, STU-Net | stride 1 | nothing to upsample; **CT-FM is the control** (below) |
+| 2D per-slice | BiomedParse, LVM-Med | 1×16×16 | out of scope (user decision 2026-10-02) |
+
+**Control to add: CT-FM I1 + guided** (500 epochs, matched to CT-FM I1, ~2.5 days, 1 GPU): the CNN
+gets the same module. Small gain → the upsampler fixes a ViT-specific deficit (the thesis); a gain as
+large as the ViTs' → the gap reopens and the story becomes "helps every encoder". Reviewers will ask.
+Same for the nnFoundation pair if GPUs allow (CNN I1 + guided). Priority: after #1 and #2, before #3.
+Cheap extra: probe gain vs token stride over the four ViTs (8 → 16) as a supporting dose-response
+figure (confounded by feature quality).
+
 ### nnFoundation matched pair (#2)
 
 - **Models.** nnFoundation (arXiv 2609.26924, DKFZ, Sep 2026), weights on Hugging Face:
