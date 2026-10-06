@@ -529,3 +529,66 @@ frozen CNN one. Same I1 decoder for all; the CNN (CT-FM) feeds it its native pyr
   SAM-Med3D I2 run, so whether a stem closes the rest is untested.
 - Caveats: one CNN, two ViTs, frozen encoders, one seed per head; the models also differ in
   pretraining data, objective and size, so the claim is "these frozen ViTs vs this frozen CNN".
+
+## Plan after the node wipe (written 2026-10-06, before the backup)
+
+### Thesis, as of 2026-10-06
+
+Frozen 3D ViT foundation models lose to CNN ones on dense CT segmentation mainly because of their
+coarse tokens; a frozen, CT-guided upsampler, trained once with labels on one encoder and reused
+unchanged on any other, closes most of that gap at zero trainable parameters. Evidence so far:
+dino3d vs CT-FM on test (section "ViT vs CNN on the test split"): upsampler alone closes 60% of the
+gap, with a CT stem 97% (CNN − ViT = +0.002 [−0.004, +0.008]); the no-CT ablation shows the gain is
+the CT; the transfer matrix shows the dino3d-trained upsampler beats per-encoder ones on SAM-Med3D
+and CT-FM. The claim is scoped to pipelines that interpolate ViT tokens to finer grids (frozen-ViT
+heads, linear/simple decoders, layer-tap pyramids); CNN pipelines with full-resolution skips
+(nnU-Net, CT-FM, VISTA3D, SuPreM) have nothing to upsample and are out of scope by design.
+
+### Priorities (GPU launches still need the user's go-ahead on a named GPU)
+
+| # | experiment | why | cost | state |
+|---|---|---|---|---|
+| 1 | **Resume the SAM-Med3D I1 + trilinear control** to 250 epochs, then its test eval | separates guidance from the extra path on an unseen encoder (dino3d: tri ≈ I1) | ~2 days, 1 GPU (`docs/BACKUP_AND_RESTORE.md` §3) | stopped at epoch 90 for the wipe |
+| 2 | **nnFoundation matched pair** (below) | removes the main caveat of the ViT-vs-CNN claim: same data, objective and framework | adapters ~1 day; probe ~1 GPU-hour; 3 head runs ~3 days on 2 GPUs | planned |
+| 3 | 3DINO's own repo, its `Linear` head on BTCV, with the guided upsampler in place of its `nn.Upsample` | literal drop-in in a third-party pipeline + a dataset other than TotalSegmentator | glue ~½ day; short runs | needs BTCV (Synapse download; user) |
+| 4 | HaN-Seg probe | structures that are not TotalSegmentator classes (optic nerves, cochlea, glands) | data prep + ~1 GPU-hour | needs download |
+| 5 | SAM-Med3D I2 / I2 + guided | does a stem close the rest of SAM-Med3D's gap to the CNN (upsampler alone: 41%)? | 2 × ~3 days | optional |
+| 6 | Guided upsampler in the benchmark's U-Net decoder (`MultiCanvasNeck` interpolation → guided; Arm N and Arm S) | drop-in in a multi-level decoder | ~10 h per run | optional; #3 covers the claim better |
+
+If only two GPUs are free (GPU1 and GPU3 were taken by another tenant on 2026-10-06), run #1 and #2
+and drop #5/#6. Freeze experiments ~16 Oct; paper due 26 Oct.
+
+### nnFoundation matched pair (#2)
+
+- **Models.** nnFoundation (arXiv 2609.26924, DKFZ, Sep 2026), weights on Hugging Face:
+  `MIC-DKFZ/nnFoundationViT` (Primus, 40 layers, dim 1056, 16 heads, **8³ token patches**, 674M) and
+  `MIC-DKFZ/nnFoundationCNN` (ResEnc-L, 6 stages, 102M). Both MAE-pretrained (ViT mask ratio 0.8,
+  CNN 0.75 with 16³ masked patches) on the same 2.1M CT/MRI/PET volumes, 192³ crops, no fixed
+  target spacing, z-score normalization. Code: nnssl (GitHub, MIC-DKFZ).
+- **Why it matters.** Their own paper: "the convolutional nnFoundation model dominates spatially
+  localized tasks, whereas the transformer-based nnFoundation model excels in tasks requiring global
+  semantic reasoning and in frozen-feature settings". Closing that gap with a frozen, train-once
+  upsampler on their own pair is the strongest version of our thesis.
+- **Risk.** 8³ tokens are 8× finer by volume than dino3d's 16³, so the resolution gap may be
+  smaller. The upsampler measures neighbour offsets in cell units (`unified/upsampler/geometry.py:144`),
+  so nothing ties it to stride 16, but stride 8 is untested. The probe decides before any head run.
+- **Steps.**
+  1. Two backbone adapters (`unified/models/backbones/`), checked with `scripts/verify_setup.py
+     --load-weights`, `scripts/test_interface.py` (the I1 interface needs isotropic power-of-two
+     strides: ViT 8, CNN 1..32 should pass) and `scripts/test_upsampler.py --encoders`; add both to
+     `unified/upsampler/encoders.py` for the probe. Intensity: z-score (as `sam_med3d`'s `znorm`).
+  2. Probe (`scripts/upsampler_probe.py`, methods `trilinear bilateral up:runs/upsampler/dino3d_label/best.pt`)
+     on the ViT's last layer: does the guided upsampler help at stride 8, and how much?
+  3. If yes: head runs **CNN I1** (native pyramid), **ViT I1**, **ViT I1 + guided**, all on one
+     250-epoch schedule (they are compared with each other only; on dino3d the ranking was fixed from
+     epoch 25). Optional: ViT I2 and I2 + guided. Then test evals and
+     `scripts/upsampler_heads.py --test` with the pair added to `TEST_RUNS` / `PAIRS` / `GAPS`.
+  4. Memory/speed: the ViT at a 96³ patch has 12³ = 1,728 tokens through 40 layers; frozen, so no
+     activations are kept, but measure s/step before fixing the schedule.
+
+### Paper bookkeeping
+
+- Cite VoxelFeat (MIDL 2025), VesselBridge3D (stem prior art), nnFoundation (the gap we close),
+  UNETR (raw-image branch), AnyUp/FeatUp/JAFAR/LoftUp (2D upsamplers, out of scope).
+- Report NSD at 1.5 mm next to Dice: at 3 mm it saturates. Guided-skip NSD gains are smaller than
+  Dice gains on dino3d (thin +0.012 vs +0.059) but not on SAM-Med3D (+0.033).

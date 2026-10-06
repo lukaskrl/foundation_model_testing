@@ -54,6 +54,9 @@ and `../CT-FM/.venv/bin/python scripts/setup_ctfm_original.py` (lighter patch + 
 
 ## 3. Relaunch
 
+The experiment plan after the reset (priorities, nnFoundation pair, BTCV, HaN-Seg) is in
+`UPSAMPLER_PLAN.md`, "Plan after the node wipe".
+
 GPU launches need the user's go-ahead on a named GPU.
 
 | what | command (from `unified/`) | then |
