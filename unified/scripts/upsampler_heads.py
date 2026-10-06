@@ -27,6 +27,7 @@ TEST_RUNS = {
     "dino3d I2+guided": "dino3d_i2g_frz_pt_f100",
     "SAM-Med3D I1": "samMed3d_i1_frz_pt_f100", "SAM-Med3D I1+tri": "samMed3d_i1t_frz_pt_f100",
     "SAM-Med3D I1+guided": "samMed3d_i1g_frz_pt_f100",
+    "CT-FM I1": "ctfm_i1_frz_pt_f100",       # CNN reference: its native pyramid, strides 16..1
 }
 PAIRS = [  # a − b
     ("dino3d I1+guided", "dino3d I1+tri"), ("dino3d I1+tri", "dino3d I1"),
@@ -34,7 +35,12 @@ PAIRS = [  # a − b
     ("dino3d I2+guided", "dino3d I2"), ("dino3d I1+guided", "dino3d I2"),
     ("SAM-Med3D I1+guided", "SAM-Med3D I1+tri"), ("SAM-Med3D I1+guided", "SAM-Med3D I1"),
     ("SAM-Med3D I1+tri", "SAM-Med3D I1"),
+    ("CT-FM I1", "dino3d I1"), ("CT-FM I1", "dino3d I1+guided"), ("CT-FM I1", "dino3d I2"),
+    ("CT-FM I1", "dino3d I2+guided"), ("CT-FM I1", "SAM-Med3D I1"), ("CT-FM I1", "SAM-Med3D I1+guided"),
 ]
+# ViT-to-CNN gap closed: (X − ViT I1) / (CNN I1 − ViT I1), with the same decoder for all
+GAPS = [("dino3d I1", ["dino3d I1+tri", "dino3d I1+guided", "dino3d I2", "dino3d I2+guided"], "CT-FM I1"),
+        ("SAM-Med3D I1", ["SAM-Med3D I1+tri", "SAM-Med3D I1+guided"], "CT-FM I1")]
 METRICS = [("dice", "Dice"), ("nsd1", "NSD 1.5mm"), ("nsd2", "NSD 3mm")]
 THIN_MM = 8.0
 
@@ -117,6 +123,32 @@ def test_table(n_boot, seed=0):
                 up = int((d_cls[mask] > 0).sum())
                 cells.append(f"{g} {pt:+.4f} [{lo:+.4f},{hi:+.4f}] {up}/{mask.sum()} up")
             print(f"    {name:<10} " + "   ".join(cells))
+    gap_table(data, thick, n_boot)
+
+
+def gap_table(data, thick, n_boot, seed=0):
+    rng = np.random.default_rng(seed)
+    print(f"\nViT-to-CNN gap closed, (X − ViT I1) / (CNN − ViT I1), Dice, 95% bootstrap CI:")
+    for base, xs, cnn in GAPS:
+        xs = [x for x in xs if data[x]]
+        if not (data[base] and data[cnn] and xs):
+            continue
+        sids = sorted(set(data[base]) & set(data[cnn]).intersection(*[data[x] for x in xs]))
+        classes = sorted({c for s in sids for c in data[base][s]["dice"]})
+        thin = np.array([c in thick and thick[c]["thick_mm"] < THIN_MM for c in classes])
+        idx = rng.integers(0, len(sids), (n_boot, len(sids)))
+        M = {k: matrix(data[k], sids, "dice", classes) for k in [base, cnn, *xs]}
+        print(f"  {base} -> {cnn}  (n={len(sids)})")
+        for g, mask in {"all": np.ones(len(classes), bool), "thin": thin}.items():
+            pt = {k: np.nanmean(class_means(V)[mask]) for k, V in M.items()}
+            bt = {k: np.nanmean(class_means(V, idx)[:, mask], 1) for k, V in M.items()}
+            gap = pt[cnn] - pt[base]
+            cells = []
+            for x in xs:
+                r = (bt[x] - bt[base]) / (bt[cnn] - bt[base])
+                lo, hi = np.nanpercentile(r, [2.5, 97.5])
+                cells.append(f"{x.split(' ', 1)[1]} {100 * (pt[x] - pt[base]) / gap:.0f}% [{100 * lo:.0f},{100 * hi:.0f}]")
+            print(f"    {g:<5} gap {gap:+.4f}: " + "   ".join(cells))
 
 
 def main():

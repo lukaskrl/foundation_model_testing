@@ -501,3 +501,31 @@ main upsampler (`dino3d_label`), which is trained once on dino3d and applied unc
   test too (val +0.008).
 - SAM-Med3D I1: test Dice 0.715 (val 0.718), NSD 1.5 mm 0.791. I1 + guided finishes today; the
   trilinear control is stopped at epoch 90 for the wipe.
+
+### ViT vs CNN on the test split (2026-10-06)
+
+Framing proposed by the user: with the guided upsampler, frozen ViT foundation models can match a
+frozen CNN one. Same I1 decoder for all; the CNN (CT-FM) feeds it its native pyramid (strides 16 to
+1), the ViTs only their stride-16 tokens. Test split, 89 cases, `python -m scripts.upsampler_heads --test`.
+
+| head | test Dice | NSD 1.5 mm | CNN − this, Dice [95% CI] | ViT-to-CNN gap closed [95% CI] |
+|---|---|---|---|---|
+| **CT-FM I1 (CNN reference)** | **0.841** | **0.885** | — | — |
+| dino3d I1 | 0.765 | 0.849 | +0.077 [0.071, 0.083] (thin +0.116) | 0% |
+| dino3d I1 + trilinear | 0.770 | 0.854 | | 6% [3, 9] |
+| dino3d I1 + guided | 0.811 | 0.869 | +0.031 [0.025, 0.036] | **60% [55, 66]** (thin 56%) |
+| dino3d I2 (CT stem) | 0.828 | 0.872 | +0.013 [0.008, 0.019] | 83% [77, 90] |
+| **dino3d I2 + guided** | **0.839** | **0.880** | **+0.002 [−0.004, +0.008]** | **97% [91, 105]** (thin 99%) |
+| SAM-Med3D I1 | 0.715 | 0.791 | +0.126 [0.120, 0.133] | 0% |
+| SAM-Med3D I1 + guided | 0.767 | 0.825 | +0.074 [0.068, 0.081] | 41% [38, 44] (thin 44%) |
+
+- **dino3d with the CT stem and the guided upsampler is statistically indistinguishable from the CNN**:
+  Dice +0.002 [−0.004, +0.008], thin classes +0.002 [−0.007, +0.010] with the CNN ahead on only 23 of
+  46, NSD 1.5 mm +0.004 [−0.002, +0.011]. Only thick classes keep a small CNN edge (+0.006 [0.001, 0.011]).
+- The upsampler alone closes 60% of the gap; the stem alone 83%; together 97%. The stem is not ours
+  (VesselBridge3D, UNETR's raw-image branch); the upsampler adds no trainable parameters and is
+  trained once.
+- SAM-Med3D starts much further behind (0.126) and the upsampler closes 41% of it; there is no
+  SAM-Med3D I2 run, so whether a stem closes the rest is untested.
+- Caveats: one CNN, two ViTs, frozen encoders, one seed per head; the models also differ in
+  pretraining data, objective and size, so the claim is "these frozen ViTs vs this frozen CNN".
