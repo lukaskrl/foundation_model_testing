@@ -530,6 +530,25 @@ frozen CNN one. Same I1 decoder for all; the CNN (CT-FM) feeds it its native pyr
 - Caveats: one CNN, two ViTs, frozen encoders, one seed per head; the models also differ in
   pretraining data, objective and size, so the claim is "these frozen ViTs vs this frozen CNN".
 
+### State at the backup (2026-10-06 17:55)
+
+- **Finished and in git:** every probe (Stage 1/2, ablations, transfer matrix) and every test eval
+  (dino3d I1, I1 + trilinear, I1 + guided, I2, I2 + guided; SAM-Med3D I1, I1 + guided; CT-FM I1), all
+  89 cases each, in `results/upsampler/`. Checkpoints in `runs/` (backed up, not in git).
+- **Stopped, to resume:** SAM-Med3D I1 + trilinear control (`samMed3d_i1t_frz_pt_f100`), stopped by
+  `runs/upsampler/stop_i1t_ep90.sh` at 17:12 right after `epoch_0090.pt` (load-checked). Validation
+  so far, against I1 and I1 + guided at the same epochs:
+
+  | epoch | I1 | I1 + trilinear | I1 + guided |
+  |---|---|---|---|
+  | 25 | 0.526 | 0.542 | 0.605 |
+  | 50 | 0.577 | 0.557 | 0.632 |
+  | 75 | 0.603 | 0.628 | 0.679 |
+
+  guided − trilinear +0.052 to +0.075 at every point (mean +0.063); trilinear − I1 +0.007 on average
+  (−0.020 to +0.025). As on dino3d, the gain is the guidance, not the extra path.
+- **Nothing else of ours was running.** GPU1 and GPU3 were held by another tenant from 2026-10-06 morning.
+
 ## Plan after the node wipe (written 2026-10-06, before the backup)
 
 ### Thesis, as of 2026-10-06
@@ -548,7 +567,7 @@ heads, linear/simple decoders, layer-tap pyramids); CNN pipelines with full-reso
 
 | # | experiment | why | cost | state |
 |---|---|---|---|---|
-| 1 | **Resume the SAM-Med3D I1 + trilinear control** to 250 epochs, then its test eval | separates guidance from the extra path on an unseen encoder (dino3d: tri ≈ I1) | ~2 days, 1 GPU (`docs/BACKUP_AND_RESTORE.md` §3) | stopped at epoch 90 for the wipe |
+| 1 | **Resume the SAM-Med3D I1 + trilinear control** from `epoch_0090.pt` to 250 epochs, then its test eval | separates guidance from the extra path on an unseen encoder (dino3d: tri ≈ I1) | 160 epochs ≈ 2 days, 1 GPU (`docs/BACKUP_AND_RESTORE.md` §3) | stopped at epoch 90 for the wipe |
 | 2 | **nnFoundation matched pair** (below) | removes the main caveat of the ViT-vs-CNN claim: same data, objective and framework | adapters ~1 day; probe ~1 GPU-hour; 3 head runs ~3 days on 2 GPUs | planned |
 | 3 | 3DINO's own repo, its `Linear` head on BTCV, with the guided upsampler in place of its `nn.Upsample` | literal drop-in in a third-party pipeline + a dataset other than TotalSegmentator | glue ~½ day; short runs | needs BTCV (Synapse download; user) |
 | 4 | HaN-Seg probe | structures that are not TotalSegmentator classes (optic nerves, cochlea, glands) | data prep + ~1 GPU-hour | needs download |

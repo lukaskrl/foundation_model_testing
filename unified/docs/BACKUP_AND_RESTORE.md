@@ -26,10 +26,10 @@ outside git and has to be copied off and put back at the **same absolute paths**
 
 Not covered here: other things in the home directory (`~/3Ddinov3`, `~/env`, ...).
 
-Copy `runs/interface/samMed3d_i1t_frz_pt_f100/` last: it is the SAM-Med3D trilinear control,
-still training on the backup day. `runs/upsampler/stop_i1t_ep90.sh` stops it right after its
-epoch-90 checkpoint is written (expected Tue 6 Oct ~17:10) and logs the stop, with a load check of
-`epoch_0090.pt`, to `runs/upsampler/gpu0_oct2.log`. Copy the folder after that line appears.
+**State at backup time (2026-10-06 17:55):** nothing of ours is running. The SAM-Med3D trilinear
+control (`runs/interface/samMed3d_i1t_frz_pt_f100/`) was stopped at 17:12 right after its epoch-90
+checkpoint (`epoch_0090.pt`, load-checked; logged in `runs/upsampler/gpu0_oct2.log`), so the whole of
+`runs/` is safe to copy. All results are committed and pushed.
 
 ## 2. Restore
 
@@ -61,7 +61,7 @@ GPU launches need the user's go-ahead on a named GPU.
 
 | what | command (from `unified/`) | then |
 |---|---|---|
-| SAM-Med3D I1 + trilinear control, resume to 250 epochs (~2 days left) | `GPU=<n> EPOCHS=250 bash scripts/run_interface.sh configs/interface/samMed3d_i1t_frz_pt_f100.yaml` — resumes from the newest `epoch_*.pt` | `python -m scripts.upsampler_test_eval --run samMed3d_i1t_frz_pt_f100` |
+| SAM-Med3D I1 + trilinear control, resume from `epoch_0090.pt` to 250 epochs (160 epochs ≈ 2 days) | `GPU=<n> EPOCHS=250 bash scripts/run_interface.sh configs/interface/samMed3d_i1t_frz_pt_f100.yaml` — resumes from the newest `epoch_*.pt` | `python -m scripts.upsampler_test_eval --run samMed3d_i1t_frz_pt_f100` |
 | any test eval left unfinished | `python -m scripts.upsampler_test_eval --run <run>` — skips the cases already in `results/upsampler/test_heads/<run>_test.json` | |
 | any probe left unfinished | rerun the same `scripts.upsampler_probe` command — skips methods already in the JSON | |
 
