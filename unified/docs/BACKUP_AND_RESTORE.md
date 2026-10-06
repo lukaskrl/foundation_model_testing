@@ -28,7 +28,7 @@ Not covered here: other things in the home directory (`~/3Ddinov3`, `~/env`, ...
 
 Copy `runs/interface/samMed3d_i1t_frz_pt_f100/` last: it is the SAM-Med3D trilinear control,
 still training on the backup day. `runs/upsampler/stop_i1t_ep90.sh` stops it right after its
-epoch-90 checkpoint is written (expected Tue 6 Oct ~19:00) and logs the stop, with a load check of
+epoch-90 checkpoint is written (expected Tue 6 Oct ~17:10) and logs the stop, with a load check of
 `epoch_0090.pt`, to `runs/upsampler/gpu0_oct2.log`. Copy the folder after that line appears.
 
 ## 2. Restore
