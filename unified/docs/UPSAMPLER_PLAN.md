@@ -446,3 +446,58 @@ I2's gain over I1 (val 74%). The NSD gains are much smaller than the Dice gains 
 thin NSD 1.5 mm +0.012). One reading, not yet checked: the guidance mostly recovers missing volume
 of thin structures rather than moving boundaries that were already within a voxel. At 1.5 mm, guided
 and I2 do not differ on NSD.
+
+### Ablations and transfer matrix (probe, 2026-10-06)
+
+Same probe protocol as Stage 1/2 (50 train / 20 val volumes, linear probe, seed 0). Dice gain over
+trilinear, all classes / thin classes. Every ablation row changes one thing in the recipe of the
+main upsampler (`dino3d_label`), which is trained once on dino3d and applied unchanged to the others.
+
+| upsampler | dino3d | SAM-Med3D | CT-FM | CT-CLIP |
+|---|---|---|---|---|
+| trilinear (absolute) | 0.338 / 0.154 | 0.241 / 0.124 | 0.192 / 0.063 | 0.054 / 0.058 |
+| **main** (`dino3d_label`) | **+0.105 / +0.152** | **+0.088 / +0.124** | **+0.078 / +0.084** | **+0.044 / +0.058** |
+| seed 1 | +0.107 / +0.154 | +0.087 / +0.124 | +0.080 / +0.089 | +0.045 / +0.060 |
+| seed 2 | +0.104 / +0.148 | +0.087 / +0.121 | +0.078 / +0.082 | +0.045 / +0.060 |
+| **no CT** (constant guidance image) | **−0.001 / −0.002** | **−0.003 / −0.007** | **−0.005 / −0.007** | **+0.008 / +0.006** |
+| radius 2 (125 neighbours) | +0.110 / +0.156 | +0.089 / +0.124 | +0.083 / +0.091 | +0.046 / +0.062 |
+| one HU window | +0.101 / +0.144 | +0.086 / +0.124 | +0.073 / +0.074 | +0.041 / +0.054 |
+| 25 labelled volumes (of 238) | +0.102 / +0.143 | +0.085 / +0.120 | +0.076 / +0.079 | +0.041 / +0.052 |
+| 75 labelled volumes | +0.106 / +0.150 | +0.088 / +0.125 | +0.078 / +0.083 | +0.047 / +0.063 |
+| feature keys | +0.106 / +0.152 | +0.088 / +0.124 | +0.078 / +0.085 | +0.043 / +0.058 |
+| bilateral (classic, no training) | +0.010 / −0.001 | +0.015 / +0.009 | +0.006 / −0.008 | +0.026 / +0.037 |
+| trained on dino3d, normalized recipe | +0.103 / +0.150 | +0.087 / +0.125 | +0.079 / +0.085 | +0.048 / +0.067 |
+| trained on SAM-Med3D, normalized | +0.054 / +0.083 | *+0.073 / +0.088* | +0.048 / +0.027 | +0.061 / +0.070 |
+| trained on CT-FM, normalized | +0.045 / +0.063 | +0.040 / +0.032 | *+0.039 / +0.026* | +0.031 / +0.005 |
+| trained on CT-CLIP, normalized | −0.052 / −0.012 | −0.018 / +0.001 | −0.031 / −0.015 | *+0.084 / +0.073* |
+
+(Italics: an upsampler on its own training encoder. NSD 1.5 mm follows the same pattern; no CT is
+−0.014 / −0.015 / −0.013 / +0.002 there.)
+
+- **The whole gain is the CT.** With a constant guidance image the same module, trained the same way,
+  learns a geometry-only kernel that is no better than trilinear on any encoder (−0.005 to +0.008;
+  its own validation loss also ends equal to trilinear's, −1.417 vs −1.416). The guidance, not the
+  learned kernel shape or the extra training, carries every point of the gain.
+- **Seed noise is small:** the three seeds span 0.003 (dino3d), 0.001 (SAM-Med3D), 0.002 (CT-FM),
+  0.001 (CT-CLIP). Against that: radius 2 is a small, consistent gain (+0.001 to +0.005, 1.4×
+  training time); one window is a small, consistent loss (−0.002 to −0.005, thin up to −0.010);
+  feature keys change nothing (so the CT-only attention is enough and the module stays simpler);
+  25 labelled volumes keep 93–97% of the gain, 75 keep all of it.
+- **Transfer beats per-encoder training on 2 of 3 unseen encoders.** With the scale confound fixed
+  (`--norm-feats`), an upsampler trained on SAM-Med3D gives SAM-Med3D +0.073, below the dino3d-trained
+  one (+0.088); CT-FM's own +0.039 vs +0.078. Only CT-CLIP prefers its own (+0.084 vs +0.044). The
+  dino3d-trained upsampler is the best on dino3d, SAM-Med3D and CT-FM, and third on CT-CLIP (behind
+  CT-CLIP's own and SAM-Med3D's); the CT-CLIP-trained one hurts dino3d (−0.052). Hypotheses (unchecked): the training encoder's feature quality decides how good a
+  signal the throwaway head passes to the upsampler (dino3d's probe is the strongest, CT-CLIP's the
+  weakest); CT-CLIP's anisotropic, padded token grid differs in geometry from dino3d's isotropic
+  stride-16 grid, so its own upsampler fits that geometry.
+- The normalized dino3d recipe equals the main one (+0.103 vs +0.105, within seed noise), so the
+  main upsampler needs no retraining.
+
+### Test split, more heads (2026-10-06)
+
+- **dino3d I2 + guided − I2: Dice +0.011 [0.009, 0.014]**, thin +0.015 (42/46 up), thick +0.010;
+  NSD 1.5 mm +0.008 [0.006, 0.011]. Macro Dice 0.839 vs 0.828. The guided skip stacks on the stem on
+  test too (val +0.008).
+- SAM-Med3D I1: test Dice 0.715 (val 0.718), NSD 1.5 mm 0.791. I1 + guided finishes today; the
+  trilinear control is stopped at epoch 90 for the wipe.
