@@ -671,3 +671,13 @@ first validation at epoch 25 ≈ 17:00, done ≈ Oct 8 evening if the node is no
 a smaller gain than frozen (fine-tuning lets the ViT pack sub-token detail into its channels; the
 trainable stem already cut the frozen gain from +0.046 to +0.011). If the node is wiped, resume with
 the same `run_interface.sh` command (checkpoints every 10 epochs, if `runs/` survives).
+
+**Epoch 25 (2026-10-07):** guided 0.8584 vs trilinear 0.8439 (+0.0145), but the gain is almost all
+vertebra identity swaps in the trilinear run (T7 +0.43, T6 +0.40, T8 +0.25, T5 +0.11, T9 +0.10 —
+a counting/context error, not a boundary one). Without T5–T9: +0.0035. Thin classes +0.003
+(guided better in 26/46), thick +0.022 (38/69), all classes 64/115: no resolution effect yet.
+Training loss: guided ahead early (epoch 4 −0.17, epoch 12 −0.03), level by epoch 16; the trilinear
+run then dropped from ~1.25 to 0.63 in epochs 28–29 (the same regime change the frozen dino3d runs
+show around epochs 45–54, sharper here), the guided run had not yet by epoch 25. Read again at epoch
+50. For scale: fine-tuned, both arms are at 0.84–0.86 by epoch 25, against 0.58–0.67 for the frozen
+dino3d / CT-FM heads at epoch 25 (frozen best: CT-FM 0.851 at epoch 500). No crashes or restarts.
