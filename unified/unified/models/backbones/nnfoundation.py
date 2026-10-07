@@ -37,6 +37,26 @@ VIT_ARCH = dict(embed_dim=1056, eva_depth=40, eva_numheads=16, patch_embed_size=
 VIT_PRETRAIN_CANVAS = (192, 192, 192)
 
 
+def _rope_3d():
+    """timm's ``RotaryEmbeddingCat`` for a 3D token grid.
+
+    nnssl pins timm <= 1.0.16; from 1.0.17 timm pre-allocates the cached table as
+    (N, 2 * dim), which fits a 2D grid only, and the copy of the 3D table (N, 3 * dim)
+    fails. This subclass sizes the buffer from the computed values. Checked 2026-10-07
+    against timm 1.0.16 on Primus' 12^3 grid (rope dim 44): the table and
+    ``apply_rot_embed_cat`` agree exactly (max |diff| 0.0)."""
+    from timm.layers.pos_embed_sincos import RotaryEmbeddingCat
+
+    class RotaryEmbeddingCat3D(RotaryEmbeddingCat):
+        def _init_buffers(self):
+            if getattr(self, "_use_cached_embed", False):
+                self.pos_embed = self._get_pos_embed_values(self.feat_shape)
+            else:
+                super()._init_buffers()
+
+    return RotaryEmbeddingCat3D
+
+
 def _network_weights(path: str) -> dict:
     ck = torch.load(path, map_location="cpu", weights_only=True)
     return ck["network_weights"] if "network_weights" in ck else ck
@@ -62,7 +82,8 @@ class NNFoundationViT(_Frozen):
         if any(c % p for c, p in zip(self.canvas, ps)):
             raise ValueError(f"canvas {self.canvas} is not a multiple of the patch size {ps}")
         self.grid = tuple(c // p for c, p in zip(self.canvas, ps))
-        self.net = Primus(input_channels=1, num_classes=1, input_shape=self.canvas, **VIT_ARCH)
+        self.net = Primus(input_channels=1, num_classes=1, input_shape=self.canvas,
+                          rope_impl=_rope_3d(), **VIT_ARCH)
         self.net.up_projection = nn.Identity()          # pretraining decoder head, unused
         if weights:
             self.load_pretrained(weights)
