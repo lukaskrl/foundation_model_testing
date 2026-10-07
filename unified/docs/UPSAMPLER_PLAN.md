@@ -681,3 +681,13 @@ run then dropped from ~1.25 to 0.63 in epochs 28–29 (the same regime change th
 show around epochs 45–54, sharper here), the guided run had not yet by epoch 25. Read again at epoch
 50. For scale: fine-tuned, both arms are at 0.84–0.86 by epoch 25, against 0.58–0.67 for the frozen
 dino3d / CT-FM heads at epoch 25 (frozen best: CT-FM 0.851 at epoch 500). No crashes or restarts.
+
+**Epoch 50 (2026-10-07 22:33): no effect when fine-tuned.** Guided 0.8648 vs trilinear 0.8684
+(−0.0036; guided better in 48/115 classes). Without the 25 vertebra classes −0.0018 (36/90); thin
+−0.0015 (23/46), thick −0.0050 (25/69). The epoch-25 lead (+0.0145) was vertebra identity swaps and
+is gone (without vertebrae it was +0.0014 then). Both runs went through the training-loss drop
+(guided at epochs 26–27, trilinear 28–29) and are level since (~0.40–0.43). No crashes.
+Reading: once the ViT is fine-tuned it recovers sub-token detail itself, so the upsampler's benefit is
+specific to frozen encoders. This supports the frozen scope of the paper, with the fine-tuned pilot as
+the scope result, and it does not justify the nnU-Net port (decision rule: port only if guided clearly
+beat trilinear when fine-tuned).
