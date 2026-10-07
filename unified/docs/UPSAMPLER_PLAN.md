@@ -627,3 +627,34 @@ figure (confounded by feature quality).
   UNETR (raw-image branch), AnyUp/FeatUp/JAFAR/LoftUp (2D upsamplers, out of scope).
 - Report NSD at 1.5 mm next to Dice: at 3 mm it saturates. Guided-skip NSD gains are smaller than
   Dice gains on dino3d (thin +0.012 vs +0.059) but not on SAM-Med3D (+0.033).
+
+### nnFoundation probe (2026-10-07, before the wipe)
+
+Adapters: `unified/models/backbones/nnfoundation.py`, configs `configs/models/nnfoundation_{vit,cnn,cnn_s8}.yaml`
+(SPL, z-score over all voxels, as their pretraining). Same probe protocol as Stage 1/2; the
+dino3d-trained upsampler (`dino3d_label/best.pt`, trained on stride-16 tokens) applied unchanged.
+
+| encoder (grid) | trilinear Dice / thin | guided Δ Dice / thin / thick | NSD 1.5 mm Δ | bilateral Δ |
+|---|---|---|---|---|
+| **nnFoundation ViT** (Primus, 8³ tokens, 1056 ch) | **0.476** / 0.338 | **+0.074 / +0.105 / +0.053** | +0.088 | +0.029 |
+| nnFoundation CNN, stride-8 stage (256 ch) | 0.141 / 0.082 | +0.060 / +0.076 / +0.050 | +0.079 | +0.019 |
+| nnFoundation CNN, stride-16 stage | 0.003 | (stopped) | | |
+| *for reference:* dino3d (16³) | 0.338 / 0.154 | +0.105 / +0.152 / +0.074 | +0.196 | +0.010 |
+| SAM-Med3D (16³ at 128³) | 0.241 / 0.124 | +0.088 / +0.124 / +0.064 | +0.138 | +0.015 |
+| CT-FM level 4 (16³) | 0.192 / 0.063 | +0.078 / +0.084 / +0.074 | +0.134 | +0.006 |
+
+- **The upsampler transfers to stride 8.** Trained only on dino3d's 16³ cells, it adds +0.074 Dice
+  (thin +0.105) to the nnFoundation ViT's 8³ tokens: a fifth encoder, a different token size, width
+  and pretraining (MAE). nnFoundation ViT + guided (0.549) is the best probe of any encoder so far.
+  The gain is smaller than on 16³ encoders (thin +0.105 vs +0.124 to +0.152), as expected when the
+  tokens are finer, but that comparison is confounded by feature quality.
+- **The nnFoundation CNN's frozen features are weak for a linear probe**: 0.141 at stride 8, and its
+  stride-16 stage is nearly constant in space (spatial std 0.002 against channel offsets 0.005; a
+  random-init copy is not), probe Dice 0.003. In frozen linear probing the ViT is far ahead of the
+  CNN (0.476 vs 0.141 at the same grid), matching nnFoundation's own "ViT excels in frozen-feature
+  settings". The CNN's strength in their paper is fine-tuned, with its full decoder; whether the ViT
+  trails the CNN in a trained frozen head (CNN with its native pyramid, as CT-FM I1) still needs the
+  head runs (#2 in "Plan after the node wipe").
+- Engineering notes: Primus' 3D RoPE does not build under timm >= 1.0.17 (fixed by a subclass,
+  identical to timm 1.0.16's table); the ViT checkpoint is nnssl's EvaMAE (encoder keys only kept);
+  its 24³ absolute position embedding is interpolated to the 12³ canvas grid, as nnFoundation does.
