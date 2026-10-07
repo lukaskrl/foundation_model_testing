@@ -1,0 +1,17 @@
+# nnFoundation ViT (arXiv 2609.26924; MIC-DKFZ/nnFoundationViT on Hugging Face, CC-BY-SA-4.0), frozen.
+# See unified/models/backbones/nnfoundation.py. Pretraining preprocessing (adaptation_plan.json):
+# SimpleITK arrays (z, y, x) -> SPL, as CT-FM; ZScoreNormalization over ALL voxels of the image
+# (use_mask_for_norm false), no resampling. znorm with a wide clamp and no mask reproduces it.
+model:
+  name: nnfoundation_vit
+  batch_size: 2
+  weights: /home/lukas/projects/foundation_model_testing/weights/nnFoundation/ViT/checkpoint_final.pth
+  preprocessing:
+    axcodes: SPL
+    intensity:
+      mode: znorm
+      a_min: -1024.0
+      a_max: 3071.0
+      mask_threshold: -100000.0
+  kwargs:
+    canvas: [96, 96, 96]

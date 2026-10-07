@@ -1,6 +1,7 @@
 # Exact package set of ../env (Python 3.10.12) on 2026-10-05, the env every result in
 # results/upsampler and runs/interface was produced with. requirements.txt is the loose spec;
 # this pins it: python3.10 -m venv ../env && ../env/bin/pip install -r requirements.lock.txt
+# 2026-10-07: + dynamic-network-architectures (nnFoundation ViT/CNN backbones), installed --no-deps
 annotated-types==0.8.0
 beartype==0.22.9
 certifi==2026.7.22
@@ -9,6 +10,7 @@ click==8.4.2
 cuda-bindings==13.3.1
 cuda-pathfinder==1.7.0
 cuda-toolkit==13.0.3.0
+dynamic-network-architectures==0.4.4
 einops==0.8.2
 filelock==3.32.4
 fsspec==2026.7.0
