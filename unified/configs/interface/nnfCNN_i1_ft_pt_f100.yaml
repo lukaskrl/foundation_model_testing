@@ -1,0 +1,30 @@
+# nnFoundation CNN (ResEnc-L encoder, 90M), FINE-TUNED end-to-end, with the pyramid-free I1 head fed
+# its native pyramid (strides 16, 8, 4, 2, 1) — the CNN reference for the fine-tuned nnFoundation ViT
+# pilot (nnfViT_i1g / nnfViT_i1t), as CT-FM I1 is for dino3d. Same head, recipe (base.yaml), batch
+# 2 x 3 and EPOCHS=150 as the ViT pair. No upsampled skip (the CNN has native fine levels), so no
+# HU channel. Preprocessing as its pretraining: SPL, z-score over all voxels; aug_scale as the ViT.
+model:
+  name: nnfoundation_cnn
+  batch_size: 2
+  weights: /home/lukas/projects/foundation_model_testing/weights/nnFoundation/CNN/checkpoint_final.pth
+  preprocessing:
+    axcodes: SPL
+    intensity:
+      mode: znorm
+      a_min: -1024.0
+      a_max: 3071.0
+      mask_threshold: -100000.0
+      aug_scale: 6.0
+  kwargs:
+    max_stride: 16
+    interface: i1
+    interface_width: 256
+    interface_patch_size: [96, 96, 96]
+  grad_accum_steps: 3
+  freeze_backbone: false
+  pretrained: true
+data:
+  train_fraction: 1.0
+  use_source_affine: true
+head:
+  name: interface_seg_head
