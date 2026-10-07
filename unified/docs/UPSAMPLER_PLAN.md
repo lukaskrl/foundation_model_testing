@@ -658,3 +658,16 @@ dino3d-trained upsampler (`dino3d_label/best.pt`, trained on stride-16 tokens) a
 - Engineering notes: Primus' 3D RoPE does not build under timm >= 1.0.17 (fixed by a subclass,
   identical to timm 1.0.16's table); the ViT checkpoint is nnssl's EvaMAE (encoder keys only kept);
   its 24³ absolute position embedding is interpolated to the 12³ canvas grid, as nnFoundation does.
+
+### Fine-tuned nnFoundation ViT pilot (started 2026-10-07 11:46)
+
+User question: does the guided upsampler still help once the ViT is fine-tuned end-to-end (the
+regime where nnFoundation's CNN beats its ViT on segmentation)? Pair, identical except the skip:
+`nnfViT_i1g_ft_pt_f100` (I1 + guided, GPU0) vs `nnfViT_i1t_ft_pt_f100` (I1 + trilinear, GPU2);
+542,956,758 trainable parameters each; the benchmark's fine-tuning recipe (AdamW 2e-4 on all
+parameters, 10 warm-up epochs, AMP, clip 1.0; validation every 25 epochs, early stopping after 5
+rounds), batch 2 × 3, `EPOCHS=150`. ~1.3 s/step, 541 steps/epoch ≈ 12 min/epoch, 73 GB per GPU;
+first validation at epoch 25 ≈ 17:00, done ≈ Oct 8 evening if the node is not wiped first. Expected:
+a smaller gain than frozen (fine-tuning lets the ViT pack sub-token detail into its channels; the
+trainable stem already cut the frozen gain from +0.046 to +0.011). If the node is wiped, resume with
+the same `run_interface.sh` command (checkpoints every 10 epochs, if `runs/` survives).
