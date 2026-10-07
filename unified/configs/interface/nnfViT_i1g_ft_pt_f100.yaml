@@ -36,5 +36,3 @@ data:
   guide_hu: true                                             # HU as channel 1 (ignored by trilinear)
 head:
   name: interface_seg_head
-train:
-  val_interval_epochs: 10                                  # pilot: a comparison point every 10 epochs (both arms)
