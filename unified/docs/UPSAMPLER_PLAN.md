@@ -721,3 +721,8 @@ the fine-tuned guided pilot's epoch-100 validation, ~09:20). Batch 3 × 2 as the
 ≈ 11:25 (trilinear) and ≈ 13:35 (guided); done ≈ Oct 9 morning/noon. Expectation from the probe
 (+0.074) and the probe-to-head ratio on dino3d/SAM-Med3D (≈ 0.4–0.6): a head gain of roughly +0.03–0.04.
 The fine-tuned trilinear pilot was stopped at epoch 103 (`epoch_0100.pt` kept, resumable).
+
+**Stopped for the node reset (2026-10-08 13:09, user request):** trilinear at epoch 45 (epoch-25 val
+0.6728; resumes from `epoch_0040.pt`), guided during its epoch-25 validation (no reading; resumes from
+`epoch_0020.pt`). Both checkpoints load (epoch 40 / 20). Resume with `GPU=<n> EPOCHS=150 bash
+scripts/run_interface.sh configs/interface/nnfViT_i1{t,g}_frz_pt_f100.yaml`.
