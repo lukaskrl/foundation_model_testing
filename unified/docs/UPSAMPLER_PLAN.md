@@ -691,3 +691,6 @@ Reading: once the ViT is fine-tuned it recovers sub-token detail itself, so the 
 specific to frozen encoders. This supports the frozen scope of the paper, with the fine-tuned pilot as
 the scope result, and it does not justify the nnU-Net port (decision rule: port only if guided clearly
 beat trilinear when fine-tuned).
+
+**Epoch 75 (2026-10-08):** guided 0.8796 vs trilinear 0.8827 (−0.0030; 48/115 classes); without
+vertebrae −0.0030 (33/90), thin −0.0014 (17/46). Still no effect. Trilinear at epoch 100: 0.8920.
