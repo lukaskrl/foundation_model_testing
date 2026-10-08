@@ -1,0 +1,32 @@
+# nnFoundation ViT (Primus, 8^3 tokens, 539M encoder), FROZEN, with the pyramid-free I1 head and an
+# upsampled stride-2 skip filled by trilinear (the control: same extra path, no guidance).
+# Frozen counterpart (2026-10-08) of the fine-tuned pilot nnfViT_i1{g,t}_ft_pt_f100 (no upsampler effect
+# when fine-tuned): same model, head, preprocessing and EPOCHS=150, encoder frozen; batch 3 x 2 = 6 as the
+# frozen dino3d pair. nnfViT_i1g_frz vs nnfViT_i1t_frz differ only in the marked skip line(s).
+model:
+  name: nnfoundation_vit
+  batch_size: 3
+  weights: /home/lukas/projects/foundation_model_testing/weights/nnFoundation/ViT/checkpoint_final.pth
+  preprocessing:
+    axcodes: SPL
+    intensity:
+      mode: znorm
+      a_min: -1024.0
+      a_max: 3071.0
+      mask_threshold: -100000.0
+      aug_scale: 6.0
+  kwargs:
+    canvas: [96, 96, 96]
+    interface: i1
+    interface_width: 256
+    interface_patch_size: [96, 96, 96]
+    interface_upsampler: trilinear                               # <-- skip variant
+  grad_accum_steps: 2
+  freeze_backbone: true
+  pretrained: true
+data:
+  train_fraction: 1.0
+  use_source_affine: true
+  guide_hu: true                                             # HU as channel 1 (ignored by trilinear)
+head:
+  name: interface_seg_head
