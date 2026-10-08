@@ -695,6 +695,12 @@ beat trilinear when fine-tuned).
 **Epoch 75 (2026-10-08):** guided 0.8796 vs trilinear 0.8827 (−0.0030; 48/115 classes); without
 vertebrae −0.0030 (33/90), thin −0.0014 (17/46). Still no effect. Trilinear at epoch 100: 0.8920.
 
+**Epoch 100, final (2026-10-08):** guided 0.8922 vs trilinear 0.8920 (+0.0003; 59/115 classes);
+without vertebrae +0.0002 (44/90), thin −0.0020 (18/46). Largest per-class swings (±0.02–0.04) are
+ribs and vertebrae in both directions, i.e. identity noise. Both runs stopped at epoch 100
+(`epoch_0100.pt` kept). Result: no upsampler effect once the ViT is fine-tuned (25/50/75/100:
++0.0145, −0.0036, −0.0030, +0.0003).
+
 **Where the fine-tuned ViT still fails (validation, trilinear at epoch 100):** low-contrast gut and
 pelvic organs (prostate 0.68, duodenum 0.77, small bowel 0.79, gallbladder 0.83), the identity of
 repeated structures (left ribs 5–12 at 0.81–0.84, C1 0.80, T4 0.82, C6 0.82), and small vessels or
