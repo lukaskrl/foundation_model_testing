@@ -282,6 +282,15 @@ ENCODERS = {
     # 16 i + 15 on RAS axes 0 and 1
     "ctfm": ((512, 6, 6, 6), [centers_stride(6, 16, 15.0), centers_stride(6, 16, 15.0),
                               centers_stride(6, 16, 0.0)]),
+    # SPL, ResEnc-L: stride-2 k3/p1 convs (cells at 16 i), as ctfm. Its residual skips also
+    # avg-pool (centre 2 i + 0.5 per level), so offset 0 is the main path's; the input-gradient
+    # centroid of the linearized pretrained encoder agrees at strides 4 and 8 (48-50 vs 48).
+    "nnfoundation_cnn": ((320, 6, 6, 6), [centers_stride(6, 16, 15.0),
+                                          centers_stride(6, 16, 15.0), centers_stride(6, 16, 0.0)]),
+    "nnfoundation_cnn_s8": ((256, 12, 12, 12), [centers_stride(12, 8, 7.0),
+                                               centers_stride(12, 8, 7.0), centers_stride(12, 8, 0.0)]),
+    # SPL, non-overlapping 8^3 patch embedding: mid-cell, unchanged by the flips
+    "nnfoundation_vit": ((1056, 12, 12, 12), [centers_stride(12, 8)] * 3),
 }
 
 

@@ -140,9 +140,9 @@ class FrozenEncoder:
         native = bb.encoder_forward(x)
         feats = [t for t in native if torch.is_tensor(t) and t.dim() == 5 and t.shape[1] > 1]
         f = feats[self.tap if self.tap is not None else -1]
-        if self.name == "ctfm":
-            # SegResNet encoder: four stride-2 3x3x3 convs with padding 1 and no
-            # pooling, so cell i is centred on input voxel 16 * i, not mid-cell
+        if self.name in ("ctfm", "nnfoundation_cnn"):
+            # SegResNet / ResEnc-L encoders: stride-2 3x3x3 convs with padding 1 and no
+            # pooling, so cell i is centred on input voxel s * i, not mid-cell
             # (derived from the layers in scripts/test_upsampler.py --encoders).
             s = D // f.shape[2]
             return f, tuple(centers_stride(n_, s, 0.0) for n_ in f.shape[2:])

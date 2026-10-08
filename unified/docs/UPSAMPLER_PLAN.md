@@ -627,3 +627,102 @@ figure (confounded by feature quality).
   UNETR (raw-image branch), AnyUp/FeatUp/JAFAR/LoftUp (2D upsamplers, out of scope).
 - Report NSD at 1.5 mm next to Dice: at 3 mm it saturates. Guided-skip NSD gains are smaller than
   Dice gains on dino3d (thin +0.012 vs +0.059) but not on SAM-Med3D (+0.033).
+
+### nnFoundation probe (2026-10-07, before the wipe)
+
+Adapters: `unified/models/backbones/nnfoundation.py`, configs `configs/models/nnfoundation_{vit,cnn,cnn_s8}.yaml`
+(SPL, z-score over all voxels, as their pretraining). Same probe protocol as Stage 1/2; the
+dino3d-trained upsampler (`dino3d_label/best.pt`, trained on stride-16 tokens) applied unchanged.
+
+| encoder (grid) | trilinear Dice / thin | guided Δ Dice / thin / thick | NSD 1.5 mm Δ | bilateral Δ |
+|---|---|---|---|---|
+| **nnFoundation ViT** (Primus, 8³ tokens, 1056 ch) | **0.476** / 0.338 | **+0.074 / +0.105 / +0.053** | +0.088 | +0.029 |
+| nnFoundation CNN, stride-8 stage (256 ch) | 0.141 / 0.082 | +0.060 / +0.076 / +0.050 | +0.079 | +0.019 |
+| nnFoundation CNN, stride-16 stage | 0.003 | (stopped) | | |
+| *for reference:* dino3d (16³) | 0.338 / 0.154 | +0.105 / +0.152 / +0.074 | +0.196 | +0.010 |
+| SAM-Med3D (16³ at 128³) | 0.241 / 0.124 | +0.088 / +0.124 / +0.064 | +0.138 | +0.015 |
+| CT-FM level 4 (16³) | 0.192 / 0.063 | +0.078 / +0.084 / +0.074 | +0.134 | +0.006 |
+
+- **The upsampler transfers to stride 8.** Trained only on dino3d's 16³ cells, it adds +0.074 Dice
+  (thin +0.105) to the nnFoundation ViT's 8³ tokens: a fifth encoder, a different token size, width
+  and pretraining (MAE). nnFoundation ViT + guided (0.549) is the best probe of any encoder so far.
+  The gain is smaller than on 16³ encoders (thin +0.105 vs +0.124 to +0.152), as expected when the
+  tokens are finer, but that comparison is confounded by feature quality.
+- **The nnFoundation CNN's frozen features are weak for a linear probe**: 0.141 at stride 8, and its
+  stride-16 stage is nearly constant in space (spatial std 0.002 against channel offsets 0.005; a
+  random-init copy is not), probe Dice 0.003. In frozen linear probing the ViT is far ahead of the
+  CNN (0.476 vs 0.141 at the same grid), matching nnFoundation's own "ViT excels in frozen-feature
+  settings". The CNN's strength in their paper is fine-tuned, with its full decoder; whether the ViT
+  trails the CNN in a trained frozen head (CNN with its native pyramid, as CT-FM I1) still needs the
+  head runs (#2 in "Plan after the node wipe").
+- Engineering notes: Primus' 3D RoPE does not build under timm >= 1.0.17 (fixed by a subclass,
+  identical to timm 1.0.16's table); the ViT checkpoint is nnssl's EvaMAE (encoder keys only kept);
+  its 24³ absolute position embedding is interpolated to the 12³ canvas grid, as nnFoundation does.
+
+### Fine-tuned nnFoundation ViT pilot (started 2026-10-07 11:46)
+
+User question: does the guided upsampler still help once the ViT is fine-tuned end-to-end (the
+regime where nnFoundation's CNN beats its ViT on segmentation)? Pair, identical except the skip:
+`nnfViT_i1g_ft_pt_f100` (I1 + guided, GPU0) vs `nnfViT_i1t_ft_pt_f100` (I1 + trilinear, GPU2);
+542,956,758 trainable parameters each; the benchmark's fine-tuning recipe (AdamW 2e-4 on all
+parameters, 10 warm-up epochs, AMP, clip 1.0; validation every 25 epochs, early stopping after 5
+rounds), batch 2 × 3, `EPOCHS=150`. ~1.3 s/step, 541 steps/epoch ≈ 12 min/epoch, 73 GB per GPU;
+first validation at epoch 25 ≈ 17:00, done ≈ Oct 8 evening if the node is not wiped first. Expected:
+a smaller gain than frozen (fine-tuning lets the ViT pack sub-token detail into its channels; the
+trainable stem already cut the frozen gain from +0.046 to +0.011). If the node is wiped, resume with
+the same `run_interface.sh` command (checkpoints every 10 epochs, if `runs/` survives).
+
+**Epoch 25 (2026-10-07):** guided 0.8584 vs trilinear 0.8439 (+0.0145), but the gain is almost all
+vertebra identity swaps in the trilinear run (T7 +0.43, T6 +0.40, T8 +0.25, T5 +0.11, T9 +0.10 —
+a counting/context error, not a boundary one). Without T5–T9: +0.0035. Thin classes +0.003
+(guided better in 26/46), thick +0.022 (38/69), all classes 64/115: no resolution effect yet.
+Training loss: guided ahead early (epoch 4 −0.17, epoch 12 −0.03), level by epoch 16; the trilinear
+run then dropped from ~1.25 to 0.63 in epochs 28–29 (the same regime change the frozen dino3d runs
+show around epochs 45–54, sharper here), the guided run had not yet by epoch 25. Read again at epoch
+50. For scale: fine-tuned, both arms are at 0.84–0.86 by epoch 25, against 0.58–0.67 for the frozen
+dino3d / CT-FM heads at epoch 25 (frozen best: CT-FM 0.851 at epoch 500). No crashes or restarts.
+
+**Epoch 50 (2026-10-07 22:33): no effect when fine-tuned.** Guided 0.8648 vs trilinear 0.8684
+(−0.0036; guided better in 48/115 classes). Without the 25 vertebra classes −0.0018 (36/90); thin
+−0.0015 (23/46), thick −0.0050 (25/69). The epoch-25 lead (+0.0145) was vertebra identity swaps and
+is gone (without vertebrae it was +0.0014 then). Both runs went through the training-loss drop
+(guided at epochs 26–27, trilinear 28–29) and are level since (~0.40–0.43). No crashes.
+Reading: once the ViT is fine-tuned it recovers sub-token detail itself, so the upsampler's benefit is
+specific to frozen encoders. This supports the frozen scope of the paper, with the fine-tuned pilot as
+the scope result, and it does not justify the nnU-Net port (decision rule: port only if guided clearly
+beat trilinear when fine-tuned).
+
+**Epoch 75 (2026-10-08):** guided 0.8796 vs trilinear 0.8827 (−0.0030; 48/115 classes); without
+vertebrae −0.0030 (33/90), thin −0.0014 (17/46). Still no effect. Trilinear at epoch 100: 0.8920.
+
+**Epoch 100, final (2026-10-08):** guided 0.8922 vs trilinear 0.8920 (+0.0003; 59/115 classes);
+without vertebrae +0.0002 (44/90), thin −0.0020 (18/46). Largest per-class swings (±0.02–0.04) are
+ribs and vertebrae in both directions, i.e. identity noise. Both runs stopped at epoch 100
+(`epoch_0100.pt` kept). Result: no upsampler effect once the ViT is fine-tuned (25/50/75/100:
++0.0145, −0.0036, −0.0030, +0.0003).
+
+**Where the fine-tuned ViT still fails (validation, trilinear at epoch 100):** low-contrast gut and
+pelvic organs (prostate 0.68, duodenum 0.77, small bowel 0.79, gallbladder 0.83), the identity of
+repeated structures (left ribs 5–12 at 0.81–0.84, C1 0.80, T4 0.82, C6 0.82), and small vessels or
+glands (portal/splenic vein 0.80, adrenals 0.81–0.84). These are context and contrast errors, not
+sub-token boundary errors, which fits the null result: the guided skip addresses the latter. Where
+guided is consistently worse (by > 0.01 at both epochs 50 and 75) it is mostly vertebra and rib
+identity (T7–T10, C2, L2, ribs 3–5/9) and small bowel; vertebra labels swing by up to ±0.4 between
+checkpoints, so these are high-variance. Almost all of these classes are better than in the frozen
+CT-FM and dino3d I2 + guided heads; C1, rib_left_12 and the right adrenal are about level.
+
+### Frozen nnFoundation ViT pair (started 2026-10-08)
+
+The frozen counterpart of the fine-tuned pilot, on the same model, head, preprocessing and 150 epochs
+(user decision, 2026-10-08): `nnfViT_i1t_frz_pt_f100` (I1 + trilinear, GPU2, from 07:10) vs
+`nnfViT_i1g_frz_pt_f100` (I1 + guided, GPU0, started by `runs/upsampler/swap_gpu0_oct8.sh` right after
+the fine-tuned guided pilot's epoch-100 validation, ~09:20). Batch 3 × 2 as the frozen dino3d pair;
+4,365,430 trainable parameters each. ~1.5 s/step, 360 steps/epoch ≈ 9 min/epoch; epoch-25 validations
+≈ 11:25 (trilinear) and ≈ 13:35 (guided); done ≈ Oct 9 morning/noon. Expectation from the probe
+(+0.074) and the probe-to-head ratio on dino3d/SAM-Med3D (≈ 0.4–0.6): a head gain of roughly +0.03–0.04.
+The fine-tuned trilinear pilot was stopped at epoch 103 (`epoch_0100.pt` kept, resumable).
+
+**Stopped for the node reset (2026-10-08 13:09, user request):** trilinear at epoch 45 (epoch-25 val
+0.6728; resumes from `epoch_0040.pt`), guided during its epoch-25 validation (no reading; resumes from
+`epoch_0020.pt`). Both checkpoints load (epoch 40 / 20). Resume with `GPU=<n> EPOCHS=150 bash
+scripts/run_interface.sh configs/interface/nnfViT_i1{t,g}_frz_pt_f100.yaml`.
