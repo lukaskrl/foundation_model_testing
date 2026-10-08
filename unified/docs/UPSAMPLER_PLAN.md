@@ -694,3 +694,13 @@ beat trilinear when fine-tuned).
 
 **Epoch 75 (2026-10-08):** guided 0.8796 vs trilinear 0.8827 (−0.0030; 48/115 classes); without
 vertebrae −0.0030 (33/90), thin −0.0014 (17/46). Still no effect. Trilinear at epoch 100: 0.8920.
+
+**Where the fine-tuned ViT still fails (validation, trilinear at epoch 100):** low-contrast gut and
+pelvic organs (prostate 0.68, duodenum 0.77, small bowel 0.79, gallbladder 0.83), the identity of
+repeated structures (left ribs 5–12 at 0.81–0.84, C1 0.80, T4 0.82, C6 0.82), and small vessels or
+glands (portal/splenic vein 0.80, adrenals 0.81–0.84). These are context and contrast errors, not
+sub-token boundary errors, which fits the null result: the guided skip addresses the latter. Where
+guided is consistently worse (by > 0.01 at both epochs 50 and 75) it is mostly vertebra and rib
+identity (T7–T10, C2, L2, ribs 3–5/9) and small bowel; vertebra labels swing by up to ±0.4 between
+checkpoints, so these are high-variance. Almost all of these classes are better than in the frozen
+CT-FM and dino3d I2 + guided heads; C1, rib_left_12 and the right adrenal are about level.
