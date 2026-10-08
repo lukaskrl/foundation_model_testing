@@ -48,6 +48,21 @@ control (`runs/interface/samMed3d_i1t_frz_pt_f100/`) was stopped at 17:12 right 
 checkpoint (`epoch_0090.pt`, load-checked; logged in `runs/upsampler/gpu0_oct2.log`), so the whole of
 `runs/` is safe to copy. All results are committed and pushed.
 
+**Second backup (2026-10-08, before a reset expected ~11:00).** Same copy list; rsync only transfers
+what changed: `runs/` grew to 48 GB (the fine-tuned nnFoundation pilot checkpoints are 6.5 GB each),
+`weights/` to 19 GB (+ `weights/nnFoundation/`, 3.1 GB, also re-downloadable from Hugging Face),
+and `projects/container_home_backup/` holds the current Claude memory. Code and results are all in git.
+State at that backup:
+- **Running, resume after the reset** (`run_interface.sh` resumes from the newest `epoch_*.pt`,
+  saved every 10 epochs): the frozen nnFoundation ViT pair, `GPU=<n> EPOCHS=150 bash
+  scripts/run_interface.sh configs/interface/nnfViT_i1t_frz_pt_f100.yaml` and the same with
+  `nnfViT_i1g_frz_pt_f100.yaml`.
+- **Stopped, resumable but not needed:** the fine-tuned pilot (`nnfViT_i1{g,t}_ft_pt_f100`, epoch 100,
+  result recorded: no upsampler effect when fine-tuned).
+- **Still to resume from the first backup:** the SAM-Med3D trilinear control (`epoch_0090.pt`).
+- **Environment:** `requirements.lock.txt` now includes `dynamic-network-architectures==0.4.4`
+  (nnFoundation backbones; install it with `--no-deps`).
+
 ## 2. Restore
 
 ```bash
