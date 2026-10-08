@@ -704,3 +704,14 @@ guided is consistently worse (by > 0.01 at both epochs 50 and 75) it is mostly v
 identity (T7–T10, C2, L2, ribs 3–5/9) and small bowel; vertebra labels swing by up to ±0.4 between
 checkpoints, so these are high-variance. Almost all of these classes are better than in the frozen
 CT-FM and dino3d I2 + guided heads; C1, rib_left_12 and the right adrenal are about level.
+
+### Frozen nnFoundation ViT pair (started 2026-10-08)
+
+The frozen counterpart of the fine-tuned pilot, on the same model, head, preprocessing and 150 epochs
+(user decision, 2026-10-08): `nnfViT_i1t_frz_pt_f100` (I1 + trilinear, GPU2, from 07:10) vs
+`nnfViT_i1g_frz_pt_f100` (I1 + guided, GPU0, started by `runs/upsampler/swap_gpu0_oct8.sh` right after
+the fine-tuned guided pilot's epoch-100 validation, ~09:20). Batch 3 × 2 as the frozen dino3d pair;
+4,365,430 trainable parameters each. ~1.5 s/step, 360 steps/epoch ≈ 9 min/epoch; epoch-25 validations
+≈ 11:25 (trilinear) and ≈ 13:35 (guided); done ≈ Oct 9 morning/noon. Expectation from the probe
+(+0.074) and the probe-to-head ratio on dino3d/SAM-Med3D (≈ 0.4–0.6): a head gain of roughly +0.03–0.04.
+The fine-tuned trilinear pilot was stopped at epoch 103 (`epoch_0100.pt` kept, resumable).
